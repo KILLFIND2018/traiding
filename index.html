@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Crypto Tycoon Simulator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <link rel="stylesheet" href="assets/styles/style.css">
+
+</head>
+
+<body>
+    <!-- Видео на заднем плане -->
+    <video id="background-video" autoplay loop muted playsinline>
+        <source src="assets/video.mp4" type="video/mp4">
+        Ваш браузер не поддерживает видео.
+    </video>
+
+    <div class="container">
+        <div class="header">
+            <h1>Crypto Tycoon Simulator</h1>
+            <div class="currency-display" id="currency-display">
+                <span id="currency-amount">0</span><img src="assets/bitcoin.png" alt="balance">
+            </div>
+        </div>
+        <div class="content">
+            <div class="main" id="main"></div>
+            <div class="auction" id="auction"></div>
+            <div class="rating" id="rating"></div>
+            <div class="inventory" id="inventory">
+                <div class="inventory-container">
+                    <table class="inventory-table">
+                        <tr>
+                            <th>Предмет</th>
+                            <th>Генерация в час</th>
+                            <th>думаем</th>
+                        </tr>
+
+                    </table>
+                </div>
+            </div>
+            <div class="mart" id="mart">
+                <div class="mart-container">
+                    <h1 class="sub-header">Магазин</h1>
+                    <div class="market">
+                        <table class="market-table">
+                            <thead>
+                                <tr>
+                                    <th>Предмет</th>
+                                    <th>Генерация в час</th>
+                                    <th>Стоимость</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Строки будут добавлены сюда через JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="wheel-container">
+                    <h1 class="sub-header">Lucky While</h1>
+                    <div class="wheel" id="wheel">
+                        <div class="segment" style="--i:0; --color:red;">Приз 1</div>
+                        <div class="segment" style="--i:1; --color:blue;">Приз 2</div>
+                        <div class="segment" style="--i:2; --color:green;">Приз 3</div>
+                        <div class="segment" style="--i:3; --color:yellow;">Приз 4</div>
+                        <div class="segment" style="--i:4; --color:purple;">Приз 5</div>
+                        <div class="segment" style="--i:5; --color:orange;">Приз 6</div>
+                    </div>
+                    <button id="spin-button">
+                        <div class="currency-display spin" id="currency-display">
+                            <span id="currency-amount">34</span>
+                            <img src="assets/bitcoin.png" alt="auction">
+                        </div>
+                    </button> <!-- Добавленная кнопка -->
+                </div>
+            </div>
+            <div class="donate" id="donate">
+                <button id="buyButton">Купить Stars</button>
+            </div>
+        </div>
+        <div class="game-menu">
+            <button class="button auction" type="button" id="auctionButton">
+                <img src="assets/auction.png" alt="auction">
+            </button>
+            <div class="separator"></div>
+            <button class="button rating" type="button">
+                <img src="assets/rating.png" alt="rating">
+            </button>
+            <div class="separator"></div>
+            <button class="button inventory" type="button">
+                <img src="assets/inventory.png" alt="inventory">
+            </button>
+            <div class="separator"></div>
+            <button class="button mart" type="button">
+                <img src="assets/mart.png" alt="mart">
+            </button>
+            <div class="separator"></div>
+            <button class="button donate" type="button">
+                <img src="assets/bitcoin.png" alt="bitcoin">
+            </button>
+            <div class="separator-hidden"></div>
+            <button class="button return" type="button">
+                <img src="assets/return.png" alt="return">
+            </button>
+        </div>
+    </div>
+    <script>
+        document.getElementById('buyButton').addEventListener('click', function() {
+            // Инициализация Telegram Web App
+            const tg = window.Telegram.WebApp;
+    
+            // Параметры для покупки
+            const options = {
+                item_id: 'unique_item_id', // Уникальный идентификатор товара
+                title: 'Telegram Stars',   // Название товара
+                description: 'Покупка Telegram Stars', // Описание товара
+                photo_url: 'https://example.com/image.png', // URL изображения товара
+                price: 100, // Цена в Stars
+                currency: 'USD', // Валюта
+            };
+    
+            // Вызов метода для покупки
+            tg.sendData(JSON.stringify({
+                type: 'purchase',
+                data: options
+            }));
+        });
+    </script>
+    <script src="assets/scripts/startThreeJs.js"></script>
+    <script src="assets/scripts/main.js"></script>
+    <script src="assets/scripts/market_data.js"></script>
+    <script src="assets/scripts/bonus_add.js"></script>
+    <script src="assets/scripts/swiper.js"></script>
+    <script src="assets/scripts/wheel.js"></script>
+    <script src="assets/scripts/menu.js"></script>
+
+
+</body>
+
+</html>

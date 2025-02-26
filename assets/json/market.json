@@ -1,0 +1,19 @@
+{
+    "items": [
+      {
+        "name": "Older PC",
+        "generation": 10,
+        "price": 100
+      },
+      {
+        "name": "Speaker",
+        "generation": 25,
+        "price": 150
+      },
+      {
+        "name": "Server",
+        "generation": 50,
+        "price": 200
+      }
+    ]
+  }
