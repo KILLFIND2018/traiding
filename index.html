@@ -19,8 +19,12 @@
         Ваш браузер не поддерживает видео.
     </video>
 
+    <audio id="background-music" autoplay loop>
+        <source src="assets/audio/audio.mp3" type="audio/mpeg">
+        Ваш браузер не поддерживает элемент audio.
+    </audio>
 
-    
+
     <div class="container">
         <div class="header">
             <h1>Crypto Tycoon Simulator</h1>
@@ -111,13 +115,18 @@
         </div>
     </div>
     <script>
-        
 
+        // Запуск музыки после первого взаимодействия
+        document.addEventListener('click', function () {
+            var music = document.getElementById('background-music');
+            music.volume = 0.1;
+            music.play(); // Запуск музыки
+        });
 
-        document.getElementById('buyButton').addEventListener('click', function() {
+        document.getElementById('buyButton').addEventListener('click', function () {
             // Инициализация Telegram Web App
             const tg = window.Telegram.WebApp;
-    
+
             // Параметры для покупки
             const options = {
                 item_id: 'unique_item_id', // Уникальный идентификатор товара
@@ -127,7 +136,7 @@
                 price: 100, // Цена в Stars
                 currency: 'USD', // Валюта
             };
-    
+
             // Вызов метода для покупки
             tg.sendData(JSON.stringify({
                 type: 'purchase',
