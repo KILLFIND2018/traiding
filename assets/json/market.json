@@ -3,17 +3,17 @@
       {
         "name": "Older PC",
         "generation": 10,
-        "price": 100
+        "price": 10
       },
       {
         "name": "Speaker",
         "generation": 25,
-        "price": 150
+        "price": 10
       },
       {
         "name": "Server",
         "generation": 50,
-        "price": 200
+        "price": 10
       },
       {
         "name": "Cafetalg",
@@ -33,6 +33,16 @@
       {
         "name": "The Globe",
         "generation": 150,
+        "price": 10
+      },
+      {
+        "name": "Drinking Water Dispenser",
+        "generation": 175,
+        "price": 10
+      },
+      {
+        "name": "Humanoid robot",
+        "generation": 200,
         "price": 10
       }
     ]

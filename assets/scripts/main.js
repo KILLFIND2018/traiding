@@ -16,6 +16,8 @@ function updateTotalGeneration() {
     hasPanasonic = false;
     hasScifiSciderRobot = false;
     hasTheGlobe = false;
+    hasDrinkingWaterDispenser = false;
+    hasHumanoidRobot = false;
 
     for (let i = 1; i < inventoryTable.rows.length; i++) {
         let itemName = inventoryTable.rows[i].cells[0].innerText;
@@ -40,6 +42,10 @@ function updateTotalGeneration() {
             hasScifiSciderRobot = true;
         } else if (itemName.trim() === "The Globe") {
             hasTheGlobe = true;
+        } else if (itemName.trim() === "Drinking Water Dispenser") {
+            hasDrinkingWaterDispenser = true;
+        } else if (itemName.trim() === "Humanoid robot") {
+            hasHumanoidRobot = true;
         }
     }
 
@@ -63,6 +69,12 @@ function updateTotalGeneration() {
     }
     if (hasTheGlobe) {
         theglobe();
+    }
+    if (hasDrinkingWaterDispenser) {
+        drinkingWaterDispenser();
+    }
+    if (hasHumanoidRobot) {
+        humanoidRobot();
     }
 
     increaseBalance(totalGeneration);
