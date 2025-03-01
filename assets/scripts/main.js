@@ -19,6 +19,12 @@ function updateTotalGeneration() {
     hasDrinkingWaterDispenser = false;
     hasHumanoidRobot = false;
 
+    hasComputerWithTerminal = false;
+    hasConditioner = false;
+    hasFridge = false;
+    hasPS5 = false;
+    hasTV = false;
+
     for (let i = 1; i < inventoryTable.rows.length; i++) {
         let itemName = inventoryTable.rows[i].cells[0].innerText;
         let generationPerHour = parseInt(inventoryTable.rows[i].cells[1].innerText, 10);
@@ -46,6 +52,16 @@ function updateTotalGeneration() {
             hasDrinkingWaterDispenser = true;
         } else if (itemName.trim() === "Humanoid robot") {
             hasHumanoidRobot = true;
+        } else if (itemName.trim() === "Computer with terminal") {
+            hasComputerWithTerminal = true;
+        } else if (itemName.trim() === "Conditioner") {
+            hasConditioner = true;
+        } else if (itemName.trim() === "Fridge") {
+            hasFridge = true;
+        } else if (itemName.trim() === "PS5") {
+            hasPS5 = true;
+        } else if (itemName.trim() === "TV") {
+            hasTV = true;
         }
     }
 
@@ -75,6 +91,21 @@ function updateTotalGeneration() {
     }
     if (hasHumanoidRobot) {
         humanoidRobot();
+    }
+    if (hasComputerWithTerminal) {
+        computerWithTerminal();
+    }
+    if (hasConditioner) {
+        conditioner();
+    }
+    if (hasFridge) {
+        fridge();
+    }
+    if (hasPS5) {
+        ps5();
+    }
+    if (hasTV) {
+        tv();
     }
 
     increaseBalance(totalGeneration);

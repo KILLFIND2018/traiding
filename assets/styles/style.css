@@ -130,7 +130,7 @@ body {
 /* Стили для контейнера колеса */
 .wheel-container {
     position: absolute;
-    top: 35%;
+    top: 40%;
     left: 50%;
     transform: translate(-50%, -50%);
     width: 300px;
@@ -151,13 +151,7 @@ body {
 
 
 
-.mart-container {
-    display: none;
-    position: absolute;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
+
 
 /* Стили для сегментов колеса */
 .segment {
@@ -178,7 +172,7 @@ body {
 .mart-container {
     display: none;
     position: absolute;
-    top: 40%;
+    top: 50%;
     /* Измените значение, чтобы заголовок и таблица не накладывались */
     left: 50%;
     transform: translate(-50%, -50%);
@@ -186,35 +180,82 @@ body {
     width: 100%;
 }
 
+/* Стили для контейнера */
 .inventory-container {
     display: block;
     position: absolute;
-    top: 40%;
-    /* Измените значение, чтобы заголовок и таблица не накладывались */
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 50%; /* Позиционирование по вертикали */
+    left: 50%; /* Позиционирование по горизонтали */
+    transform: translate(-50%, -50%); /* Центрирование */
     text-align: center;
-    width: 100%;
+    width: 80%; /* Ширина контейнера */
+    max-height: 300px; /* Фиксированная высота контейнера */
+    overflow-y: auto; /* Включаем вертикальную прокрутку */
+    background-color: rgba(44, 62, 80, 0.1); /* Цвет фона контейнера */
+    padding: 10px; /* Отступы внутри контейнера */
 }
 
-.market-table,
+/* Стили для таблицы */
 .inventory-table {
-    background-color: rgba(44, 62, 80, 0.3);
-    margin-top: 20px;
-    /* Отступ между заголовком и таблицей */
-    width: 80%;
-    margin-left: auto;
-    margin-right: auto;
-    border-collapse: collapse;
+    width: 100%; /* Таблица занимает всю ширину контейнера */
+    border-collapse: collapse; /* Убираем двойные границы */
+    background-color: rgba(44, 62, 80, 0.3); /* Цвет фона таблицы */
 }
 
-.market-table th,
-.market-table td,
+/* Стили для заголовков и ячеек таблицы */
 .inventory-table th,
 .inventory-table td {
-    padding: 10px;
-    text-align: center;
+    padding: 10px; /* Отступы внутри ячеек */
+    text-align: center; /* Выравнивание текста по центру */
 }
+
+/* Стили для заголовков таблицы */
+.inventory-table th {
+    background-color: rgba(44, 62, 80, 0.5); /* Цвет фона заголовков */
+    color: white; /* Цвет текста заголовков */
+}
+
+/* Стили для строк таблицы */
+.inventory-table tbody tr:hover {
+    background-color: rgba(44, 62, 80, 0.2); /* Цвет фона при наведении */
+}
+
+/* Стили для контейнера таблицы */
+.market {
+    max-height: 300px; /* Фиксированная высота контейнера */
+    overflow-y: auto; /* Включаем вертикальную прокрутку */
+    width: 90%; /* Ширина контейнера */
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20px; /* Отступ сверху */
+}
+
+/* Стили для таблицы */
+.market-table {
+    width: 100%; /* Таблица занимает всю ширину контейнера */
+    border-collapse: collapse; /* Убираем двойные границы */
+    background-color: rgba(44, 62, 80, 0.3); /* Цвет фона таблицы */
+}
+
+/* Стили для заголовков и ячеек таблицы */
+.market-table th,
+.market-table td {
+    padding: 10px; /* Отступы внутри ячеек */
+    text-align: center; /* Выравнивание текста по центру */
+}
+
+/* Стили для заголовков таблицы */
+.market-table th {
+    background-color: rgba(44, 62, 80, 0.5); /* Цвет фона заголовков */
+    color: white; /* Цвет текста заголовков */
+}
+
+/* Стили для строк таблицы */
+.market-table tbody tr:hover {
+    background-color: rgba(44, 62, 80, 0.2); /* Цвет фона при наведении */
+}
+
+
 
 .sub-header {
     margin-bottom: 20px;

@@ -6,9 +6,14 @@ let hasCafetalg = false;
 let hasPanasonic = false;
 let hasScifiSciderRobot = false;
 let hasTheGlobe = false;
-
 let hasDrinkingWaterDispenser = false;
 let hasHumanoidRobot = false;
+
+let hasComputerWithTerminal = false;
+let hasConditioner =  false;
+let hasFridge = false;
+let hasPS5 = false;
+let hasTV = false;
 
 let olderPCModel = null;
 let speakerModel = null;
@@ -17,9 +22,14 @@ let CafetalgModel = null;
 let PanasonicModel = null;
 let ScifiSciderRobotModel = null;
 let TheGlobeModel = null;
-
 let DrinkingWaterDispenserModel = null;
 let HumanoidRobotModel = null;
+
+let ComputerWithTerminalModel = null;
+let ConditionerModel =  null;
+let FridgeModel = null;
+let PS5Model = null;
+let TVModel = null;
 
 // Загрузка модели офиса
 loader.load('assets/models/Office.glb', function (gltf) {
@@ -153,5 +163,76 @@ function humanoidRobot() {
         console.error('Ошибка загрузки модели "HumanoidRobot":', error);
     });
 }
+
+function computerWithTerminal() {
+    if (!hasComputerWithTerminal || ComputerWithTerminalModel !== null) return;
+
+    loader.load('assets/models/Computer with terminal.glb', function (computerWithTerminalGltf) {
+        ComputerWithTerminalModel = computerWithTerminalGltf.scene;
+        ComputerWithTerminalModel.scale.set(0.5, 0.5, 0.5);
+        ComputerWithTerminalModel.position.set(0, 0.2, -3.8);
+        scene.add(ComputerWithTerminalModel);
+    }, undefined, function (error) {
+        console.error('Ошибка загрузки модели "ComputerWithTerminal":', error);
+    });
+}
+
+
+function conditioner() {
+    if (!hasConditioner || ConditionerModel !== null) return;
+
+    loader.load('assets/models/Conditioner.glb', function (conditionerGltf) {
+        ConditionerModel = conditionerGltf.scene;
+        ConditionerModel.scale.set(0.040, 0.040, 0.040);
+        ConditionerModel.position.set(1.7, 0.7, -3.8);
+        ConditionerModel.rotateY(Math.PI /2);
+        scene.add(ConditionerModel);
+    }, undefined, function (error) {
+        console.error('Ошибка загрузки модели "Conditioner":', error);
+    });
+}
+
+function fridge() {
+    if (!hasFridge || FridgeModel !== null) return;
+
+    loader.load('assets/models/Fridge.glb', function (fridgeGltf) {
+        FridgeModel = fridgeGltf.scene;
+        FridgeModel.scale.set(0.9, 0.9, 0.9);
+        FridgeModel.position.set(2.8, 0, -3.6);
+        scene.add(FridgeModel);
+    }, undefined, function (error) {
+        console.error('Ошибка загрузки модели "fridge":', error);
+    });
+}
+
+function ps5() {
+    if (!hasPS5 || PS5Model !== null) return;
+
+    loader.load('assets/models/PS5.glb', function (ps5Gtlf) {
+        PS5Model = ps5Gtlf.scene;
+        PS5Model.scale.set(2, 2, 2);
+        PS5Model.position.set(2.8, 0.2, -2.5);
+        scene.add(PS5Model);
+    }, undefined, function (error) {
+        console.error('Ошибка загрузки модели "ps5":', error);
+    });
+}
+
+function tv() {
+    if (!hasTV || TVModel !== null) return;
+
+    loader.load('assets/models/TV.glb', function (tvGltf) {
+        TVModel = tvGltf.scene;
+        TVModel.scale.set(0.0010, 0.0010, 0.0010);
+        TVModel.position.set(1.3, 0.2, 1);
+        scene.add(TVModel);
+    }, undefined, function (error) {
+        console.error('Ошибка загрузки модели "tv":', error);
+    });
+}
+
+
+
+
 
 

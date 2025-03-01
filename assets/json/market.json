@@ -44,6 +44,31 @@
         "name": "Humanoid robot",
         "generation": 200,
         "price": 10
+      },
+      {
+        "name": "Computer with terminal",
+        "generation": 225,
+        "price": 10
+      },
+      {
+        "name": "Conditioner",
+        "generation": 250,
+        "price": 10
+      },
+      {
+        "name": "Fridge",
+        "generation": 275,
+        "price": 10
+      },
+      {
+        "name": "PS5",
+        "generation": 300,
+        "price": 10
+      },
+      {
+        "name": "TV",
+        "generation": 325,
+        "price": 10
       }
     ]
   }
