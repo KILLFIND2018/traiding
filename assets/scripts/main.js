@@ -129,6 +129,9 @@ function increaseBalance(totalGeneration) {
         let currentBalance = parseInt(currencyAmount.textContent, 10);
         currentBalance += totalGeneration * progressionFactor;
         currencyAmount.textContent = Math.floor(currentBalance);
+
+        // Выводим текущий баланс в консоль
+        console.log(`Текущий баланс: ${currentBalance}`);
     }, 1000); // Обновление баланса каждую секунду
 
     // Отдельный интервал для увеличения коэффициента прогрессии каждые 10 секунд
