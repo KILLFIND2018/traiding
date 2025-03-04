@@ -9,11 +9,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <link rel="stylesheet" href="assets/styles/style.css">
-
 </head>
 
 <body>
-    <!-- Видео на заднем плане -->
     <video id="background-video" autoplay loop muted playsinline>
         <source src="assets/video.mp4" type="video/mp4">
         Ваш браузер не поддерживает видео.
@@ -23,7 +21,6 @@
         <source src="2assets/audio/audio.mp3" type="audio/mpeg">
         Ваш браузер не поддерживает элемент audio.
     </audio>
-
 
     <div class="container">
         <div class="header">
@@ -66,21 +63,9 @@
                     </div>
                 </div>
                 <div class="wheel-container">
-                    <h1 class="sub-header">Lucky While</h1>
-                    <div class="wheel" id="wheel">
-                        <div class="segment" style="--i:0; --color:red;">Приз 1</div>
-                        <div class="segment" style="--i:1; --color:blue;">Приз 2</div>
-                        <div class="segment" style="--i:2; --color:green;">Приз 3</div>
-                        <div class="segment" style="--i:3; --color:yellow;">Приз 4</div>
-                        <div class="segment" style="--i:4; --color:purple;">Приз 5</div>
-                        <div class="segment" style="--i:5; --color:orange;">Приз 6</div>
-                    </div>
-                    <button id="spin-button">
-                        <div class="currency-display spin" id="currency-display">
-                            <span id="currency-amount">34</span>
-                            <img src="assets/bitcoin.png" alt="auction">
-                        </div>
-                    </button> <!-- Добавленная кнопка -->
+                    <img src="assets/img_whell/whell.png" id="wheel" class="wheel">
+                    <div class="arrow"></div>
+                    <button class="spin-btn">Крутить!</button>
                 </div>
             </div>
             <div class="donate" id="donate">
@@ -114,32 +99,50 @@
         </div>
     </div>
     <script>
+        const prizes = ["Приз 1", "Приз 2", "Приз 3", "Приз 4", "Приз 5", "Приз 6", "Приз 7", "Приз 8"];
+        let isSpinning = false;
 
+        function startSpin() {
+            if (isSpinning) return;
+            isSpinning = true;
 
-        
+            const totalSectors = prizes.length;
+            const sectorAngle = 360 / totalSectors;
+            const extraRotations = 5;
+            const winningSector = Math.floor(Math.random() * totalSectors);
+            const finalAngle = (extraRotations * 360) + (winningSector * sectorAngle) + (sectorAngle / 2);
 
-        // Запуск музыки после первого взаимодействия
+            const wheel = document.getElementById('wheel');
+            wheel.style.transition = 'transform 4s ease-out';
+            wheel.style.transform = `rotate(${finalAngle}deg)`;
+
+            // Сбрасываем флаг isSpinning после завершения анимации
+            wheel.addEventListener('transitionend', () => {
+                isSpinning = false;
+            }, { once: true });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const spinButton = document.querySelector('.spin-btn');
+            spinButton.addEventListener('click', startSpin);
+        });
+
         document.addEventListener('click', function () {
             var music = document.getElementById('background-music');
             music.volume = 0.1;
-            music.play(); // Запуск музыки
+            music.play();
         });
 
         document.getElementById('buyButton').addEventListener('click', function () {
-            // Инициализация Telegram Web App
             const tg = window.Telegram.WebApp;
-
-            // Параметры для покупки
             const options = {
-                item_id: 'unique_item_id', // Уникальный идентификатор товара
-                title: 'Telegram Stars',   // Название товара
-                description: 'Покупка Telegram Stars', // Описание товара
-                photo_url: 'https://example.com/image.png', // URL изображения товара
-                price: 100, // Цена в Stars
-                currency: 'USD', // Валюта
+                item_id: 'unique_item_id',
+                title: 'Telegram Stars',
+                description: 'Покупка Telegram Stars',
+                photo_url: 'https://example.com/image.png',
+                price: 100,
+                currency: 'USD',
             };
-
-            // Вызов метода для покупки
             tg.sendData(JSON.stringify({
                 type: 'purchase',
                 data: options
@@ -152,10 +155,8 @@
     <script src="assets/scripts/main.js"></script>
     <script src="assets/scripts/market_data.js"></script>
     <script src="assets/scripts/swiper.js"></script>
-    <script src="assets/scripts/wheel.js"></script>
+    <script src="2assets/scripts/wheel.js"></script>
     <script src="assets/scripts/menu.js"></script>
-
-
 </body>
 
 </html>
