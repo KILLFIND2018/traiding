@@ -48,6 +48,7 @@ body {
     padding-top: 30px;
     padding-bottom: 5px;
     height: calc(100vh - 70px - 60px);
+    width: 90%;
 }
 
 .game-menu {
