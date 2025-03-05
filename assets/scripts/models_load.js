@@ -13,9 +13,11 @@ let hasConditioner =  false;
 let hasFridge = false;
 let hasPS5 = false;
 let hasTV = false;
-
 let hasCooler = false;
 let hasShowcase = false;
+
+let hasPrinter = false;
+let hasRadio = false;
 
 let olderPCModel = null;
 let speakerModel = null;
@@ -31,9 +33,11 @@ let ConditionerModel =  null;
 let FridgeModel = null;
 let PS5Model = null;
 let TVModel = null;
-
 let CoolerModel = null;
 let ShowcaseModel = null;
+
+let PrinterModel = null;
+let RadioModel = null;
 
 // Загрузка модели офиса
 loader.load('assets/models/Office.glb', function (gltf) {
@@ -262,8 +266,31 @@ function showcase() {
     });
 }
 
+function printer() {
+    if (!hasPrinter || PrinterModel !== null) return;
 
+    loader.load('assets/models/Printer.glb', function (printerGltf) {
+        PrinterModel = printerGltf.scene;
+        PrinterModel.scale.set(0.002, 0.002, 0.002);
+        PrinterModel.position.set(-3, 0.5, 2.1);
+        PrinterModel.rotation.y = Math.PI / 2;
+        scene.add(PrinterModel);
+    }, undefined, function (error) {
+        console.error('Ошибка загрузки модели "printer":', error);
+    });
+}
 
+function radio() {
+    if (!hasRadio || RadioModel !== null) return;
 
+    loader.load('assets/models/Radio.glb', function (radioGltf) {
+        RadioModel = radioGltf.scene;
+        RadioModel.scale.set(0.6, 0.6, 0.6);
+        RadioModel.position.set(-1.3, 0.2, 1.7);
+        scene.add(RadioModel);
+    }, undefined, function (error) {
+        console.error('Ошибка загрузки модели "radio":', error);
+    });
+}
 
 

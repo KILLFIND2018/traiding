@@ -23,9 +23,11 @@ function updateTotalGeneration() {
     hasFridge = false;
     hasPS5 = false;
     hasTV = false;
-
     hasCooler = false;
     hasShowcase = false;
+
+    hasPrinter = false;
+    hasRadio = false;
 
     for (let i = 1; i < inventoryTable.rows.length; i++) {
         let itemName = inventoryTable.rows[i].cells[0].innerText;
@@ -68,6 +70,10 @@ function updateTotalGeneration() {
             hasCooler = true;
         } else if (itemName.trim() === "Showcase") {
             hasShowcase = true;
+        } else if (itemName.trim() === "Printer") {
+            hasPrinter = true;
+        } else if (itemName.trim() === "Radio") {
+            hasRadio = true;
         }
     }
 
@@ -118,6 +124,12 @@ function updateTotalGeneration() {
     }
     if (hasShowcase) {
         showcase();
+    }
+    if (hasPrinter) {
+        printer();
+    }
+    if (hasRadio) {
+        radio();
     }
 
     increaseBalance(totalGeneration);

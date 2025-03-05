@@ -79,6 +79,16 @@
         "name": "Showcase",
         "generation": 375,
         "price": 10
+      },
+      {
+        "name": "Printer",
+        "generation": 400,
+        "price": 10
+      },
+      {
+        "name": "Radio",
+        "generation": 425,
+        "price": 10
       }
     ]
   }
