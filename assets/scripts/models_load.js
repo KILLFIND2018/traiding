@@ -8,12 +8,14 @@ let hasScifiSciderRobot = false;
 let hasTheGlobe = false;
 let hasDrinkingWaterDispenser = false;
 let hasHumanoidRobot = false;
-
 let hasComputerWithTerminal = false;
 let hasConditioner =  false;
 let hasFridge = false;
 let hasPS5 = false;
 let hasTV = false;
+
+let hasCooler = false;
+let hasShowcase = false;
 
 let olderPCModel = null;
 let speakerModel = null;
@@ -24,12 +26,14 @@ let ScifiSciderRobotModel = null;
 let TheGlobeModel = null;
 let DrinkingWaterDispenserModel = null;
 let HumanoidRobotModel = null;
-
 let ComputerWithTerminalModel = null;
 let ConditionerModel =  null;
 let FridgeModel = null;
 let PS5Model = null;
 let TVModel = null;
+
+let CoolerModel = null;
+let ShowcaseModel = null;
 
 // Загрузка модели офиса
 loader.load('assets/models/Office.glb', function (gltf) {
@@ -228,6 +232,33 @@ function tv() {
         scene.add(TVModel);
     }, undefined, function (error) {
         console.error('Ошибка загрузки модели "tv":', error);
+    });
+}
+
+function cooler() {
+    if (!hasCooler || CoolerModel !== null) return;
+
+    loader.load('assets/models/Cooler.glb', function (coolerGltf) {
+        CoolerModel = coolerGltf.scene;
+        CoolerModel.scale.set(0.03, 0.03, 0.03);
+        CoolerModel.position.set(1.3, 0.2, 1);
+        scene.add(CoolerModel);
+    }, undefined, function (error) {
+        console.error('Ошибка загрузки модели "cooler":', error);
+    });
+}
+
+function showcase() {
+    if (!hasShowcase || ShowcaseModel !== null) return;
+
+    loader.load('assets/models/Showcase.glb', function (showcaseGltf) {
+        ShowcaseModel = showcaseGltf.scene;
+        ShowcaseModel.scale.set(0.005, 0.005, 0.005);
+        ShowcaseModel.position.set(2.8, 0.2, 1);
+        ShowcaseModel.rotation.y = -Math.PI / 2;
+        scene.add(ShowcaseModel);
+    }, undefined, function (error) {
+        console.error('Ошибка загрузки модели "showcase":', error);
     });
 }
 

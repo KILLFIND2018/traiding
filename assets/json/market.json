@@ -69,6 +69,16 @@
         "name": "TV",
         "generation": 325,
         "price": 10
+      },
+      {
+        "name": "Cooler",
+        "generation": 350,
+        "price": 10
+      },
+      {
+        "name": "Showcase",
+        "generation": 375,
+        "price": 10
       }
     ]
   }

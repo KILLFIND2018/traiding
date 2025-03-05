@@ -18,12 +18,14 @@ function updateTotalGeneration() {
     hasTheGlobe = false;
     hasDrinkingWaterDispenser = false;
     hasHumanoidRobot = false;
-
     hasComputerWithTerminal = false;
     hasConditioner = false;
     hasFridge = false;
     hasPS5 = false;
     hasTV = false;
+
+    hasCooler = false;
+    hasShowcase = false;
 
     for (let i = 1; i < inventoryTable.rows.length; i++) {
         let itemName = inventoryTable.rows[i].cells[0].innerText;
@@ -62,6 +64,10 @@ function updateTotalGeneration() {
             hasPS5 = true;
         } else if (itemName.trim() === "TV") {
             hasTV = true;
+        } else if (itemName.trim() === "Cooler") {
+            hasCooler = true;
+        } else if (itemName.trim() === "Showcase") {
+            hasShowcase = true;
         }
     }
 
@@ -107,10 +113,17 @@ function updateTotalGeneration() {
     if (hasTV) {
         tv();
     }
+    if (hasCooler) {
+        cooler();
+    }
+    if (hasShowcase) {
+        showcase();
+    }
 
     increaseBalance(totalGeneration);
 }
 
+// Переменная для хранения интервала генерации баланса
 // Переменная для хранения интервала генерации баланса
 let balanceInterval;
 
@@ -123,8 +136,9 @@ function increaseBalance(totalGeneration) {
     }
 
     let progressionFactor = 1;
+    let timeElapsed = 0;
 
-    // Увеличиваем баланс каждую секунду, но прогрессию — каждые 10 секунд
+    // Увеличиваем баланс каждую секунду и применяем прогрессию каждые 10 секунд
     balanceInterval = setInterval(() => {
         let currentBalance = parseInt(currencyAmount.textContent, 10);
         currentBalance += totalGeneration * progressionFactor;
@@ -132,13 +146,14 @@ function increaseBalance(totalGeneration) {
 
         // Выводим текущий баланс в консоль
         console.log(`Текущий баланс: ${currentBalance}`);
-    }, 1000); // Обновление баланса каждую секунду
 
-    // Отдельный интервал для увеличения коэффициента прогрессии каждые 10 секунд
-    setInterval(() => {
-        progressionFactor *= PROGRESSION_RATE;
-        console.log(`Прогрессия увеличена раз в 10 сек. Новый коэффициент: ${progressionFactor.toFixed(2)}`);
-    }, 10000); // Увеличение прогрессии каждые 10 секунд
+        // Увеличиваем время и применяем прогрессию каждые 10 секунд
+        timeElapsed += 1;
+        if (timeElapsed % 10 === 0) {
+            progressionFactor *= PROGRESSION_RATE;
+            console.log(`Прогрессия увеличена раз в 10 сек. Новый коэффициент: ${progressionFactor.toFixed(2)}`);
+        }
+    }, 1000); // Обновление баланса каждую секунду
 }
 
 // Функция для добавления бонусного предмета "Older PC"
