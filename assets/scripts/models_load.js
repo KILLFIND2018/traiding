@@ -245,7 +245,7 @@ function cooler() {
     loader.load('assets/models/Cooler.glb', function (coolerGltf) {
         CoolerModel = coolerGltf.scene;
         CoolerModel.scale.set(0.03, 0.03, 0.03);
-        CoolerModel.position.set(1.3, 0.2, 1);
+        CoolerModel.position.set(0.3, 0.2, 2.1);
         scene.add(CoolerModel);
     }, undefined, function (error) {
         console.error('Ошибка загрузки модели "cooler":', error);
