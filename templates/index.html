@@ -30,16 +30,16 @@
             <div class="auction" id="auction"></div>
             <div class="rating" id="rating">
                 <div class="rating-container">
-                        <table class="rating-table">
-                            <thead>
-                                <tr>
-                                    <th>Позиция</th>
-                                    <th>Пользователь</th>
-                                    <th>Баланс</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+                    <table class="rating-table">
+                        <thead>
+                            <tr>
+                                <th>Позиция</th>
+                                <th>Пользователь</th>
+                                <th>Баланс</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
             <div class="inventory" id="inventory">
@@ -198,6 +198,10 @@
                 }
             }, 10000);
 
+            const ratingInterval = setInterval(() => {
+                loadRating();
+            }, 30000);
+
             const heartbeatInterval = setInterval(async () => {
                 try {
                     await fetch('/heartbeat', {
@@ -211,19 +215,19 @@
                 }
             }, 5000);
 
-            // Остановка при закрытии Web App через Telegram
             Telegram.WebApp.onEvent('web_app_close', async () => {
                 console.log('Web App закрыт через Telegram');
                 clearInterval(balanceInterval);
+                clearInterval(ratingInterval);
                 clearInterval(heartbeatInterval);
                 await stopGeneration(userId);
             });
 
-            // Остановка при смене видимости
             document.addEventListener('visibilitychange', async () => {
                 if (document.visibilityState === 'hidden') {
                     console.log('Вкладка стала невидимой');
                     clearInterval(balanceInterval);
+                    clearInterval(ratingInterval);
                     clearInterval(heartbeatInterval);
                     await stopGeneration(userId);
                 } else if (document.visibilityState === 'visible') {
@@ -232,21 +236,22 @@
                     if (balance !== null) {
                         document.getElementById('currency-amount').textContent = balance;
                     }
+                    loadRating();
                 }
             });
 
-            // Остановка при потере фокуса окна
             window.addEventListener('blur', async () => {
                 console.log('Окно потеряло фокус');
                 clearInterval(balanceInterval);
+                clearInterval(ratingInterval);
                 clearInterval(heartbeatInterval);
                 await stopGeneration(userId);
             });
 
-            // Остановка при закрытии вкладки (асинхронная попытка)
             window.addEventListener('beforeunload', (event) => {
                 console.log('Закрытие вкладки');
                 clearInterval(balanceInterval);
+                clearInterval(ratingInterval);
                 clearInterval(heartbeatInterval);
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', '/stop', false);
@@ -257,6 +262,7 @@
 
             await loadInventory(userId);
             loadMarket();
+            loadRating();
         }
 
         async function loadInventory(userId) {
@@ -323,6 +329,29 @@
                     priceCell.appendChild(button);
                 });
                 setupBuyButtons(userId);
+            }
+        }
+
+        async function loadRating() {
+            try {
+                const response = await fetch(`/get_rating`);
+                const data = await response.json();
+                
+                if (data.status === "success") {
+                    const ratingTable = document.querySelector('.rating-table tbody');
+                    while (ratingTable.rows.length > 0) {
+                        ratingTable.deleteRow(0);
+                    }
+                    
+                    data.users.forEach(user => {
+                        const newRow = ratingTable.insertRow(-1);
+                        newRow.insertCell(0).textContent = user.position;
+                        newRow.insertCell(1).textContent = user.username || 'Anonymous';
+                        newRow.insertCell(2).textContent = user.balance;
+                    });
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке рейтинга:', error);
             }
         }
 
@@ -421,5 +450,5 @@
     </script>
     <script src="/static/scripts/swiper.js"></script>
     <script src="/static/scripts/menu.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'922bd1702f15c010',t:'MTc0MjM3NTIzMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

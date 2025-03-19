@@ -283,5 +283,32 @@ def get_inventory():
         cursor.close()
         connection.close()
 
+@app.route('/get_rating', methods=['GET'])
+def get_rating():
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor(dictionary=True)
+
+        # Получаем всех активных пользователей, сортируем по убыванию баланса
+        cursor.execute("""
+            SELECT username, balance 
+            FROM user_progress 
+            WHERE is_active = 1 
+            ORDER BY balance DESC
+        """)
+        users = cursor.fetchall()
+
+        # Добавляем позицию в рейтинге
+        for index, user in enumerate(users, start=1):
+            user['position'] = index
+
+        return jsonify({"status": "success", "users": users}), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
