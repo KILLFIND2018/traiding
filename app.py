@@ -310,5 +310,53 @@ def get_rating():
         cursor.close()
         connection.close()
 
+@app.route('/buy_with_stars', methods=['POST'])
+def buy_with_stars():
+    data = request.json
+    user_id = data.get('user_id')
+    amount = data.get('amount')  # Количество монет
+    stars_cost = data.get('stars_cost')  # Стоимость в Stars
+
+    if not all([user_id, amount, stars_cost]):
+        return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
+
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+
+        # Получаем текущие данные пользователя
+        cursor.execute("SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s", (user_id,))
+        result = cursor.fetchone()
+
+        if not result:
+            return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
+
+        balance, total_generation, last_updated = result
+        total_generation = total_generation or 1
+        last_updated = last_updated or datetime.now()
+
+        # Рассчитываем обновленный баланс (Stars обрабатываются Telegram, мы добавляем монеты)
+        new_balance, _ = calculate_balance(balance, 1.0, last_updated, total_generation)
+        new_balance += amount  # Добавляем купленные монеты
+
+        # Обновляем баланс в базе данных
+        cursor.execute("""
+            UPDATE user_progress 
+            SET balance = %s, last_updated = %s 
+            WHERE user_id = %s
+        """, (new_balance, datetime.now(), user_id))
+
+        connection.commit()
+        print(f"Пользователь {user_id} купил {amount} монет за {stars_cost} Stars. Новый баланс: {new_balance}")
+
+        return jsonify({"status": "success", "new_balance": new_balance}), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -436,17 +436,52 @@
         });
 
         document.getElementById('buyButton').addEventListener('click', () => {
-            const tg = window.Telegram.WebApp;
-            const options = {
-                item_id: 'unique_item_id',
-                title: 'Telegram Stars',
-                description: 'Покупка Telegram Stars',
-                photo_url: 'https://example.com/image.png',
-                price: 100,
-                currency: 'USD',
+    const tg = window.Telegram.WebApp;
+
+    // Проверяем, готов ли Telegram Web App
+    if (!tg.ready) {
+        tg.ready();
+    }
+
+    // Показываем всплывающее окно для подтверждения покупки
+    tg.showPopup({
+        title: 'Купить монеты за Telegram Stars',
+        message: 'Купить 100 монет за 10 Telegram Stars?',
+        buttons: [
+            { id: 'buy', type: 'default', text: 'Купить' },
+            { type: 'cancel', text: 'Отмена' }
+        ]
+    }, (buttonId) => {
+        if (buttonId === 'buy') {
+            // Данные для покупки
+            const purchaseData = {
+                type: 'purchase_stars',
+                user_id: urlParams.get('user_id'),
+                amount: 100, // Количество монет
+                stars_cost: 10 // Стоимость в Stars
             };
-            tg.sendData(JSON.stringify({ type: 'purchase', data: options }));
-        });
+
+            // Отправляем запрос на сервер Flask
+            fetch('/buy_with_stars', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(purchaseData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    tg.showAlert('Покупка успешна! Добавлено 100 монет.');
+                    document.getElementById('currency-amount').textContent = data.new_balance;
+                } else {
+                    tg.showAlert('Ошибка покупки: ' + (data.message || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(error => {
+                tg.showAlert('Ошибка при покупке: ' + error.message);
+            });
+        }
+    });
+});
     </script>
     <script src="/static/scripts/swiper.js"></script>
     <script src="/static/scripts/menu.js"></script>
