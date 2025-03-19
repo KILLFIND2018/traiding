@@ -4,7 +4,6 @@ from flask_cors import CORS
 import mysql.connector
 import threading
 import time
-import os
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app, resources={r"/static/*": {"origins": "*"}})

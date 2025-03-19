@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="/static/styles/style.css">
 </head>
 <body>
+    <div class="loader" id="loader">
+        <div class="spinner"></div>
+        <p>Загрузка...</p>
+    </div>
     <video id="background-video" autoplay loop muted playsinline>
         <source src="/static/video.mp4" type="video/mp4">
         Ваш браузер не поддерживает видео.
@@ -177,8 +181,12 @@
         async function startApp(userId) {
             if (!userId) {
                 console.error("User ID is missing in the URL.");
+                document.getElementById('loader').classList.add('hidden');
                 return;
             }
+
+            const loader = document.getElementById('loader');
+            loader.classList.remove('hidden');
 
             const initialBalance = await startGeneration(userId);
             if (initialBalance !== null) {
@@ -261,8 +269,11 @@
             });
 
             await loadInventory(userId);
-            loadMarket();
-            loadRating();
+            await loadMarket();
+            await loadRating();
+
+            await new Promise(resolve => setTimeout(resolve, 6000)); // Задержка 6 секунды
+            loader.classList.add('hidden');
         }
 
         async function loadInventory(userId) {
@@ -436,54 +447,51 @@
         });
 
         document.getElementById('buyButton').addEventListener('click', () => {
-    const tg = window.Telegram.WebApp;
+            const tg = window.Telegram.WebApp;
 
-    // Проверяем, готов ли Telegram Web App
-    if (!tg.ready) {
-        tg.ready();
-    }
+            if (!tg.ready) {
+                tg.ready();
+            }
 
-    // Показываем всплывающее окно для подтверждения покупки
-    tg.showPopup({
-        title: 'Купить монеты за Telegram Stars',
-        message: 'Купить 100 монет за 10 Telegram Stars?',
-        buttons: [
-            { id: 'buy', type: 'default', text: 'Купить' },
-            { type: 'cancel', text: 'Отмена' }
-        ]
-    }, (buttonId) => {
-        if (buttonId === 'buy') {
-            // Данные для покупки
-            const purchaseData = {
-                type: 'purchase_stars',
-                user_id: urlParams.get('user_id'),
-                amount: 100, // Количество монет
-                stars_cost: 10 // Стоимость в Stars
-            };
+            tg.showPopup({
+                title: 'Купить монеты за Telegram Stars',
+                message: 'Купить 100 монет за 10 Telegram Stars?',
+                buttons: [
+                    { id: 'buy', type: 'default', text: 'Купить' },
+                    { type: 'cancel', text: 'Отмена' }
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'buy') {
+                    const purchaseData = {
+                        type: 'purchase_stars',
+                        user_id: urlParams.get('user_id'),
+                        amount: 100,
+                        stars_cost: 10
+                    };
 
-            // Отправляем запрос на сервер Flask
-            fetch('/buy_with_stars', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(purchaseData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    tg.showAlert('Покупка успешна! Добавлено 100 монет.');
-                    document.getElementById('currency-amount').textContent = data.new_balance;
-                } else {
-                    tg.showAlert('Ошибка покупки: ' + (data.message || 'Неизвестная ошибка'));
+                    fetch('/buy_with_stars', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(purchaseData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            tg.showAlert('Покупка успешна! Добавлено 100 монет.');
+                            document.getElementById('currency-amount').textContent = data.new_balance;
+                        } else {
+                            tg.showAlert('Ошибка покупки: ' + (data.message || 'Неизвестная ошибка'));
+                        }
+                    })
+                    .catch(error => {
+                        tg.showAlert('Ошибка при покупке: ' + error.message);
+                    });
                 }
-            })
-            .catch(error => {
-                tg.showAlert('Ошибка при покупке: ' + error.message);
             });
-        }
-    });
-});
+        });
     </script>
     <script src="/static/scripts/swiper.js"></script>
     <script src="/static/scripts/menu.js"></script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'922d9f64bad0d1b6',t:'MTc0MjM5NDE1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
