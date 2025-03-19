@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crypto Tycoon Simulator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <link rel="stylesheet" href="/static/styles/style.css">
+</head>
+<body>
+    <video id="background-video" autoplay loop muted playsinline>
+        <source src="/static/video.mp4" type="video/mp4">
+        Ваш браузер не поддерживает видео.
+    </video>
+    <audio id="background-music" autoplay loop>
+        <source src="/static/audio/audio.mp3" type="audio/mpeg">
+        Ваш браузер не поддерживает элемент audio.
+    </audio>
+    <div class="container">
+        <div class="header">
+            <h1>Crypto Tycoon Simulator</h1>
+            <div class="currency-display" id="currency-display">
+                <span id="currency-amount">0</span><img src="/static/bitcoin.png" alt="balance">
+            </div>
+        </div>
+        <div class="content">
+            <div class="main" id="main"></div>
+            <div class="auction" id="auction"></div>
+            <div class="rating" id="rating"></div>
+            <div class="inventory" id="inventory">
+                <div class="inventory-container">
+                    <table class="inventory-table">
+                        <tr>
+                            <th>Предмет</th>
+                            <th>Генерация в сек</th>
+                            <th>Статус</th>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="mart" id="mart">
+                <div class="mart-container">
+                    <h1 class="sub-header">Магазин</h1>
+                    <div class="market">
+                        <table class="market-table">
+                            <thead>
+                                <tr>
+                                    <th>Предмет</th>
+                                    <th>Генерация в сек</th>
+                                    <th>Стоимость</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="wheel-container">
+                    <img src="/static/img_whell/whell.png" id="wheel" class="wheel">
+                    <div class="arrow"></div>
+                    <button class="spin-btn">Крутить!</button>
+                </div>
+            </div>
+            <div class="donate" id="donate">
+                <button id="buyButton">Купить Stars</button>
+            </div>
+        </div>
+        <div class="game-menu">
+            <button class="button auction" type="button" id="auctionButton"><img src="/static/auction.png" alt="auction"></button>
+            <div class="separator"></div>
+            <button class="button rating" type="button"><img src="/static/rating.png" alt="rating"></button>
+            <div class="separator"></div>
+            <button class="button inventory" type="button"><img src="/static/inventory.png" alt="inventory"></button>
+            <div class="separator"></div>
+            <button class="button mart" type="button"><img src="/static/mart.png" alt="mart"></button>
+            <div class="separator"></div>
+            <button class="button donate" type="button"><img src="/static/bitcoin.png" alt="bitcoin"></button>
+            <div class="separator-hidden"></div>
+            <button class="button return" type="button"><img src="/static/return.png" alt="return"></button>
+        </div>
+    </div>
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('main').appendChild(renderer.domElement);
+
+        const axesHelper = new THREE.AxesHelper(5);
+        scene.add(axesHelper);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 5, 5);
+        scene.add(directionalLight);
+        const loader = new THREE.GLTFLoader();
+
+        camera.position.set(-10, 10, 18);
+        camera.lookAt(0, 0, 0);
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            camera.position.z += event.deltaY * 0.01;
+            camera.position.z = Math.max(1, camera.position.z);
+        }, { passive: false });
+
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('user_id');
+
+        async function stopGeneration(userId) {
+            try {
+                const response = await fetch('/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                const data = await response.json();
+                if (data.status === "success") {
+                    console.log(`Генерация для user_id ${userId} успешно остановлена: ${data.message}`);
+                } else {
+                    console.error(`Ошибка остановки генерации для user_id ${userId}: ${data.message}`);
+                }
+            } catch (error) {
+                console.error(`Ошибка при отправке запроса на остановку для user_id ${userId}: ${error}`);
+            }
+        }
+
+        async function startGeneration(userId) {
+            try {
+                const response = await fetch('/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                const data = await response.json();
+                if (data.status === "success") {
+                    console.log(`Генерация для user_id ${userId} запущена, начальный баланс: ${data.balance}`);
+                    return data.balance;
+                } else {
+                    console.error('Ошибка при старте:', data.message);
+                    return null;
+                }
+            } catch (error) {
+                console.error('Ошибка при запуске генерации:', error);
+                return null;
+            }
+        }
+
+        async function startApp(userId) {
+            if (!userId) {
+                console.error("User ID is missing in the URL.");
+                return;
+            }
+
+            const initialBalance = await startGeneration(userId);
+            if (initialBalance !== null) {
+                document.getElementById('currency-amount').textContent = initialBalance;
+            }
+
+            const balanceInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/get_balance?user_id=${userId}`);
+                    const data = await response.json();
+                    if (data.status === "success") {
+                        document.getElementById('currency-amount').textContent = data.balance;
+                        console.log(`Обновление баланса для user_id ${userId}: ${data.balance}`);
+                    }
+                } catch (error) {
+                    console.error('Ошибка при обновлении баланса:', error);
+                }
+            }, 10000);
+
+            const heartbeatInterval = setInterval(async () => {
+                try {
+                    await fetch('/heartbeat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: userId })
+                    });
+                    console.log(`Heartbeat отправлен для user_id ${userId}`);
+                } catch (error) {
+                    console.error(`Ошибка heartbeat для user_id ${userId}: ${error}`);
+                }
+            }, 5000);
+
+            // Остановка при закрытии Web App через Telegram
+            Telegram.WebApp.onEvent('web_app_close', async () => {
+                console.log('Web App закрыт через Telegram');
+                clearInterval(balanceInterval);
+                clearInterval(heartbeatInterval);
+                await stopGeneration(userId);
+            });
+
+            // Остановка при смене видимости
+            document.addEventListener('visibilitychange', async () => {
+                if (document.visibilityState === 'hidden') {
+                    console.log('Вкладка стала невидимой');
+                    clearInterval(balanceInterval);
+                    clearInterval(heartbeatInterval);
+                    await stopGeneration(userId);
+                } else if (document.visibilityState === 'visible') {
+                    console.log('Вкладка снова видима, перезапуск генерации');
+                    const balance = await startGeneration(userId);
+                    if (balance !== null) {
+                        document.getElementById('currency-amount').textContent = balance;
+                    }
+                }
+            });
+
+            // Остановка при потере фокуса окна
+            window.addEventListener('blur', async () => {
+                console.log('Окно потеряло фокус');
+                clearInterval(balanceInterval);
+                clearInterval(heartbeatInterval);
+                await stopGeneration(userId);
+            });
+
+            // Остановка при закрытии вкладки (асинхронная попытка)
+            window.addEventListener('beforeunload', (event) => {
+                console.log('Закрытие вкладки');
+                clearInterval(balanceInterval);
+                clearInterval(heartbeatInterval);
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/stop', false);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.send(JSON.stringify({ user_id: userId }));
+                console.log('Синхронный запрос на остановку отправлен');
+            });
+
+            await loadInventory(userId);
+            loadMarket();
+        }
+
+        async function loadInventory(userId) {
+            const response = await fetch(`/get_inventory?user_id=${userId}`);
+            const data = await response.json();
+            if (data.status === "success") {
+                const inventoryTable = document.querySelector('.inventory-table');
+                while (inventoryTable.rows.length > 1) {
+                    inventoryTable.deleteRow(1);
+                }
+                data.items.forEach(item => {
+                    const newRow = inventoryTable.insertRow(-1);
+                    newRow.insertCell(0).textContent = item.item_name;
+                    newRow.insertCell(1).textContent = item.generation_per_hour;
+                    newRow.insertCell(2).textContent = 'активен';
+                    updateTotalGeneration(item.item_name);
+                });
+            }
+        }
+
+        function setupBuyButtons(userId) {
+            document.querySelectorAll('.buy-button').forEach(button => {
+                button.addEventListener('click', async function () {
+                    const row = this.closest('tr');
+                    const itemName = row.querySelector('td:nth-child(1)').textContent.trim();
+                    const itemGeneration = parseInt(row.querySelector('td:nth-child(2)').textContent, 10);
+                    const itemCost = parseInt(this.querySelector('span').textContent, 10);
+
+                    const response = await fetch('/buy_item', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            item_name: itemName,
+                            item_cost: itemCost,
+                            item_generation: itemGeneration
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.status === "success") {
+                        document.getElementById('currency-amount').textContent = data.balance;
+                        await loadInventory(userId);
+                    } else {
+                        alert(data.message || 'Ошибка покупки');
+                    }
+                });
+            });
+        }
+
+        async function loadMarket() {
+            const response = await fetch('/get_market');
+            const data = await response.json();
+            if (data.status === "success") {
+                const tbody = document.querySelector('.market-table tbody');
+                data.items.forEach(item => {
+                    const row = tbody.insertRow();
+                    row.insertCell(0).textContent = item.name;
+                    row.insertCell(1).textContent = item.generation;
+                    const priceCell = row.insertCell(2);
+                    const button = document.createElement('button');
+                    button.className = 'buy-button';
+                    button.innerHTML = `<span>${item.price}</span><img src="/static/bitcoin.png" alt="bitcoin">`;
+                    priceCell.appendChild(button);
+                });
+                setupBuyButtons(userId);
+            }
+        }
+
+        let models = {};
+        function updateTotalGeneration(itemName) {
+            const items = {
+                "Older PC": olderPC, "Speaker": speaker, "Server": server, "Cafetalg": cafetalg, "Panasonic": panasonic,
+                "Scifi Scider Robot": scifisciderrobot, "The Globe": theglobe, "Drinking Water Dispenser": drinkingWaterDispenser,
+                "Humanoid robot": humanoidRobot, "Computer with terminal": computerWithTerminal, "Conditioner": conditioner,
+                "Fridge": fridge, "PS5": ps5, "TV": tv, "Cooler": cooler, "Showcase": showcase, "Printer": printer, "Radio": radio
+            };
+
+            if (items[itemName] && !models[itemName]) {
+                items[itemName]();
+                models[itemName] = true;
+            }
+        }
+
+        let model;
+        let olderPCModel, speakerModel, serverModel, CafetalgModel, PanasonicModel, ScifiSciderRobotModel, TheGlobeModel,
+            DrinkingWaterDispenserModel, HumanoidRobotModel, ComputerWithTerminalModel, ConditionerModel, FridgeModel,
+            PS5Model, TVModel, CoolerModel, ShowcaseModel, PrinterModel, RadioModel;
+
+        loader.load('/static/models/Office.glb', function (gltf) {
+            model = gltf.scene;
+            model.scale.set(0.95, 0.95, 0.95);
+            model.position.set(3.5, 0.5, 0);
+            scene.add(model);
+            model.rotateY(Math.PI);
+            animate();
+        }, undefined, function (error) {
+            console.error('Ошибка загрузки модели офиса:', error);
+        });
+
+        function olderPC() { if (!olderPCModel) loader.load('/static/models/RetroPC.glb', gltf => { olderPCModel = gltf.scene; olderPCModel.scale.set(0.014, 0.014, 0.014); olderPCModel.position.set(-2.7, 0.2, -2.5); scene.add(olderPCModel); }); }
+        function speaker() { if (!speakerModel) loader.load('/static/models/Speaker.glb', gltf => { speakerModel = gltf.scene; speakerModel.scale.set(0.001, 0.001, 0.001); speakerModel.position.set(-1, 0.2, -2.8); scene.add(speakerModel); }); }
+        function server() { if (!serverModel) loader.load('/static/models/ServerV2+console.glb', gltf => { serverModel = gltf.scene; serverModel.scale.set(0.2, 0.2, 0.2); serverModel.position.set(0.2, 0.2, -2.8); scene.add(serverModel); }); }
+        function cafetalg() { if (!CafetalgModel) loader.load('/static/models/CAFETALG.glb', gltf => { CafetalgModel = gltf.scene; CafetalgModel.scale.set(0.00010, 0.00010, 0.00010); CafetalgModel.position.set(1.5, 0.2, -2.8); scene.add(CafetalgModel); }); }
+        function panasonic() { if (!PanasonicModel) loader.load('/static/models/Panasonic.glb', gltf => { PanasonicModel = gltf.scene; PanasonicModel.scale.set(1, 1, 1); PanasonicModel.position.set(-0.6, 0.5, 1); scene.add(PanasonicModel); }); }
+        function scifisciderrobot() { if (!ScifiSciderRobotModel) loader.load('/static/models/ScifiSciderRobot.glb', gltf => { ScifiSciderRobotModel = gltf.scene; ScifiSciderRobotModel.scale.set(0.2, 0.2, 0.2); ScifiSciderRobotModel.position.set(-1.9, 0.5, 1); scene.add(ScifiSciderRobotModel); }); }
+        function theglobe() { if (!TheGlobeModel) loader.load('/static/models/TheGlobe.glb', gltf => { TheGlobeModel = gltf.scene; TheGlobeModel.scale.set(0.3, 0.3, 0.3); TheGlobeModel.position.set(-3.2, 0.5, 1); scene.add(TheGlobeModel); }); }
+        function drinkingWaterDispenser() { if (!DrinkingWaterDispenserModel) loader.load('/static/models/Drinking Water Dispenser.glb', gltf => { DrinkingWaterDispenserModel = gltf.scene; DrinkingWaterDispenserModel.scale.set(0.02, 0.02, 0.02); DrinkingWaterDispenserModel.position.set(-2.7, 0.2, -4); scene.add(DrinkingWaterDispenserModel); }); }
+        function humanoidRobot() { if (!HumanoidRobotModel) loader.load('/static/models/Humanoid robot.glb', gltf => { HumanoidRobotModel = gltf.scene; HumanoidRobotModel.scale.set(0.9, 0.9, 0.9); HumanoidRobotModel.position.set(-1.3, 0.2, -3.8); scene.add(HumanoidRobotModel); }); }
+        function computerWithTerminal() { if (!ComputerWithTerminalModel) loader.load('/static/models/Computer with terminal.glb', gltf => { ComputerWithTerminalModel = gltf.scene; ComputerWithTerminalModel.scale.set(0.5, 0.5, 0.5); ComputerWithTerminalModel.position.set(0, 0.2, -3.8); scene.add(ComputerWithTerminalModel); }); }
+        function conditioner() { if (!ConditionerModel) loader.load('/static/models/Conditioner.glb', gltf => { ConditionerModel = gltf.scene; ConditionerModel.scale.set(0.040, 0.040, 0.040); ConditionerModel.position.set(1.7, 0.7, -3.8); ConditionerModel.rotateY(Math.PI / 2); scene.add(ConditionerModel); }); }
+        function fridge() { if (!FridgeModel) loader.load('/static/models/Fridge.glb', gltf => { FridgeModel = gltf.scene; FridgeModel.scale.set(0.9, 0.9, 0.9); FridgeModel.position.set(2.8, 0, -3.6); scene.add(FridgeModel); }); }
+        function ps5() { if (!PS5Model) loader.load('/static/models/PS5.glb', gltf => { PS5Model = gltf.scene; PS5Model.scale.set(2, 2, 2); PS5Model.position.set(2.8, 0.2, -2.5); scene.add(PS5Model); }); }
+        function tv() { if (!TVModel) loader.load('/static/models/TV.glb', gltf => { TVModel = gltf.scene; TVModel.scale.set(0.0010, 0.0010, 0.0010); TVModel.position.set(1.3, 0.2, 1); scene.add(TVModel); }); }
+        function cooler() { if (!CoolerModel) loader.load('/static/models/Cooler.glb', gltf => { CoolerModel = gltf.scene; CoolerModel.scale.set(0.03, 0.03, 0.03); CoolerModel.position.set(0.3, 0.2, 2.1); scene.add(CoolerModel); }); }
+        function showcase() { if (!ShowcaseModel) loader.load('/static/models/Showcase.glb', gltf => { ShowcaseModel = gltf.scene; ShowcaseModel.scale.set(0.005, 0.005, 0.005); ShowcaseModel.position.set(2.8, 0.2, 1); ShowcaseModel.rotation.y = -Math.PI / 2; scene.add(ShowcaseModel); }); }
+        function printer() { if (!PrinterModel) loader.load('/static/models/Printer.glb', gltf => { PrinterModel = gltf.scene; PrinterModel.scale.set(0.002, 0.002, 0.002); PrinterModel.position.set(-3, 0.5, 2.1); PrinterModel.rotation.y = Math.PI / 2; scene.add(PrinterModel); }); }
+        function radio() { if (!RadioModel) loader.load('/static/models/Radio.glb', gltf => { RadioModel = gltf.scene; RadioModel.scale.set(0.6, 0.6, 0.6); RadioModel.position.set(-1.3, 0.2, 1.7); scene.add(RadioModel); }); }
+
+        if (userId) startApp(userId);
+
+        const prizes = ["Приз 1", "Приз 2", "Приз 3", "Приз 4", "Приз 5", "Приз 6", "Приз 7", "Приз 8"];
+        let isSpinning = false;
+
+        function startSpin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            const totalSectors = prizes.length;
+            const sectorAngle = 360 / totalSectors;
+            const extraRotations = 5;
+            const winningSector = Math.floor(Math.random() * totalSectors);
+            const finalAngle = (extraRotations * 360) + (winningSector * sectorAngle) + (sectorAngle / 2);
+            const wheel = document.getElementById('wheel');
+            wheel.style.transition = 'transform 4s ease-out';
+            wheel.style.transform = `rotate(${finalAngle}deg)`;
+            wheel.addEventListener('transitionend', () => { isSpinning = false; }, { once: true });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const spinButton = document.querySelector('.spin-btn');
+            spinButton.addEventListener('click', startSpin);
+        });
+
+        document.addEventListener('click', function () {
+            var music = document.getElementById('background-music');
+            music.volume = 0.1;
+            music.play();
+        });
+
+        document.getElementById('buyButton').addEventListener('click', () => {
+            const tg = window.Telegram.WebApp;
+            const options = {
+                item_id: 'unique_item_id',
+                title: 'Telegram Stars',
+                description: 'Покупка Telegram Stars',
+                photo_url: 'https://example.com/image.png',
+                price: 100,
+                currency: 'USD',
+            };
+            tg.sendData(JSON.stringify({ type: 'purchase', data: options }));
+        });
+    </script>
+    <script src="/static/scripts/swiper.js"></script>
+    <script src="/static/scripts/menu.js"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'922bd1702f15c010',t:'MTc0MjM3NTIzMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
