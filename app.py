@@ -293,7 +293,6 @@ def get_rating():
         cursor.execute("""
             SELECT username, balance 
             FROM user_progress 
-            WHERE is_active = 1 
             ORDER BY balance DESC
         """)
         users = cursor.fetchall()
