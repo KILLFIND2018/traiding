@@ -3,7 +3,7 @@ from telegram.ext import Application, CommandHandler
 import mysql.connector
 
 TOKEN = ''
-WEB_APP_URL = 'https://tycooncryptosimulator.org/?user_id={user_id}'
+WEB_APP_URL = ''
 
 MYSQL_CONFIG = {
     'user': '',

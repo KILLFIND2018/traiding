@@ -222,6 +222,45 @@ body {
 }
 
 
+/* Стили для контейнера рейтинга */
+.rating-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 80%;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: rgba(44, 62, 80, 0.1);
+    padding: 10px;
+}
+
+
+/* Стили для таблицы */
+.rating-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: rgba(44, 62, 80, 0.3);
+}
+
+/* Стили для заголовков и ячеек таблицы */
+.rating-table th,
+.rating-table td {
+    padding: 10px;
+    text-align: center;
+}
+
+/* Стили для заголовков таблицы */
+.rating-table th {
+    background-color: rgba(44, 62, 80, 0.5);
+    color: white;
+}
+
+/* Стили для строк таблицы */
+.rating-table tbody tr:hover {
+    background-color: rgba(44, 62, 80, 0.2);
+}
 
 .sub-header {
     margin-bottom: 20px;
