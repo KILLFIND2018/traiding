@@ -23,15 +23,28 @@ def calculate_balance(current_balance, progression_factor, last_updated, total_g
     now = datetime.now()
     seconds_elapsed = (now - last_updated).total_seconds()
     
+    # Базовая генерация за первые 60 секунд без прогрессии
     if seconds_elapsed <= 60:
         new_balance = current_balance + total_generation * seconds_elapsed
+        new_progression = 0  # Прогрессия начинается с 0
     else:
+        # Базовая генерация за первые 60 секунд
         progression_time = max(0, seconds_elapsed - 60)
         new_balance = current_balance + total_generation * 60
-        new_balance += total_generation * (progression_factor + 0.001 * progression_time)
-        progression_factor += 0.001 * progression_time
-    
-    return int(new_balance), progression_factor
+        
+        # Расчет увеличения прогрессии: 0.01 за каждые, например, 300 секунд (5 минут)
+        progression_step = 0.01  # Начальный шаг прогрессии
+        progression_increase = int(progression_time / 300)  # Каждые 5 минут +0.01
+        new_progression = progression_step * progression_increase  # Например, 0.01, 0.02, 0.03...
+        
+        # Ограничение прогрессии, чтобы не уйти в бесконечность (опционально)
+        new_progression = min(new_progression, 0.50)  # Максимум 0.50, например
+        
+        # Применяем прогрессию к генерации после 60 секунд
+        new_balance += total_generation * progression_time * (1 + new_progression)
+
+    # Учитываем, что баланс — BIGINT, округляем до целого числа
+    return int(new_balance), new_progression
 
 def generation_loop(user_id):
     while True:
@@ -110,7 +123,7 @@ def start_generation():
         if result:
             balance, total_generation, is_active = result
             if not is_active:
-                cursor.execute("UPDATE user_progress SET is_active = 1, last_updated = %s WHERE user_id = %s", (datetime.now(), user_id))
+                cursor.execute("UPDATE user_progress SET is_active = 1, last_updated = %s, progression_factor = 0 WHERE user_id = %s", (datetime.now(), user_id))
                 threading.Thread(target=generation_loop, args=(user_id,), daemon=True).start()
                 print(f"Генерация для user_id {user_id} запущена")
             connection.commit()
