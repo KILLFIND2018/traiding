@@ -31,7 +31,44 @@
         </div>
         <div class="content">
             <div class="main" id="main"></div>
-            <div class="auction" id="auction"></div>
+            <div class="auction" id="auction">
+                <div class="auction-container">
+                    <h1 class="sub-header">Аукцион</h1>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chat-messages"></div>
+                        <div class="chat-input">
+                            <input type="text" id="chat-input" placeholder="Сообщение...">
+                            <button onclick="sendChatMessage()">Отправить</button>
+                        </div>
+                    </div>
+                    <div class="auction-lots">
+                        <h2>Текущие лоты</h2>
+                        <table class="lots-table">
+                            <thead>
+                                <tr>
+                                    <th>ID лота</th>
+                                    <th>Предмет</th>
+                                    <th>Описание</th>
+                                    <th>Стартовая цена</th>
+                                    <th>Текущая ставка</th>
+                                    <th>Продавец</th>
+                                    <th>Действие</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lots-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="create-lot">
+                        <h2>Создать лот</h2>
+                        <form id="create-lot-form">
+                            <select id="item-select" name="item_name"></select>
+                            <input type="text" name="description" placeholder="Описание лота" required>
+                            <input type="number" name="start_price" placeholder="Стартовая цена" required min="1">
+                            <button type="submit">Выставить лот</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
             <div class="rating" id="rating">
                 <div class="rating-container">
                     <table class="rating-table">
@@ -271,8 +308,9 @@
             await loadInventory(userId);
             await loadMarket();
             await loadRating();
+            loadAuction(userId);
 
-            await new Promise(resolve => setTimeout(resolve, 6000)); // Задержка 6 секунды
+            await new Promise(resolve => setTimeout(resolve, 10000)); // Задержка 10 секунды
             loader.classList.add('hidden');
         }
 
@@ -489,6 +527,152 @@
                 }
             });
         });
+
+
+        async function loadAuction(userId) {
+    await loadLots();
+    await loadChat();
+    await loadUserItems(userId);
+}
+
+async function loadLots() {
+    const response = await fetch('/get_auction_lots');
+    const data = await response.json();
+    if (data.status === "success") {
+        const tbody = document.getElementById('lots-table-body');
+        tbody.innerHTML = '';
+        data.lots.forEach(lot => {
+            const row = tbody.insertRow();
+            row.insertCell(0).textContent = lot.lot_id;
+            row.insertCell(1).textContent = lot.item_name;
+            row.insertCell(2).textContent = lot.description;
+            row.insertCell(3).textContent = lot.start_price;
+            row.insertCell(4).textContent = lot.current_bid || 'Нет ставок';
+            row.insertCell(5).textContent = lot.seller_username || 'Anonymous';
+            const actionCell = row.insertCell(6);
+            const bidButton = document.createElement('button');
+            bidButton.textContent = 'Сделать ставку';
+            bidButton.onclick = () => placeBid(lot.lot_id);
+            actionCell.appendChild(bidButton);
+        });
+    }
+}
+
+async function loadChat() {
+    const response = await fetch('/get_chat');
+    const data = await response.json();
+    if (data.status === "success") {
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.innerHTML = '';
+        data.messages.forEach(msg => {
+            const p = document.createElement('p');
+            p.textContent = `${msg.username}: ${msg.message} (${new Date(msg.timestamp).toLocaleTimeString()})`;
+            chatMessages.appendChild(p);
+        });
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    if (message) {
+        await fetch('/send_chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, message })
+        });
+        input.value = '';
+        await loadChat();
+    }
+}
+
+async function loadUserItems(userId) {
+    const response = await fetch(`/get_inventory?user_id=${userId}`);
+    const data = await response.json();
+    if (data.status === "success") {
+        const select = document.getElementById('item-select');
+        select.innerHTML = '<option value="">Выберите предмет</option>'; // Пустая опция по умолчанию
+        data.items.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.item_name;
+            option.textContent = item.item_name;
+            select.appendChild(option);
+        });
+    }
+}
+
+document.getElementById('create-lot-form').addEventListener('submit', async (e) => {
+    e.preventDefault(); // Предотвращаем стандартное поведение формы
+    const formData = new FormData(e.target);
+    const lotData = {
+        user_id: userId,
+        item_name: formData.get('item_name'),
+        description: formData.get('description'),
+        start_price: parseInt(formData.get('start_price'))
+    };
+    
+    const response = await fetch('/create_lot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lotData)
+    });
+    
+    const data = await response.json();
+    if (data.status === "success") {
+        await loadLots(); // Обновляем список лотов
+        await loadInventory(userId); // Обновляем инвентарь
+        document.getElementById('create-lot-form').reset(); // Очищаем форму
+    } else {
+        alert(data.message); // Показываем сообщение об ошибке
+    }
+});
+
+async function placeBid(lotId) {
+    const bidAmount = prompt('Введите сумму ставки:');
+    if (bidAmount && !isNaN(bidAmount)) {
+        const response = await fetch('/place_bid', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, lot_id: lotId, bid_amount: parseInt(bidAmount) })
+        });
+        const data = await response.json();
+        if (data.status === "success") {
+            await loadLots();
+        } else {
+            alert(data.message);
+        }
+    }
+}
+
+// Обновление чата каждые 5 секунд
+setInterval(loadChat, 5000);
+
+// Загрузка аукциона при нажатии на кнопку
+document.querySelector('.button.auction').addEventListener('click', () => loadAuction(userId));
+
+
+if (lot.seller_id === userId) {
+    const completeButton = document.createElement('button');
+    completeButton.textContent = 'Завершить';
+    completeButton.onclick = () => completeLot(lot.lot_id);
+    actionCell.appendChild(completeButton);
+}
+
+async function completeLot(lotId) {
+    const response = await fetch('/complete_lot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, lot_id: lotId })
+    });
+    const data = await response.json();
+    if (data.status === "success") {
+        await loadLots();
+        await loadInventory(userId);
+    } else {
+        alert(data.message);
+    }
+}
     </script>
     <script src="/static/scripts/swiper.js"></script>
     <script src="/static/scripts/menu.js"></script>

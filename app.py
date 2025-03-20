@@ -4,6 +4,7 @@ from flask_cors import CORS
 import mysql.connector
 import threading
 import time
+import os
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app, resources={r"/static/*": {"origins": "*"}})
@@ -115,7 +116,7 @@ def start_generation():
             connection.commit()
             return jsonify({"status": "success", "balance": balance}), 200
         else:
-            return jsonify({"status": "error", "message": "User not found, please start via Telegram bot"}), 404
+            return jsonify({"status": "error", "message": "Пользователь не найден, пожалуйста, начните через Telegram-бота"}), 404
 
     except mysql.connector.Error as err:
         return jsonify({"status": "error", "message": str(err)}), 500
@@ -196,7 +197,7 @@ def buy_item():
     item_generation = data.get('item_generation')
 
     if not all([user_id, item_name, item_cost, item_generation]):
-        return jsonify({"status": "error", "message": "Missing required fields"}), 400
+        return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
 
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
@@ -204,13 +205,13 @@ def buy_item():
 
         cursor.execute("SELECT COUNT(*) FROM inventory WHERE user_id = %s AND item_name = %s", (user_id, item_name))
         if cursor.fetchone()[0] > 0:
-            return jsonify({"status": "error", "message": "Item already owned"}), 400
+            return jsonify({"status": "error", "message": "Предмет уже есть в инвентаре"}), 400
 
         cursor.execute("SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s", (user_id,))
         result = cursor.fetchone()
 
         if not result:
-            return jsonify({"status": "error", "message": "User not found"}), 404
+            return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
 
         balance, total_generation, last_updated = result
         total_generation = total_generation or 1
@@ -355,6 +356,203 @@ def buy_with_stars():
         cursor.close()
         connection.close()
 
+@app.route('/get_auction_lots', methods=['GET'])
+def get_auction_lots():
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT l.lot_id, l.item_name, l.description, l.start_price, l.current_bid, u.username AS seller_username, l.seller_id
+            FROM auction_lots l
+            JOIN user_progress u ON l.seller_id = u.user_id
+            WHERE l.is_active = 1
+        """)
+        lots = cursor.fetchall()
+        return jsonify({"status": "success", "lots": lots}), 200
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@app.route('/create_lot', methods=['POST'])
+def create_lot():
+    data = request.json
+    user_id = data.get('user_id')
+    item_name = data.get('item_name')
+    description = data.get('description')
+    start_price = data.get('start_price')
+
+    if not all([user_id, item_name, description, start_price]):
+        return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
+
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+
+        # Проверка наличия предмета в инвентаре
+        cursor.execute("SELECT COUNT(*) FROM inventory WHERE user_id = %s AND item_name = %s", (user_id, item_name))
+        if cursor.fetchone()[0] == 0:
+            return jsonify({"status": "error", "message": "Товар не найден в инвентаре"}), 400
+
+        # Создание лота
+        cursor.execute("""
+            INSERT INTO auction_lots (seller_id, item_name, description, start_price)
+            VALUES (%s, %s, %s, %s)
+        """, (user_id, item_name, description, start_price))
+
+        # Удаление предмета из инвентаря продавца
+        cursor.execute("DELETE FROM inventory WHERE user_id = %s AND item_name = %s LIMIT 1", (user_id, item_name))
+        
+        connection.commit()
+        return jsonify({"status": "success"}), 200
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@app.route('/place_bid', methods=['POST'])
+def place_bid():
+    data = request.json
+    user_id = data.get('user_id')
+    lot_id = data.get('lot_id')
+    bid_amount = data.get('bid_amount')
+
+    if not all([user_id, lot_id, bid_amount]):
+        return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
+
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+
+        # Проверка лота
+        cursor.execute("SELECT start_price, current_bid, seller_id FROM auction_lots WHERE lot_id = %s AND is_active = 1", (lot_id,))
+        lot = cursor.fetchone()
+        if not lot:
+            return jsonify({"status": "error", "message": "Лот не найден или неактивен"}), 404
+
+        start_price, current_bid, seller_id = lot
+        if user_id == seller_id:
+            return jsonify({"status": "error", "message": "Вы не можете делать ставки на свой собственный лот."}), 400
+
+        min_bid = current_bid or start_price
+        if bid_amount <= min_bid:
+            return jsonify({"status": "error", "message": "Ставка должна быть выше текущей ставки"}), 400
+
+        # Проверка баланса
+        cursor.execute("SELECT balance FROM user_progress WHERE user_id = %s", (user_id,))
+        balance = cursor.fetchone()[0]
+        if balance < bid_amount:
+            return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
+
+        # Обновление ставки
+        cursor.execute("""
+            UPDATE auction_lots 
+            SET current_bid = %s, current_bidder_id = %s 
+            WHERE lot_id = %s
+        """, (bid_amount, user_id, lot_id))
+        connection.commit()
+        return jsonify({"status": "success"}), 200
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@app.route('/complete_lot', methods=['POST'])
+def complete_lot():
+    data = request.json
+    user_id = data.get('user_id')
+    lot_id = data.get('lot_id')
+
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+
+        # Проверка лота и прав продавца
+        cursor.execute("""
+            SELECT seller_id, item_name, current_bid, current_bidder_id 
+            FROM auction_lots 
+            WHERE lot_id = %s AND is_active = 1
+        """, (lot_id,))
+        lot = cursor.fetchone()
+        if not lot:
+            return jsonify({"status": "error", "message": "Лот не найден или неактивен"}), 404
+
+        seller_id, item_name, current_bid, current_bidder_id = lot
+        if seller_id != user_id:
+            return jsonify({"status": "error", "message": "Только продавец может завершить лот."}), 403
+
+        if not current_bidder_id:
+            return jsonify({"status": "error", "message": "Пока нет ставок"}), 400
+
+        # Транзакция
+        cursor.execute("SELECT balance FROM user_progress WHERE user_id = %s", (current_bidder_id,))
+        buyer_balance = cursor.fetchone()[0]
+        if buyer_balance < current_bid:
+            return jsonify({"status": "error", "message": "У покупателя недостаточно средств"}), 400
+
+        # Списание средств у покупателя
+        cursor.execute("UPDATE user_progress SET balance = balance - %s WHERE user_id = %s", (current_bid, current_bidder_id))
+        # Начисление средств продавцу
+        cursor.execute("UPDATE user_progress SET balance = balance + %s WHERE user_id = %s", (current_bid, seller_id))
+        # Передача предмета покупателю
+        cursor.execute("""
+            INSERT INTO inventory (user_id, item_name, generation_per_hour)
+            SELECT %s, %s, generation_per_hour FROM market_items WHERE name = %s
+        """, (current_bidder_id, item_name, item_name))
+        # Завершение лота
+        cursor.execute("UPDATE auction_lots SET is_active = 0 WHERE lot_id = %s", (lot_id,))
+
+        connection.commit()
+        return jsonify({"status": "success"}), 200
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@app.route('/get_chat', methods=['GET'])
+def get_chat():
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT u.username, c.message, c.timestamp 
+            FROM auction_chat c 
+            JOIN user_progress u ON c.user_id = u.user_id 
+            ORDER BY c.timestamp ASC 
+            LIMIT 50
+        """)
+        messages = cursor.fetchall()
+        return jsonify({"status": "success", "messages": messages}), 200
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@app.route('/send_chat', methods=['POST'])
+def send_chat():
+    data = request.json
+    user_id = data.get('user_id')
+    message = data.get('message')
+
+    if not all([user_id, message]):
+        return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
+
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+        cursor.execute("INSERT INTO auction_chat (user_id, message) VALUES (%s, %s)", (user_id, message))
+        connection.commit()
+        return jsonify({"status": "success"}), 200
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -174,8 +174,68 @@ body {
 
 
 
+.auction-container { 
+    display: block; 
+    position: absolute; /* Позиционируем относительно родителя */
+    top: 50%; /* Центрирование по вертикали */
+    left: 50%; /* Центрирование по горизонтали */
+    transform: translate(-50%, -50%); /* Смещение для точного центрирования */
+    width: 80%; /* Ширина как у inventory-container и rating-container */
+    max-height: 350px; /* Фиксированная высота как у обоих контейнеров */
+    overflow-y: auto; /* Включаем вертикальную прокрутку */
+    background-color: rgba(44, 62, 80, 0.1); /* Полупрозрачный фон как у inventory-container */
+    padding: 10px; /* Внутренние отступы как у обоих контейнеров */
+    box-sizing: border-box; /* Учитываем padding в ширине */
+    text-align: center; /* Выравнивание текста по центру как у rating-container */
+    gap: 20px; /* Оставляем промежуток между элементами */
+}
 
+.chat-container { 
+    border: 1px solid #ccc; 
+    padding: 10px; 
+    height: 250px; 
+    display: flex; 
+    flex-direction: column; 
+}
 
+.chat-messages { 
+    flex-grow: 1; 
+    overflow-y: auto; 
+}
+
+.chat-input { 
+    display: flex; 
+    gap: 10px; 
+}
+
+.auction-lots {
+    width: 100%; /* Таблица занимает всю ширину контейнера .auction-container */
+    overflow-x: auto; /* Включаем горизонтальную прокрутку для блока с таблицей */
+    white-space: nowrap; /* Предотвращаем перенос строк в таблице */
+}
+
+.lots-table { 
+    width: 100%; /* Устанавливаем минимальную ширину равной контейнеру */
+    min-width: 1200px; /* Фиксируем минимальную ширину таблицы больше, чем 95vw, чтобы появилась прокрутка */
+    border-collapse: collapse; 
+}
+
+.lots-table th, .lots-table td { 
+    border: 1px solid #ccc; 
+    padding: 8px; 
+    text-align: left; 
+    min-width: 150px; /* Устанавливаем минимальную ширину колонок для читаемости */
+}
+
+.create-lot { 
+    margin-top: 20px; 
+}
+
+.create-lot form { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+}
 
 
 
@@ -379,7 +439,7 @@ td {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 50px;
+    margin-top: 5px;
 }
 
 .wheel-container {
@@ -422,6 +482,15 @@ td {
     margin-top: 20px;
     font-size: 24px;
     color: #333;
+}
+
+@media (max-width: 768px) {
+    .lots-table {
+        min-width: 800px; /* Уменьшенная ширина для мобильных */
+    }
+    .lots-table th, .lots-table td {
+        min-width: 100px; /* Уменьшенная ширина колонок */
+    }
 }
 
 
