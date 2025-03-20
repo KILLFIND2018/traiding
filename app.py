@@ -1,21 +1,13 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import mysql.connector
 import threading
 import time
-import os
+from config import MYSQL_CONFIG  # Импорт конфигурации
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app, resources={r"/static/*": {"origins": "*"}})
-
-MYSQL_CONFIG = {
-    'user': '',
-    'password': '',
-    'host': '',
-    'database': '',
-    'raise_on_warnings': True
-}
 
 user_heartbeats = {}
 

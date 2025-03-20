@@ -1,19 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, LabeledPrice
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, PreCheckoutQueryHandler, MessageHandler, filters
 import mysql.connector
-
-# Токен вашего бота
-TOKEN = ''
-WEB_APP_URL = ''
-
-# Конфигурация MySQL
-MYSQL_CONFIG = {
-    'user': '',
-    'password': '',
-    'host': '',
-    'database': '',
-    'raise_on_warnings': True
-}
+from config import TOKEN, WEB_APP_URL, MYSQL_CONFIG  # Импорт конфигурации
 
 async def start(update, context):
     """Обработчик команды /start"""
