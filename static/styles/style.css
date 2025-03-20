@@ -28,22 +28,27 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8); /* Полупрозрачный черный фон */
+    background: rgba(0, 0, 0, 0.8);
+    /* Полупрозрачный черный фон */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 9999; /* Поверх всего контента */
+    z-index: 9999;
+    /* Поверх всего контента */
 }
 
 /* Стили для спиннера */
 .spinner {
     width: 50px;
     height: 50px;
-    border: 5px solid #f3f3f3; /* Светлый цвет */
-    border-top: 5px solid #3498db; /* Основной цвет */
+    border: 5px solid #f3f3f3;
+    /* Светлый цвет */
+    border-top: 5px solid #3498db;
+    /* Основной цвет */
     border-radius: 50%;
-    animation: spin 1s linear infinite; /* Анимация вращения */
+    animation: spin 1s linear infinite;
+    /* Анимация вращения */
 }
 
 /* Текст под спиннером */
@@ -56,8 +61,13 @@ body {
 
 /* Анимация вращения */
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Скрытие загрузчика */
@@ -67,7 +77,8 @@ body {
 
 .container {
     width: 100vw;
-    height: 100vh; /* Занимаем всю высоту экрана */
+    height: 100vh;
+    /* Занимаем всю высоту экрана */
     position: relative;
     display: flex;
     flex-direction: column;
@@ -174,67 +185,86 @@ body {
 
 
 
-.auction-container { 
-    display: block; 
-    position: absolute; /* Позиционируем относительно родителя */
-    top: 50%; /* Центрирование по вертикали */
-    left: 50%; /* Центрирование по горизонтали */
-    transform: translate(-50%, -50%); /* Смещение для точного центрирования */
-    width: 80%; /* Ширина как у inventory-container и rating-container */
-    max-height: 350px; /* Фиксированная высота как у обоих контейнеров */
-    overflow-y: auto; /* Включаем вертикальную прокрутку */
-    background-color: rgba(44, 62, 80, 0.1); /* Полупрозрачный фон как у inventory-container */
-    padding: 10px; /* Внутренние отступы как у обоих контейнеров */
-    box-sizing: border-box; /* Учитываем padding в ширине */
-    text-align: center; /* Выравнивание текста по центру как у rating-container */
-    gap: 20px; /* Оставляем промежуток между элементами */
+.auction-container {
+    display: block;
+    position: absolute;
+    /* Позиционируем относительно родителя */
+    top: 50%;
+    /* Центрирование по вертикали */
+    left: 50%;
+    /* Центрирование по горизонтали */
+    transform: translate(-50%, -50%);
+    /* Смещение для точного центрирования */
+    width: 80%;
+    /* Ширина как у inventory-container и rating-container */
+    max-height: 350px;
+    /* Фиксированная высота как у обоих контейнеров */
+    overflow-y: auto;
+    /* Включаем вертикальную прокрутку */
+    background-color: rgba(44, 62, 80, 0.1);
+    /* Полупрозрачный фон как у inventory-container */
+    padding: 10px;
+    /* Внутренние отступы как у обоих контейнеров */
+    box-sizing: border-box;
+    /* Учитываем padding в ширине */
+    text-align: center;
+    /* Выравнивание текста по центру как у rating-container */
+    gap: 20px;
+    /* Оставляем промежуток между элементами */
 }
 
-.chat-container { 
-    border: 1px solid #ccc; 
-    padding: 10px; 
-    height: 250px; 
-    display: flex; 
-    flex-direction: column; 
+.chat-container {
+    border: 1px solid #ccc;
+    padding: 10px;
+    height: 250px;
+    display: flex;
+    flex-direction: column;
 }
 
-.chat-messages { 
-    flex-grow: 1; 
-    overflow-y: auto; 
+.chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
 }
 
-.chat-input { 
-    display: flex; 
-    gap: 10px; 
+.chat-input {
+    display: flex;
+    gap: 10px;
 }
 
 .auction-lots {
-    width: 100%; /* Таблица занимает всю ширину контейнера .auction-container */
-    overflow-x: auto; /* Включаем горизонтальную прокрутку для блока с таблицей */
-    white-space: nowrap; /* Предотвращаем перенос строк в таблице */
+    width: 100%;
+    /* Таблица занимает всю ширину контейнера .auction-container */
+    overflow-x: auto;
+    /* Включаем горизонтальную прокрутку для блока с таблицей */
+    white-space: nowrap;
+    /* Предотвращаем перенос строк в таблице */
 }
 
-.lots-table { 
-    width: 100%; /* Устанавливаем минимальную ширину равной контейнеру */
-    min-width: 1200px; /* Фиксируем минимальную ширину таблицы больше, чем 95vw, чтобы появилась прокрутка */
-    border-collapse: collapse; 
+.lots-table {
+    width: 100%;
+    /* Устанавливаем минимальную ширину равной контейнеру */
+    min-width: 1200px;
+    /* Фиксируем минимальную ширину таблицы больше, чем 95vw, чтобы появилась прокрутка */
+    border-collapse: collapse;
 }
 
-.lots-table th, .lots-table td { 
-    border: 1px solid #ccc; 
-    padding: 8px; 
-    text-align: left; 
-    min-width: 150px; /* Устанавливаем минимальную ширину колонок для читаемости */
+.lots-table th,
+.lots-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+    min-width: 150px;
+    /* Устанавливаем минимальную ширину колонок для читаемости */
 }
 
-.create-lot { 
-    margin-top: 20px; 
+.create-lot {
+    margin-top: 20px;
 }
 
-.create-lot form { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 10px; 
+.create-lot form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 
@@ -254,75 +284,103 @@ body {
 .inventory-container {
     display: block;
     position: absolute;
-    top: 50%; /* Позиционирование по вертикали */
-    left: 50%; /* Позиционирование по горизонтали */
-    transform: translate(-50%, -50%); /* Центрирование */
+    top: 50%;
+    /* Позиционирование по вертикали */
+    left: 50%;
+    /* Позиционирование по горизонтали */
+    transform: translate(-50%, -50%);
+    /* Центрирование */
     text-align: center;
-    width: 80%; /* Ширина контейнера */
-    max-height: 300px; /* Фиксированная высота контейнера */
-    overflow-y: auto; /* Включаем вертикальную прокрутку */
-    background-color: rgba(44, 62, 80, 0.1); /* Цвет фона контейнера */
-    padding: 10px; /* Отступы внутри контейнера */
+    width: 80%;
+    /* Ширина контейнера */
+    max-height: 300px;
+    /* Фиксированная высота контейнера */
+    overflow-y: auto;
+    /* Включаем вертикальную прокрутку */
+    background-color: rgba(44, 62, 80, 0.1);
+    /* Цвет фона контейнера */
+    padding: 10px;
+    /* Отступы внутри контейнера */
 }
 
 /* Стили для таблицы */
 .inventory-table {
-    width: 100%; /* Таблица занимает всю ширину контейнера */
-    border-collapse: collapse; /* Убираем двойные границы */
-    background-color: rgba(44, 62, 80, 0.3); /* Цвет фона таблицы */
+    width: 100%;
+    /* Таблица занимает всю ширину контейнера */
+    border-collapse: collapse;
+    /* Убираем двойные границы */
+    background-color: rgba(44, 62, 80, 0.3);
+    /* Цвет фона таблицы */
 }
 
 /* Стили для заголовков и ячеек таблицы */
 .inventory-table th,
 .inventory-table td {
-    padding: 10px; /* Отступы внутри ячеек */
-    text-align: center; /* Выравнивание текста по центру */
+    padding: 10px;
+    /* Отступы внутри ячеек */
+    text-align: center;
+    /* Выравнивание текста по центру */
 }
 
 /* Стили для заголовков таблицы */
 .inventory-table th {
-    background-color: rgba(44, 62, 80, 0.5); /* Цвет фона заголовков */
-    color: white; /* Цвет текста заголовков */
+    background-color: rgba(44, 62, 80, 0.5);
+    /* Цвет фона заголовков */
+    color: white;
+    /* Цвет текста заголовков */
 }
 
 /* Стили для строк таблицы */
 .inventory-table tbody tr:hover {
-    background-color: rgba(44, 62, 80, 0.2); /* Цвет фона при наведении */
+    background-color: rgba(44, 62, 80, 0.2);
+    /* Цвет фона при наведении */
 }
 
 /* Стили для контейнера таблицы */
 .market {
-    max-height: 300px; /* Фиксированная высота контейнера */
-    overflow-y: auto; /* Включаем вертикальную прокрутку */
-    width: 90%; /* Ширина контейнера */
+    max-height: 300px;
+    /* Фиксированная высота контейнера */
+    overflow-y: auto;
+    /* Включаем вертикальную прокрутку */
+    width: 90%;
+    /* Ширина контейнера */
     margin-left: auto;
     margin-right: auto;
-    margin-top: 20px; /* Отступ сверху */
+    margin-top: 20px;
+    /* Отступ сверху */
 }
 
 /* Стили для таблицы */
 .market-table {
-    width: 100%; /* Таблица занимает всю ширину контейнера */
-    border-collapse: collapse; /* Убираем двойные границы */
-    background-color: rgba(44, 62, 80, 0.3); /* Цвет фона таблицы */
+    width: 100%;
+    /* Таблица занимает всю ширину контейнера */
+    border-collapse: collapse;
+    /* Убираем двойные границы */
+    background-color: rgba(44, 62, 80, 0.3);
+    /* Цвет фона таблицы */
 }
 
 /* Стили для заголовков и ячеек таблицы */
 .market-table th,
 .market-table td {
-    padding: 10px; /* Отступы внутри ячеек */
-    text-align: center; /* Выравнивание текста по центру */
+    padding: 10px;
+    /* Отступы внутри ячеек */
+    text-align: center;
+    /* Выравнивание текста по центру */
 }
 
 /* Стили для заголовков таблицы */
 .market-table th {
-    background-color: rgba(44, 62, 80, 0.5); /* Цвет фона заголовков */
-    color: white; /* Цвет текста заголовков */
+    background-color: rgba(44, 62, 80, 0.5);
+    /* Цвет фона заголовков */
+    color: white;
+    /* Цвет текста заголовков */
 }
 
 /* Стили для строк таблицы */
 .market-table tbody tr:hover {
-    background-color: rgba(44, 62, 80, 0.2); /* Цвет фона при наведении */
+    background-color: rgba(44, 62, 80, 0.2);
+    /* Цвет фона при наведении */
 }
 
 
@@ -456,7 +514,8 @@ td {
     width: 100%;
     height: 100%;
     transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
-    transform-origin: center; /* Важно! Вращение вокруг центра */
+    transform-origin: center;
+    /* Важно! Вращение вокруг центра */
 }
 
 .arrow {
@@ -486,10 +545,14 @@ td {
 
 @media (max-width: 768px) {
     .lots-table {
-        min-width: 800px; /* Уменьшенная ширина для мобильных */
+        min-width: 800px;
+        /* Уменьшенная ширина для мобильных */
     }
-    .lots-table th, .lots-table td {
-        min-width: 100px; /* Уменьшенная ширина колонок */
+
+    .lots-table th,
+    .lots-table td {
+        min-width: 100px;
+        /* Уменьшенная ширина колонок */
     }
 }
 

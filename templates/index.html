@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Crypto Tycoon Simulator</title>
@@ -9,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <link rel="stylesheet" href="/static/styles/style.css">
 </head>
+
 <body>
     <div class="loader" id="loader">
         <div class="spinner"></div>
@@ -121,7 +123,8 @@
             </div>
         </div>
         <div class="game-menu">
-            <button class="button auction" type="button" id="auctionButton"><img src="/static/auction.png" alt="auction"></button>
+            <button class="button auction" type="button" id="auctionButton"><img src="/static/auction.png"
+                    alt="auction"></button>
             <div class="separator"></div>
             <button class="button rating" type="button"><img src="/static/rating.png" alt="rating"></button>
             <div class="separator"></div>
@@ -385,13 +388,13 @@
             try {
                 const response = await fetch(`/get_rating`);
                 const data = await response.json();
-                
+
                 if (data.status === "success") {
                     const ratingTable = document.querySelector('.rating-table tbody');
                     while (ratingTable.rows.length > 0) {
                         ratingTable.deleteRow(0);
                     }
-                    
+
                     data.users.forEach(user => {
                         const newRow = ratingTable.insertRow(-1);
                         newRow.insertCell(0).textContent = user.position;
@@ -512,170 +515,171 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(purchaseData)
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            tg.showAlert('Покупка успешна! Добавлено 100 монет.');
-                            document.getElementById('currency-amount').textContent = data.new_balance;
-                        } else {
-                            tg.showAlert('Ошибка покупки: ' + (data.message || 'Неизвестная ошибка'));
-                        }
-                    })
-                    .catch(error => {
-                        tg.showAlert('Ошибка при покупке: ' + error.message);
-                    });
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                tg.showAlert('Покупка успешна! Добавлено 100 монет.');
+                                document.getElementById('currency-amount').textContent = data.new_balance;
+                            } else {
+                                tg.showAlert('Ошибка покупки: ' + (data.message || 'Неизвестная ошибка'));
+                            }
+                        })
+                        .catch(error => {
+                            tg.showAlert('Ошибка при покупке: ' + error.message);
+                        });
                 }
             });
         });
 
 
         async function loadAuction(userId) {
-    await loadLots();
-    await loadChat();
-    await loadUserItems(userId);
-}
-
-async function loadLots() {
-    const response = await fetch('/get_auction_lots');
-    const data = await response.json();
-    if (data.status === "success") {
-        const tbody = document.getElementById('lots-table-body');
-        tbody.innerHTML = '';
-        data.lots.forEach(lot => {
-            const row = tbody.insertRow();
-            row.insertCell(0).textContent = lot.lot_id;
-            row.insertCell(1).textContent = lot.item_name;
-            row.insertCell(2).textContent = lot.description;
-            row.insertCell(3).textContent = lot.start_price;
-            row.insertCell(4).textContent = lot.current_bid || 'Нет ставок';
-            row.insertCell(5).textContent = lot.seller_username || 'Anonymous';
-            const actionCell = row.insertCell(6);
-            const bidButton = document.createElement('button');
-            bidButton.textContent = 'Сделать ставку';
-            bidButton.onclick = () => placeBid(lot.lot_id);
-            actionCell.appendChild(bidButton);
-        });
-    }
-}
-
-async function loadChat() {
-    const response = await fetch('/get_chat');
-    const data = await response.json();
-    if (data.status === "success") {
-        const chatMessages = document.getElementById('chat-messages');
-        chatMessages.innerHTML = '';
-        data.messages.forEach(msg => {
-            const p = document.createElement('p');
-            p.textContent = `${msg.username}: ${msg.message} (${new Date(msg.timestamp).toLocaleTimeString()})`;
-            chatMessages.appendChild(p);
-        });
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-}
-
-async function sendChatMessage() {
-    const input = document.getElementById('chat-input');
-    const message = input.value.trim();
-    if (message) {
-        await fetch('/send_chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, message })
-        });
-        input.value = '';
-        await loadChat();
-    }
-}
-
-async function loadUserItems(userId) {
-    const response = await fetch(`/get_inventory?user_id=${userId}`);
-    const data = await response.json();
-    if (data.status === "success") {
-        const select = document.getElementById('item-select');
-        select.innerHTML = '<option value="">Выберите предмет</option>'; // Пустая опция по умолчанию
-        data.items.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item.item_name;
-            option.textContent = item.item_name;
-            select.appendChild(option);
-        });
-    }
-}
-
-document.getElementById('create-lot-form').addEventListener('submit', async (e) => {
-    e.preventDefault(); // Предотвращаем стандартное поведение формы
-    const formData = new FormData(e.target);
-    const lotData = {
-        user_id: userId,
-        item_name: formData.get('item_name'),
-        description: formData.get('description'),
-        start_price: parseInt(formData.get('start_price'))
-    };
-    
-    const response = await fetch('/create_lot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(lotData)
-    });
-    
-    const data = await response.json();
-    if (data.status === "success") {
-        await loadLots(); // Обновляем список лотов
-        await loadInventory(userId); // Обновляем инвентарь
-        document.getElementById('create-lot-form').reset(); // Очищаем форму
-    } else {
-        alert(data.message); // Показываем сообщение об ошибке
-    }
-});
-
-async function placeBid(lotId) {
-    const bidAmount = prompt('Введите сумму ставки:');
-    if (bidAmount && !isNaN(bidAmount)) {
-        const response = await fetch('/place_bid', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, lot_id: lotId, bid_amount: parseInt(bidAmount) })
-        });
-        const data = await response.json();
-        if (data.status === "success") {
             await loadLots();
-        } else {
-            alert(data.message);
+            await loadChat();
+            await loadUserItems(userId);
         }
-    }
-}
 
-// Обновление чата каждые 5 секунд
-setInterval(loadChat, 5000);
+        async function loadLots() {
+            const response = await fetch('/get_auction_lots');
+            const data = await response.json();
+            if (data.status === "success") {
+                const tbody = document.getElementById('lots-table-body');
+                tbody.innerHTML = '';
+                data.lots.forEach(lot => {
+                    const row = tbody.insertRow();
+                    row.insertCell(0).textContent = lot.lot_id;
+                    row.insertCell(1).textContent = lot.item_name;
+                    row.insertCell(2).textContent = lot.description;
+                    row.insertCell(3).textContent = lot.start_price;
+                    row.insertCell(4).textContent = lot.current_bid || 'Нет ставок';
+                    row.insertCell(5).textContent = lot.seller_username || 'Anonymous';
+                    const actionCell = row.insertCell(6);
+                    const bidButton = document.createElement('button');
+                    bidButton.textContent = 'Сделать ставку';
+                    bidButton.onclick = () => placeBid(lot.lot_id);
+                    actionCell.appendChild(bidButton);
+                });
+            }
+        }
 
-// Загрузка аукциона при нажатии на кнопку
-document.querySelector('.button.auction').addEventListener('click', () => loadAuction(userId));
+        async function loadChat() {
+            const response = await fetch('/get_chat');
+            const data = await response.json();
+            if (data.status === "success") {
+                const chatMessages = document.getElementById('chat-messages');
+                chatMessages.innerHTML = '';
+                data.messages.forEach(msg => {
+                    const p = document.createElement('p');
+                    p.textContent = `${msg.username}: ${msg.message} (${new Date(msg.timestamp).toLocaleTimeString()})`;
+                    chatMessages.appendChild(p);
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (message) {
+                await fetch('/send_chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, message })
+                });
+                input.value = '';
+                await loadChat();
+            }
+        }
+
+        async function loadUserItems(userId) {
+            const response = await fetch(`/get_inventory?user_id=${userId}`);
+            const data = await response.json();
+            if (data.status === "success") {
+                const select = document.getElementById('item-select');
+                select.innerHTML = '<option value="">Выберите предмет</option>'; // Пустая опция по умолчанию
+                data.items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.item_name;
+                    option.textContent = item.item_name;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        document.getElementById('create-lot-form').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Предотвращаем стандартное поведение формы
+            const formData = new FormData(e.target);
+            const lotData = {
+                user_id: userId,
+                item_name: formData.get('item_name'),
+                description: formData.get('description'),
+                start_price: parseInt(formData.get('start_price'))
+            };
+
+            const response = await fetch('/create_lot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(lotData)
+            });
+
+            const data = await response.json();
+            if (data.status === "success") {
+                await loadLots(); // Обновляем список лотов
+                await loadInventory(userId); // Обновляем инвентарь
+                document.getElementById('create-lot-form').reset(); // Очищаем форму
+            } else {
+                alert(data.message); // Показываем сообщение об ошибке
+            }
+        });
+
+        async function placeBid(lotId) {
+            const bidAmount = prompt('Введите сумму ставки:');
+            if (bidAmount && !isNaN(bidAmount)) {
+                const response = await fetch('/place_bid', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, lot_id: lotId, bid_amount: parseInt(bidAmount) })
+                });
+                const data = await response.json();
+                if (data.status === "success") {
+                    await loadLots();
+                } else {
+                    alert(data.message);
+                }
+            }
+        }
+
+        // Обновление чата каждые 5 секунд
+        setInterval(loadChat, 5000);
+
+        // Загрузка аукциона при нажатии на кнопку
+        document.querySelector('.button.auction').addEventListener('click', () => loadAuction(userId));
 
 
-if (lot.seller_id === userId) {
-    const completeButton = document.createElement('button');
-    completeButton.textContent = 'Завершить';
-    completeButton.onclick = () => completeLot(lot.lot_id);
-    actionCell.appendChild(completeButton);
-}
+        if (lot.seller_id === userId) {
+            const completeButton = document.createElement('button');
+            completeButton.textContent = 'Завершить';
+            completeButton.onclick = () => completeLot(lot.lot_id);
+            actionCell.appendChild(completeButton);
+        }
 
-async function completeLot(lotId) {
-    const response = await fetch('/complete_lot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, lot_id: lotId })
-    });
-    const data = await response.json();
-    if (data.status === "success") {
-        await loadLots();
-        await loadInventory(userId);
-    } else {
-        alert(data.message);
-    }
-}
+        async function completeLot(lotId) {
+            const response = await fetch('/complete_lot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, lot_id: lotId })
+            });
+            const data = await response.json();
+            if (data.status === "success") {
+                await loadLots();
+                await loadInventory(userId);
+            } else {
+                alert(data.message);
+            }
+        }
     </script>
     <script src="/static/scripts/swiper.js"></script>
     <script src="/static/scripts/menu.js"></script>
-    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'922d9f64bad0d1b6',t:'MTc0MjM5NDE1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+    <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'922d9f64bad0d1b6',t:'MTc0MjM5NDE1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
 </body>
+
 </html>
