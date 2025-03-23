@@ -256,7 +256,7 @@ def get_market():
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor(dictionary=True)
 
-        cursor.execute("SELECT name, generation_per_second AS generation, price FROM market_items")
+        cursor.execute("SELECT name, generation_per_hour AS generation, price FROM market_items")
         items = cursor.fetchall()
 
         return jsonify({"status": "success", "items": items}), 200

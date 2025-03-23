@@ -543,7 +543,7 @@
             const data = await response.json();
             if (data.status === "success") {
                 const tbody = document.getElementById('lots-table-body');
-                tbody.innerHTML = '';
+                tbody.innerHTML = ''; // Очищаем таблицу перед обновлением
                 data.lots.forEach(lot => {
                     const row = tbody.insertRow();
                     row.insertCell(0).textContent = lot.lot_id;
@@ -553,11 +553,23 @@
                     row.insertCell(4).textContent = lot.current_bid || 'Нет ставок';
                     row.insertCell(5).textContent = lot.seller_username || 'Anonymous';
                     const actionCell = row.insertCell(6);
+
+                    // Кнопка "Сделать ставку" для всех пользователей
                     const bidButton = document.createElement('button');
                     bidButton.textContent = 'Сделать ставку';
                     bidButton.onclick = () => placeBid(lot.lot_id);
                     actionCell.appendChild(bidButton);
+
+                    // Кнопка "Завершить" только для продавца
+                    if (String(lot.seller_id) === userId) { // или Number(userId) === lot.seller_id
+                        const completeButton = document.createElement('button');
+                        completeButton.textContent = 'Завершить';
+                        completeButton.onclick = () => completeLot(lot.lot_id);
+                        actionCell.appendChild(completeButton);
+                    }
                 });
+            } else {
+                console.error('Ошибка загрузки лотов:', data.message);
             }
         }
 
@@ -655,12 +667,7 @@
         document.querySelector('.button.auction').addEventListener('click', () => loadAuction(userId));
 
 
-        if (lot.seller_id === userId) {
-            const completeButton = document.createElement('button');
-            completeButton.textContent = 'Завершить';
-            completeButton.onclick = () => completeLot(lot.lot_id);
-            actionCell.appendChild(completeButton);
-        }
+
 
         async function completeLot(lotId) {
             const response = await fetch('/complete_lot', {
