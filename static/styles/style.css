@@ -557,7 +557,56 @@ td {
 }
 
 
+.bitcoin-widget {
+    width: 100%;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 5px;
+    margin-bottom: 10px;
+    color: #fff;
+    text-align: center;
+}
 
+#bitcoin-price {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+#bitcoin-graph {
+    height: 100px;
+    margin-bottom: 10px;
+}
+
+.bet-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.bet-container button {
+    padding: 5px 10px;
+    background-color: #f1c40f;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.bet-container button:disabled {
+    background-color: #7f8c8d;
+    cursor: not-allowed;
+}
+
+.bet-container input {
+    padding: 5px;
+    width: 100px;
+    border-radius: 5px;
+}
+
+#bet-status {
+    font-size: 14px;
+    margin-top: 5px;
+}
 
 @media screen and (max-width: 768px),
 screen and (max-width: 1024px) {

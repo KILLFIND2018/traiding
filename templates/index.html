@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <link rel="stylesheet" href="/static/styles/style.css">
 </head>
@@ -26,6 +27,16 @@
     </audio>
     <div class="container">
         <div class="header">
+            <div class="bitcoin-widget">
+                <div id="bitcoin-price">Текущая цена BTC: <span id="btc-price">Загрузка...</span> $</div>
+                <div id="bitcoin-graph"></div>
+                <div class="bet-container">
+                    <button id="bet-up" disabled>Ставка: Рост</button>
+                    <button id="bet-down" disabled>Ставка: Падение</button>
+                    <input type="number" id="bet-amount" placeholder="Сумма ставки" min="1" disabled>
+                    <p id="bet-status">Следующая ставка доступна через: <span id="bet-timer">00:00:00</span></p>
+                </div>
+            </div>
             <h1>Crypto Tycoon Simulator</h1>
             <div class="currency-display" id="currency-display">
                 <span id="currency-amount">0</span><img src="/static/bitcoin.png" alt="balance">
@@ -311,6 +322,7 @@
             await loadInventory(userId);
             await loadMarket();
             await loadRating();
+            await initBitcoinWidget(userId);
             loadAuction(userId);
 
             await new Promise(resolve => setTimeout(resolve, 10000)); // Задержка 10 секунды
@@ -683,6 +695,126 @@
                 alert(data.message);
             }
         }
+
+        async function initBitcoinWidget(userId) {
+    // Обновление цены
+    async function updatePrice() {
+        const response = await fetch('/get_bitcoin_price');
+        const data = await response.json();
+        if (data.status === "success") {
+            document.getElementById('btc-price').textContent = data.price;
+        }
+    }
+    updatePrice();
+    setInterval(updatePrice, 60000); // Обновление каждую минуту
+
+    // График
+    const ctx = document.createElement('canvas');
+    document.getElementById('bitcoin-graph').appendChild(ctx);
+    let prices = [];
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'BTC Price (USD)',
+                data: prices,
+                borderColor: '#f1c40f',
+                fill: false
+            }]
+        },
+        options: { scales: { x: { display: false }, y: { beginAtZero: false } } }
+    });
+
+    async function updateGraph() {
+        const response = await fetch('/get_bitcoin_price');
+        const data = await response.json();
+        if (data.status === "success") {
+            prices.push(data.price);
+            if (prices.length > 60) prices.shift();
+            chart.data.labels = prices.map((_, i) => i);
+            chart.data.datasets[0].data = prices;
+            chart.update();
+        }
+    }
+    updateGraph();
+    setInterval(updateGraph, 60000);
+
+    // Логика ставок
+    const betUpButton = document.getElementById('bet-up');
+    const betDownButton = document.getElementById('bet-down');
+    const betAmountInput = document.getElementById('bet-amount');
+    const betTimer = document.getElementById('bet-timer');
+
+    async function checkBetStatus() {
+        const response = await fetch(`/check_bitcoin_bet?user_id=${userId}`);
+        const data = await response.json();
+
+        if (data.status === "pending") {
+            const remaining = data.remaining;
+            const hours = Math.floor(remaining / 3600);
+            const minutes = Math.floor((remaining % 3600) / 60);
+            const seconds = Math.floor(remaining % 60);
+            betTimer.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            betUpButton.disabled = true;
+            betDownButton.disabled = true;
+            betAmountInput.disabled = true;
+        } else {
+            betTimer.textContent = "Ставка доступна!";
+            betUpButton.disabled = false;
+            betDownButton.disabled = false;
+            betAmountInput.disabled = false;
+            if (data.won !== undefined) {
+                alert(data.won ? `Вы выиграли! Ваш приз: ${data.prize} монет` : "Вы проиграли.");
+                document.getElementById('currency-amount').textContent = data.balance;
+            }
+        }
+    }
+    checkBetStatus();
+    setInterval(checkBetStatus, 1000);
+
+    betUpButton.addEventListener('click', async () => {
+        const amount = parseInt(betAmountInput.value);
+        if (amount > 0) {
+            const response = await fetch('/place_bitcoin_bet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, bet_amount: amount, bet_direction: 'up' })
+            });
+            const data = await response.json();
+            if (data.status === "success") {
+                document.getElementById('currency-amount').textContent = data.balance;
+                checkBetStatus();
+            } else {
+                alert(data.message);
+            }
+        } else {
+            alert("Введите корректную сумму ставки!");
+        }
+    });
+
+    betDownButton.addEventListener('click', async () => {
+        const amount = parseInt(betAmountInput.value);
+        if (amount > 0) {
+            const response = await fetch('/place_bitcoin_bet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, bet_amount: amount, bet_direction: 'down' })
+            });
+            const data = await response.json();
+            if (data.status === "success") {
+                document.getElementById('currency-amount').textContent = data.balance;
+                checkBetStatus();
+            } else {
+                alert(data.message);
+            }
+        } else {
+            alert("Введите корректную сумму ставки!");
+        }
+    });
+}
+
+
     </script>
     <script src="/static/scripts/swiper.js"></script>
     <script src="/static/scripts/menu.js"></script>

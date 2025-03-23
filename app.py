@@ -559,5 +559,124 @@ def send_chat():
         cursor.close()
         connection.close()
 
+
+import requests
+
+@app.route('/get_bitcoin_price', methods=['GET'])
+def get_bitcoin_price():
+    try:
+        response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd')
+        data = response.json()
+        price = data['bitcoin']['usd']
+        return jsonify({"status": "success", "price": price}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/place_bitcoin_bet', methods=['POST'])
+def place_bitcoin_bet():
+    data = request.json
+    user_id = data.get('user_id')
+    bet_amount = data.get('bet_amount')
+    bet_direction = data.get('bet_direction')  # 'up' или 'down'
+
+    if not all([user_id, bet_amount, bet_direction]):
+        return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
+
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+
+        # Проверка последней ставки
+        cursor.execute("SELECT bet_time FROM bitcoin_bets WHERE user_id = %s", (user_id,))
+        last_bet = cursor.fetchone()
+        if last_bet and (datetime.now() - last_bet[0]).total_seconds() < 60:  # 24 часа
+            return jsonify({"status": "error", "message": "Ставка доступна раз в сутки"}), 400
+
+        # Проверка баланса
+        cursor.execute("SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s", (user_id,))
+        result = cursor.fetchone()
+        if not result:
+            return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
+        
+        balance, total_generation, last_updated = result
+        total_generation = total_generation or 1
+        last_updated = last_updated or datetime.now()
+        new_balance, _ = calculate_balance(balance, 1.0, last_updated, total_generation)
+
+        if new_balance < bet_amount:
+            return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
+
+        # Получение текущей цены биткоина
+        btc_price_response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd').json()
+        btc_price = btc_price_response['bitcoin']['usd']
+
+        # Списание средств
+        new_balance -= bet_amount
+        cursor.execute("UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s", 
+                       (new_balance, datetime.now(), user_id))
+
+        # Сохранение ставки
+        cursor.execute("""
+            INSERT INTO bitcoin_bets (user_id, bet_amount, bet_direction, bet_time, bet_price)
+            VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE bet_amount = %s, bet_direction = %s, bet_time = %s, bet_price = %s, resolved = FALSE
+        """, (user_id, bet_amount, bet_direction, datetime.now(), btc_price, 
+              bet_amount, bet_direction, datetime.now(), btc_price))
+        
+        connection.commit()
+        return jsonify({"status": "success", "balance": new_balance}), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@app.route('/check_bitcoin_bet', methods=['GET'])
+def check_bitcoin_bet():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+
+        cursor.execute("SELECT bet_amount, bet_direction, bet_time, bet_price, resolved FROM bitcoin_bets WHERE user_id = %s", (user_id,))
+        bet = cursor.fetchone()
+        if not bet or bet[4]:  # resolved = True
+            return jsonify({"status": "success", "message": "Нет активных ставок"}), 200
+
+        bet_amount, bet_direction, bet_time, bet_price = bet[0:4]
+        if (datetime.now() - bet_time).total_seconds() < 60:  # Проверка через 24 часа
+            remaining = 60 - (datetime.now() - bet_time).total_seconds()
+            return jsonify({"status": "pending", "remaining": int(remaining)}), 200
+
+        # Получение текущей цены
+        btc_price_response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd').json()
+        current_price = btc_price_response['bitcoin']['usd']
+
+        # Проверка результата
+        won = (bet_direction == 'up' and current_price > bet_price) or (bet_direction == 'down' and current_price < bet_price)
+        prize = bet_amount * 2 if won else 0
+
+        # Обновление баланса
+        cursor.execute("SELECT balance FROM user_progress WHERE user_id = %s", (user_id,))
+        balance = cursor.fetchone()[0]
+        new_balance = balance + prize
+
+        cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", (new_balance, user_id))
+        cursor.execute("UPDATE bitcoin_bets SET resolved = TRUE WHERE user_id = %s", (user_id,))
+        connection.commit()
+
+        return jsonify({"status": "success", "won": won, "prize": prize, "balance": new_balance}), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
