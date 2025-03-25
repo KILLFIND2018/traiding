@@ -43,7 +43,12 @@
             </div>
         </div>
         <div class="content">
-            <div class="main" id="main"></div>
+            <div class="main" id="main">
+                <div id="reward-notification" class="reward-notification hidden">
+                    <p>Вы получили MacBook за приглашение друга!</p>
+                    <img id="reward-image" src="/static/referal.png" alt="MacBook Reward">
+                </div>
+            </div>
             <div class="auction" id="auction">
                 <div class="auction-container">
                     <h1 class="sub-header">Аукцион</h1>
@@ -345,20 +350,28 @@
         }
 
         async function checkNewRewards(userId) {
-            const response = await fetch(`/get_new_rewards?user_id=${userId}`);
-            const data = await response.json();
-            if (data.status === "success" && data.rewards.length > 0) {
-                data.rewards.forEach(reward => {
-                    if (reward.item_name === "Macbook" && !models["Macbook"]) {
-                        macbook(); // Загружаем модель
-                        models["Macbook"] = true;
-                        Telegram.WebApp.showAlert("Спасибо, что пригласили друга! Вот ваш Macbook!");
-                    }
-                });
-                // Обновляем инвентарь после получения наград
-                await loadInventory(userId);
+    const response = await fetch(`/get_new_rewards?user_id=${userId}`);
+    const data = await response.json();
+    if (data.status === "success" && data.rewards.length > 0) {
+        data.rewards.forEach(reward => {
+            if (reward.item_name === "Macbook" && !models["Macbook"]) {
+                macbook(); // Загружаем модель в сцену
+                models["Macbook"] = true;
+                
+                // Показываем уведомление
+                const rewardNotification = document.getElementById('reward-notification');
+                rewardNotification.classList.remove('hidden');
+                
+                // Скрываем уведомление через 5 секунд
+                setTimeout(() => {
+                    rewardNotification.classList.add('hidden');
+                }, 120000);
             }
-        }
+        });
+        // Обновляем инвентарь после получения наград
+        await loadInventory(userId);
+    }
+}
         // Упрощаем checkReferralStatus, убираем алерты
         async function checkReferralStatus(userId) {
             const response = await fetch(`/get_inventory?user_id=${userId}`);
@@ -521,7 +534,6 @@
                     MacbookModel.scale.set(0.014, 0.014, 0.014);
                     MacbookModel.position.set(1.5, 0.2, 2.1);
                     scene.add(MacbookModel);
-                    Telegram.WebApp.showAlert("Спасибо, что пригласили друга! Вот ваш Macbook!");
                 });
         }
         if (userId) startApp(userId);
