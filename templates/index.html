@@ -236,6 +236,8 @@
                 return;
             }
 
+
+
             const loader = document.getElementById('loader');
             loader.classList.remove('hidden');
 
@@ -274,11 +276,20 @@
                 }
             }, 5000);
 
+            // Проверка новых наград при запуске
+            await checkNewRewards(userId);
+
+            // Периодическая проверка инвентаря (без алертов)
+            const inventoryCheckInterval = setInterval(async () => {
+                await loadInventory(userId); // Просто обновляем инвентарь
+            }, 10000);
+
             Telegram.WebApp.onEvent('web_app_close', async () => {
                 console.log('Web App закрыт через Telegram');
                 clearInterval(balanceInterval);
                 clearInterval(ratingInterval);
                 clearInterval(heartbeatInterval);
+                clearInterval(inventoryCheckInterval);
                 await stopGeneration(userId);
             });
 
@@ -288,6 +299,7 @@
                     clearInterval(balanceInterval);
                     clearInterval(ratingInterval);
                     clearInterval(heartbeatInterval);
+                    clearInterval(inventoryCheckInterval);
                     await stopGeneration(userId);
                 } else if (document.visibilityState === 'visible') {
                     console.log('Вкладка снова видима, перезапуск генерации');
@@ -296,6 +308,7 @@
                         document.getElementById('currency-amount').textContent = balance;
                     }
                     loadRating();
+                    await checkNewRewards(userId);
                 }
             });
 
@@ -312,6 +325,7 @@
                 clearInterval(balanceInterval);
                 clearInterval(ratingInterval);
                 clearInterval(heartbeatInterval);
+                clearInterval(inventoryCheckInterval);
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', '/stop', false);
                 xhr.setRequestHeader('Content-Type', 'application/json');
@@ -323,11 +337,43 @@
             await loadMarket();
             await loadRating();
             await initBitcoinWidget(userId);
+
             loadAuction(userId);
 
             await new Promise(resolve => setTimeout(resolve, 10000)); // Задержка 10 секунды
             loader.classList.add('hidden');
         }
+
+        async function checkNewRewards(userId) {
+            const response = await fetch(`/get_new_rewards?user_id=${userId}`);
+            const data = await response.json();
+            if (data.status === "success" && data.rewards.length > 0) {
+                data.rewards.forEach(reward => {
+                    if (reward.item_name === "Macbook" && !models["Macbook"]) {
+                        macbook(); // Загружаем модель
+                        models["Macbook"] = true;
+                        Telegram.WebApp.showAlert("Спасибо, что пригласили друга! Вот ваш Macbook!");
+                    }
+                });
+                // Обновляем инвентарь после получения наград
+                await loadInventory(userId);
+            }
+        }
+        // Упрощаем checkReferralStatus, убираем алерты
+        async function checkReferralStatus(userId) {
+            const response = await fetch(`/get_inventory?user_id=${userId}`);
+            const data = await response.json();
+            if (data.status === "success") {
+                const currentInventory = data.items.map(item => item.item_name);
+                currentInventory.forEach(item => {
+                    if (!models[item]) {
+                        updateTotalGeneration(item); // Загружаем модель, если она еще не загружена
+                    }
+                });
+            }
+        }
+
+
 
         async function loadInventory(userId) {
             const response = await fetch(`/get_inventory?user_id=${userId}`);
@@ -437,7 +483,7 @@
         let model;
         let olderPCModel, speakerModel, serverModel, CafetalgModel, PanasonicModel, ScifiSciderRobotModel, TheGlobeModel,
             DrinkingWaterDispenserModel, HumanoidRobotModel, ComputerWithTerminalModel, ConditionerModel, FridgeModel,
-            PS5Model, TVModel, CoolerModel, ShowcaseModel, PrinterModel, RadioModel;
+            PS5Model, TVModel, CoolerModel, ShowcaseModel, PrinterModel, RadioModel, MacbookModel;
 
         loader.load('/static/models/Office.glb', function (gltf) {
             model = gltf.scene;
@@ -468,7 +514,16 @@
         function showcase() { if (!ShowcaseModel) loader.load('/static/models/Showcase.glb', gltf => { ShowcaseModel = gltf.scene; ShowcaseModel.scale.set(0.005, 0.005, 0.005); ShowcaseModel.position.set(2.8, 0.2, 1); ShowcaseModel.rotation.y = -Math.PI / 2; scene.add(ShowcaseModel); }); }
         function printer() { if (!PrinterModel) loader.load('/static/models/Printer.glb', gltf => { PrinterModel = gltf.scene; PrinterModel.scale.set(0.002, 0.002, 0.002); PrinterModel.position.set(-3, 0.5, 2.1); PrinterModel.rotation.y = Math.PI / 2; scene.add(PrinterModel); }); }
         function radio() { if (!RadioModel) loader.load('/static/models/Radio.glb', gltf => { RadioModel = gltf.scene; RadioModel.scale.set(0.6, 0.6, 0.6); RadioModel.position.set(-1.3, 0.2, 1.7); scene.add(RadioModel); }); }
-
+        function macbook() {
+            if (!MacbookModel)
+                loader.load('/static/models/Macbook.glb', gltf => {
+                    MacbookModel = gltf.scene;
+                    MacbookModel.scale.set(0.014, 0.014, 0.014);
+                    MacbookModel.position.set(1.5, 0.2, 2.1);
+                    scene.add(MacbookModel);
+                    Telegram.WebApp.showAlert("Спасибо, что пригласили друга! Вот ваш Macbook!");
+                });
+        }
         if (userId) startApp(userId);
 
         const prizes = ["Приз 1", "Приз 2", "Приз 3", "Приз 4", "Приз 5", "Приз 6", "Приз 7", "Приз 8"];
@@ -697,122 +752,122 @@
         }
 
         async function initBitcoinWidget(userId) {
-    // Обновление цены
-    async function updatePrice() {
-        const response = await fetch('/get_bitcoin_price');
-        const data = await response.json();
-        if (data.status === "success") {
-            document.getElementById('btc-price').textContent = data.price;
-        }
-    }
-    updatePrice();
-    setInterval(updatePrice, 60000); // Обновление каждую минуту
-
-    // График
-    const ctx = document.createElement('canvas');
-    document.getElementById('bitcoin-graph').appendChild(ctx);
-    let prices = [];
-    const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'BTC Price (USD)',
-                data: prices,
-                borderColor: '#f1c40f',
-                fill: false
-            }]
-        },
-        options: { scales: { x: { display: false }, y: { beginAtZero: false } } }
-    });
-
-    async function updateGraph() {
-        const response = await fetch('/get_bitcoin_price');
-        const data = await response.json();
-        if (data.status === "success") {
-            prices.push(data.price);
-            if (prices.length > 60) prices.shift();
-            chart.data.labels = prices.map((_, i) => i);
-            chart.data.datasets[0].data = prices;
-            chart.update();
-        }
-    }
-    updateGraph();
-    setInterval(updateGraph, 60000);
-
-    // Логика ставок
-    const betUpButton = document.getElementById('bet-up');
-    const betDownButton = document.getElementById('bet-down');
-    const betAmountInput = document.getElementById('bet-amount');
-    const betTimer = document.getElementById('bet-timer');
-
-    async function checkBetStatus() {
-        const response = await fetch(`/check_bitcoin_bet?user_id=${userId}`);
-        const data = await response.json();
-
-        if (data.status === "pending") {
-            const remaining = data.remaining;
-            const hours = Math.floor(remaining / 3600);
-            const minutes = Math.floor((remaining % 3600) / 60);
-            const seconds = Math.floor(remaining % 60);
-            betTimer.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            betUpButton.disabled = true;
-            betDownButton.disabled = true;
-            betAmountInput.disabled = true;
-        } else {
-            betTimer.textContent = "Ставка доступна!";
-            betUpButton.disabled = false;
-            betDownButton.disabled = false;
-            betAmountInput.disabled = false;
-            if (data.won !== undefined) {
-                alert(data.won ? `Вы выиграли! Ваш приз: ${data.prize} монет` : "Вы проиграли.");
-                document.getElementById('currency-amount').textContent = data.balance;
+            // Обновление цены
+            async function updatePrice() {
+                const response = await fetch('/get_bitcoin_price');
+                const data = await response.json();
+                if (data.status === "success") {
+                    document.getElementById('btc-price').textContent = data.price;
+                }
             }
-        }
-    }
-    checkBetStatus();
-    setInterval(checkBetStatus, 1000);
+            updatePrice();
+            setInterval(updatePrice, 60000); // Обновление каждую минуту
 
-    betUpButton.addEventListener('click', async () => {
-        const amount = parseInt(betAmountInput.value);
-        if (amount > 0) {
-            const response = await fetch('/place_bitcoin_bet', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userId, bet_amount: amount, bet_direction: 'up' })
+            // График
+            const ctx = document.createElement('canvas');
+            document.getElementById('bitcoin-graph').appendChild(ctx);
+            let prices = [];
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'BTC Price (USD)',
+                        data: prices,
+                        borderColor: '#f1c40f',
+                        fill: false
+                    }]
+                },
+                options: { scales: { x: { display: false }, y: { beginAtZero: false } } }
             });
-            const data = await response.json();
-            if (data.status === "success") {
-                document.getElementById('currency-amount').textContent = data.balance;
-                checkBetStatus();
-            } else {
-                alert(data.message);
-            }
-        } else {
-            alert("Введите корректную сумму ставки!");
-        }
-    });
 
-    betDownButton.addEventListener('click', async () => {
-        const amount = parseInt(betAmountInput.value);
-        if (amount > 0) {
-            const response = await fetch('/place_bitcoin_bet', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userId, bet_amount: amount, bet_direction: 'down' })
-            });
-            const data = await response.json();
-            if (data.status === "success") {
-                document.getElementById('currency-amount').textContent = data.balance;
-                checkBetStatus();
-            } else {
-                alert(data.message);
+            async function updateGraph() {
+                const response = await fetch('/get_bitcoin_price');
+                const data = await response.json();
+                if (data.status === "success") {
+                    prices.push(data.price);
+                    if (prices.length > 60) prices.shift();
+                    chart.data.labels = prices.map((_, i) => i);
+                    chart.data.datasets[0].data = prices;
+                    chart.update();
+                }
             }
-        } else {
-            alert("Введите корректную сумму ставки!");
+            updateGraph();
+            setInterval(updateGraph, 60000);
+
+            // Логика ставок
+            const betUpButton = document.getElementById('bet-up');
+            const betDownButton = document.getElementById('bet-down');
+            const betAmountInput = document.getElementById('bet-amount');
+            const betTimer = document.getElementById('bet-timer');
+
+            async function checkBetStatus() {
+                const response = await fetch(`/check_bitcoin_bet?user_id=${userId}`);
+                const data = await response.json();
+
+                if (data.status === "pending") {
+                    const remaining = data.remaining;
+                    const hours = Math.floor(remaining / 3600);
+                    const minutes = Math.floor((remaining % 3600) / 60);
+                    const seconds = Math.floor(remaining % 60);
+                    betTimer.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    betUpButton.disabled = true;
+                    betDownButton.disabled = true;
+                    betAmountInput.disabled = true;
+                } else {
+                    betTimer.textContent = "Ставка доступна!";
+                    betUpButton.disabled = false;
+                    betDownButton.disabled = false;
+                    betAmountInput.disabled = false;
+                    if (data.won !== undefined) {
+                        alert(data.won ? `Вы выиграли! Ваш приз: ${data.prize} монет` : "Вы проиграли.");
+                        document.getElementById('currency-amount').textContent = data.balance;
+                    }
+                }
+            }
+            checkBetStatus();
+            setInterval(checkBetStatus, 1000);
+
+            betUpButton.addEventListener('click', async () => {
+                const amount = parseInt(betAmountInput.value);
+                if (amount > 0) {
+                    const response = await fetch('/place_bitcoin_bet', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: userId, bet_amount: amount, bet_direction: 'up' })
+                    });
+                    const data = await response.json();
+                    if (data.status === "success") {
+                        document.getElementById('currency-amount').textContent = data.balance;
+                        checkBetStatus();
+                    } else {
+                        alert(data.message);
+                    }
+                } else {
+                    alert("Введите корректную сумму ставки!");
+                }
+            });
+
+            betDownButton.addEventListener('click', async () => {
+                const amount = parseInt(betAmountInput.value);
+                if (amount > 0) {
+                    const response = await fetch('/place_bitcoin_bet', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: userId, bet_amount: amount, bet_direction: 'down' })
+                    });
+                    const data = await response.json();
+                    if (data.status === "success") {
+                        document.getElementById('currency-amount').textContent = data.balance;
+                        checkBetStatus();
+                    } else {
+                        alert(data.message);
+                    }
+                } else {
+                    alert("Введите корректную сумму ставки!");
+                }
+            });
         }
-    });
-}
 
 
     </script>

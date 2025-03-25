@@ -677,6 +677,118 @@ def check_bitcoin_bet():
         cursor.close()
         connection.close()
 
+@app.route('/generate_referral', methods=['POST'])
+def generate_referral():
+    data = request.json
+    user_id = data.get('user_id')
+    if not user_id:
+        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+    
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+        
+        # Генерируем уникальный реферальный код
+        import uuid
+        referral_code = str(uuid.uuid4())[:8]
+        
+        cursor.execute("""
+            INSERT INTO referrals (user_id, referral_code, created_at)
+            VALUES (%s, %s, %s)
+        """, (user_id, referral_code, datetime.now()))
+        
+        connection.commit()
+        return jsonify({"status": "success", "referral_code": referral_code}), 200
+        
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@app.route('/use_referral', methods=['POST'])
+def use_referral():
+    data = request.json
+    user_id = data.get('user_id')
+    referral_code = data.get('referral_code')
+    
+    if not all([user_id, referral_code]):
+        return jsonify({"status": "error", "message": "Missing required fields"}), 400
+    
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+        
+        cursor.execute("SELECT user_id FROM referrals WHERE referral_code = %s AND used_by IS NULL", (referral_code,))
+        result = cursor.fetchone()
+        
+        if not result:
+            return jsonify({"status": "error", "message": "Invalid or used referral code"}), 400
+            
+        referrer_id = result[0]
+        
+        if referrer_id == user_id:
+            return jsonify({"status": "error", "message": "You cannot use your own referral"}), 400
+            
+        cursor.execute("SELECT COUNT(*) FROM referrals WHERE used_by = %s", (user_id,))
+        if cursor.fetchone()[0] > 0:
+            return jsonify({"status": "error", "message": "You have already used a referral"}), 400
+            
+        cursor.execute("""
+            UPDATE referrals 
+            SET used_by = %s, used_at = %s 
+            WHERE referral_code = %s
+        """, (user_id, datetime.now(), referral_code))
+        
+        cursor.execute("""
+            INSERT INTO inventory (user_id, item_name, generation_per_hour)
+            VALUES (%s, %s, %s)
+        """, (referrer_id, "Macbook", 50))
+        
+        connection.commit()
+        return jsonify({"status": "success", "message": "Referral used successfully"}), 200
+        
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@app.route('/get_new_rewards', methods=['GET'])
+def get_new_rewards():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"status": "error", "message": "Missing user_id"}), 400
+
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor(dictionary=True)
+        
+        # Получаем награды, для которых алерт еще не показан
+        cursor.execute("""
+            SELECT id, item_name, awarded_at 
+            FROM rewards 
+            WHERE user_id = %s AND alert_shown = FALSE
+        """, (user_id,))
+        rewards = cursor.fetchall()
+
+        # Если есть новые награды, возвращаем их
+        if rewards:
+            # Отмечаем алерт как показанный
+            cursor.execute("""
+                UPDATE rewards 
+                SET alert_shown = TRUE 
+                WHERE user_id = %s AND alert_shown = FALSE
+            """, (user_id,))
+            connection.commit()
+        
+        return jsonify({"status": "success", "rewards": rewards})
+
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
