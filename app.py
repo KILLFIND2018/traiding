@@ -789,6 +789,123 @@ def get_new_rewards():
     finally:
         cursor.close()
         connection.close()
+@app.route('/get_login_reward_status', methods=['GET'])
+def get_login_reward_status():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"status": "error", "message": "User ID is missing"}), 400
 
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+
+        # Проверяем время последнего получения награды
+        cursor.execute("""
+            SELECT last_reward_time, total_generation, balance, last_updated 
+            FROM user_progress 
+            WHERE user_id = %s
+        """, (user_id,))
+        result = cursor.fetchone()
+
+        if not result:
+            return jsonify({"status": "error", "message": "User not found"}), 404
+
+        last_reward_time, total_generation, balance, last_updated = result
+        total_generation = total_generation or 1
+        last_updated = last_updated or datetime.now()
+
+        current_time = datetime.now()
+        reward_interval = 240  # 4 минуты в секундах
+
+        # Если время последнего вознаграждения не установлено
+        if not last_reward_time:
+            return jsonify({
+                "status": "available",
+                "remaining": 0,
+                "total_generation": total_generation
+            }), 200
+
+        time_since_last_reward = (current_time - last_reward_time).total_seconds()
+        
+        if time_since_last_reward >= reward_interval:
+            return jsonify({
+                "status": "available",
+                "remaining": 0,
+                "total_generation": total_generation
+            }), 200
+        else:
+            remaining = reward_interval - time_since_last_reward
+            return jsonify({
+                "status": "pending",
+                "remaining": int(remaining),
+                "total_generation": total_generation
+            }), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@app.route('/claim_login_reward', methods=['POST'])
+def claim_login_reward():
+    data = request.json
+    user_id = data.get('user_id')
+    if not user_id:
+        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+
+        cursor.execute("""
+            SELECT last_reward_time, total_generation, balance, last_updated 
+            FROM user_progress 
+            WHERE user_id = %s
+        """, (user_id,))
+        result = cursor.fetchone()
+
+        if not result:
+            return jsonify({"status": "error", "message": "User not found"}), 404
+
+        last_reward_time, total_generation, balance, last_updated = result
+        total_generation = total_generation or 1
+        last_updated = last_updated or datetime.now()
+
+        current_time = datetime.now()
+        reward_interval = 240  # 4 минуты в секундах
+
+        # Проверяем, доступна ли награда
+        if last_reward_time and (current_time - last_reward_time).total_seconds() < reward_interval:
+            return jsonify({"status": "error", "message": "Reward not available yet"}), 400
+
+        # Рассчитываем прибыль за 4 минуты (240 секунд)
+        profit_per_second = total_generation
+        period_profit = profit_per_second * 240
+        reward = int(period_profit * 0.05)  # 5% от прибыли за 4 минуты
+        
+        # Обновляем баланс и время последнего получения награды
+        new_balance = balance + reward
+        cursor.execute("""
+            UPDATE user_progress 
+            SET balance = %s, last_reward_time = %s 
+            WHERE user_id = %s
+        """, (new_balance, current_time, user_id))
+        
+        connection.commit()
+        
+        print(f"User {user_id} claimed login reward: {reward} coins. New balance: {new_balance}")
+        
+        return jsonify({
+            "status": "success",
+            "reward": reward,
+            "new_balance": new_balance
+        }), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

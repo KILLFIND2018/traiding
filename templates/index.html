@@ -37,6 +37,9 @@
                     <p id="bet-status">Следующая ставка доступна через: <span id="bet-timer">00:00:00</span></p>
                 </div>
             </div>
+            <div class="reward-timer">
+                <p>Награда за вход: <span id="reward-status">Проверка...</span></p>
+            </div>
             <h1>Crypto Tycoon Simulator</h1>
             <div class="currency-display" id="currency-display">
                 <span id="currency-amount">0</span><img src="/static/bitcoin.png" alt="balance">
@@ -283,7 +286,8 @@
 
             // Проверка новых наград при запуске
             await checkNewRewards(userId);
-
+            await checkLoginReward(userId);
+            const rewardCheckInterval = setInterval(() => checkLoginReward(userId), 1000);
             // Периодическая проверка инвентаря (без алертов)
             const inventoryCheckInterval = setInterval(async () => {
                 await loadInventory(userId); // Просто обновляем инвентарь
@@ -296,6 +300,7 @@
                 clearInterval(heartbeatInterval);
                 clearInterval(inventoryCheckInterval);
                 await stopGeneration(userId);
+                clearInterval(rewardCheckInterval);
             });
 
             document.addEventListener('visibilitychange', async () => {
@@ -306,6 +311,7 @@
                     clearInterval(heartbeatInterval);
                     clearInterval(inventoryCheckInterval);
                     await stopGeneration(userId);
+                    clearInterval(rewardCheckInterval);
                 } else if (document.visibilityState === 'visible') {
                     console.log('Вкладка снова видима, перезапуск генерации');
                     const balance = await startGeneration(userId);
@@ -314,17 +320,11 @@
                     }
                     loadRating();
                     await checkNewRewards(userId);
+                    rewardCheckInterval = setInterval(() => checkLoginReward(userId), 1000);
                 }
             });
 
-            window.addEventListener('blur', async () => {
-                console.log('Окно потеряло фокус');
-                clearInterval(balanceInterval);
-                clearInterval(ratingInterval);
-                clearInterval(heartbeatInterval);
-                await stopGeneration(userId);
-            });
-
+            
             window.addEventListener('beforeunload', (event) => {
                 console.log('Закрытие вкладки');
                 clearInterval(balanceInterval);
@@ -336,6 +336,7 @@
                 xhr.setRequestHeader('Content-Type', 'application/json');
                 xhr.send(JSON.stringify({ user_id: userId }));
                 console.log('Синхронный запрос на остановку отправлен');
+                clearInterval(rewardCheckInterval);
             });
 
             await loadInventory(userId);
@@ -880,6 +881,46 @@
                 }
             });
         }
+
+        async function checkLoginReward(userId) {
+    const response = await fetch(`/get_login_reward_status?user_id=${userId}`);
+    const data = await response.json();
+    const rewardStatus = document.getElementById('reward-status');
+
+    if (data.status === "available") {
+        rewardStatus.textContent = "Доступна! Кликните для получения";
+        rewardStatus.parentElement.classList.add('available');
+        rewardStatus.parentElement.onclick = () => claimLoginReward(userId);
+    } else if (data.status === "pending") {
+        const remaining = data.remaining;
+        const minutes = Math.floor(remaining / 60);
+        const seconds = Math.floor(remaining % 60);
+        rewardStatus.textContent = `Доступна через ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        rewardStatus.parentElement.classList.remove('available');
+        rewardStatus.parentElement.onclick = null;
+    } else {
+        rewardStatus.textContent = "Ошибка проверки";
+    }
+}
+
+async function claimLoginReward(userId) {
+    const response = await fetch('/claim_login_reward', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId })
+    });
+    const data = await response.json();
+    
+    if (data.status === "success") {
+        console.log(`Получена награда за вход: ${data.reward} монет. Новый баланс: ${data.new_balance}`);
+        document.getElementById('currency-amount').textContent = data.new_balance;
+        alert(`Вы получили ${data.reward} монет за вход!`);
+        await checkLoginReward(userId);
+    } else {
+        console.error('Ошибка получения награды:', data.message);
+        alert('Ошибка получения награды: ' + data.message);
+    }
+}
 
 
     </script>

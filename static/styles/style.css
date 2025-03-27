@@ -651,6 +651,19 @@ td {
     }
 }
 
+.reward-timer {
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 5px;
+    color: white;
+    text-align: center;
+}
+
+.reward-timer.available {
+    background: rgba(0, 255, 0, 0.7);
+    cursor: pointer;
+}
 
 @media screen and (max-width: 768px),
 screen and (max-width: 1024px) {
