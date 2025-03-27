@@ -270,14 +270,15 @@ body {
 
 
 .mart-container {
-    display: none;
+    display: block; /* По умолчанию виден */
     position: absolute;
     top: 50%;
-    /* Измените значение, чтобы заголовок и таблица не накладывались */
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
-    width: 100%;
+    width: 90%;
+    padding-bottom: 70px;
+    opacity: 1;
 }
 
 /* Стили для контейнера */
@@ -500,48 +501,7 @@ td {
     margin-top: 5px;
 }
 
-.wheel-container {
-    display: block;
-    position: absolute;
-    top: 50%;
-    /* Измените значение, чтобы заголовок и таблица не накладывались */
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-}
 
-.wheel {
-    width: 100%;
-    height: 100%;
-    transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
-    transform-origin: center;
-    /* Важно! Вращение вокруг центра */
-}
-
-.arrow {
-    position: absolute;
-    top: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 20px;
-    height: 40px;
-    background: #ff0000;
-    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-    z-index: 2;
-}
-
-.spin-btn {
-    margin-top: 30px;
-    padding: 15px 30px;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-.result {
-    margin-top: 20px;
-    font-size: 24px;
-    color: #333;
-}
 
 @media (max-width: 768px) {
     .lots-table {
@@ -665,6 +625,131 @@ td {
     cursor: pointer;
 }
 
+
+
+/* Контейнер колеса */
+.wheel-container {
+    display: none; /* По умолчанию скрыт */
+    position: absolute; /* Позиционируем как mart-container */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%; /* Устанавливаем такую же ширину, как у mart-container */
+    max-width: 300px; /* Ограничение ширины для колеса */
+    height: auto;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    z-index: 2; /* Устанавливаем выше контента, но ниже уведомлений */
+    padding-bottom: 70px; /* Учитываем высоту меню */
+}
+
+/* Колесо */
+.wheel {
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+    transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transform-origin: center;
+    margin-bottom: 10px;
+}
+
+/* Стрелка внизу, смотрит вверх */
+.arrow {
+    position: relative; /* Изменяем на relative, чтобы не привязываться к absolute позиционированию */
+    width: 0;
+    height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 40px solid red; /* Стрелка смотрит вверх */
+    margin-bottom: 10px; /* Отступ от кнопки */
+}
+
+/* Стиль кнопки */
+.glow-on-hover {
+    width: 220px;
+    height: 50px;
+    border: none;
+    outline: none;
+    color: #fff;
+    background: #111;
+    cursor: pointer;
+    position: relative;
+    z-index: 0;
+    border-radius: 10px;
+    font-size: 16px;
+    margin-top: 10px; /* Отступ сверху от стрелки */
+}
+
+/* Уведомление о призе */
+.prize-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #4CAF50;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    display: none;
+    animation: slideIn 0.5s ease;
+    z-index: 10; /* Уведомление поверх всего */
+}
+
+/* Убедимся, что меню не перекрывает контент */
+.game-menu {
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 60px;
+    background-color: rgba(44, 62, 80, 0.3);
+    z-index: 5; /* Меню ниже уведомления, но выше контента */
+}
+
+/* Контейнер mart для правильного размещения */
+.mart-container {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 90%;
+    padding-bottom: 70px;
+    opacity: 1;
+    z-index: 2; /* Устанавливаем тот же уровень, что и у wheel-container */
+}
+
+/* Стили для кнопок навигации */
+.nav-button {
+    position: absolute;
+    bottom: 80px; /* Чуть выше game-menu */
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: #ecf0f1;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    z-index: 3; /* Выше контента, но ниже уведомлений */
+}
+
+.nav-button:hover {
+    background-color: #2980b9;
+}
+
+.nav-button.right {
+    right: 20px; /* Кнопка "Вправо" прижата к правому краю */
+}
+
+.nav-button.left {
+    left: 20px; /* Кнопка "Влево" прижата к левому краю */
+}
 @media screen and (max-width: 768px),
 screen and (max-width: 1024px) {
     .container {
