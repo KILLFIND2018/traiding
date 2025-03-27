@@ -6,6 +6,12 @@ import threading
 import time
 from config import MYSQL_CONFIG  # Импорт конфигурации
 
+import logging
+
+# Отключаем логи запросов
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app, resources={r"/static/*": {"origins": "*"}})
 
