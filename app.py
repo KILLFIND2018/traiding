@@ -957,61 +957,40 @@ def spin_wheel():
         ]
         
         prize = prizes[prize_index]
+        refund = False
 
-        # Обрабатываем выигрыш
-        if prize in ["1000 токенов", "2000 токенов", "10000 токенов", "100000 токенов"]:
-            prize_amount = int(prize.split()[0])
-            new_balance += prize_amount
-            cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", 
-                          (new_balance, user_id))
+        # Проверяем, является ли приз предметом и есть ли он в инвентаре
+        if prize in ["кулер", "робот"]:
+            item_name = "Drinking Water Dispenser" if prize == "кулер" else "Humanoid robot"
+            cursor.execute("SELECT COUNT(*) FROM inventory WHERE user_id = %s AND item_name = %s", 
+                          (user_id, item_name))
+            item_exists = cursor.fetchone()[0] > 0
             
-        elif prize.startswith("x"):
-            multiplier = int(prize[1])
-            new_balance = new_balance * multiplier
-            cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", 
-                          (new_balance, user_id))
-            
-        elif prize == "кулер":
-            # Проверяем, есть ли уже предмет в инвентаре
-            cursor.execute("SELECT generation_per_hour FROM inventory WHERE user_id = %s AND item_name = %s", 
-                          (user_id, "Drinking Water Dispenser"))
-            result = cursor.fetchone()
-            
-            if result:
-                # Если предмет есть - обновляем
-                current_gen = result[0]
-                cursor.execute("""
-                    UPDATE inventory 
-                    SET generation_per_hour = %s 
-                    WHERE user_id = %s AND item_name = %s
-                """, (current_gen + 10, user_id, "Drinking Water Dispenser"))
+            if item_exists:
+                # Возвращаем стоимость вращения
+                new_balance += spin_cost
+                cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", 
+                              (new_balance, user_id))
+                refund = True
             else:
-                # Если предмета нет - добавляем
+                # Добавляем новый предмет
+                generation_per_hour = 10 if prize == "кулер" else 20
                 cursor.execute("""
                     INSERT INTO inventory (user_id, item_name, generation_per_hour)
                     VALUES (%s, %s, %s)
-                """, (user_id, "Drinking Water Dispenser", 10))
-            
-        elif prize == "робот":
-            # Проверяем, есть ли уже предмет в инвентаре
-            cursor.execute("SELECT generation_per_hour FROM inventory WHERE user_id = %s AND item_name = %s", 
-                          (user_id, "Humanoid robot"))
-            result = cursor.fetchone()
-            
-            if result:
-                # Если предмет есть - обновляем
-                current_gen = result[0]
-                cursor.execute("""
-                    UPDATE inventory 
-                    SET generation_per_hour = %s 
-                    WHERE user_id = %s AND item_name = %s
-                """, (current_gen + 20, user_id, "Humanoid robot"))
-            else:
-                # Если предмета нет - добавляем
-                cursor.execute("""
-                    INSERT INTO inventory (user_id, item_name, generation_per_hour)
-                    VALUES (%s, %s, %s)
-                """, (user_id, "Humanoid robot", 20))
+                """, (user_id, item_name, generation_per_hour))
+        else:
+            # Обрабатываем выигрыш токенов
+            if prize in ["1000 токенов", "2000 токенов", "10000 токенов", "100000 токенов"]:
+                prize_amount = int(prize.split()[0])
+                new_balance += prize_amount
+                cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", 
+                              (new_balance, user_id))
+            elif prize.startswith("x"):
+                multiplier = int(prize[1])
+                new_balance = new_balance * multiplier
+                cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", 
+                              (new_balance, user_id))
 
         connection.commit()
         
@@ -1019,7 +998,8 @@ def spin_wheel():
             "status": "success",
             "prize": prize,
             "prize_index": prize_index,
-            "new_balance": new_balance
+            "new_balance": new_balance,
+            "refund": refund  # Указываем, был ли возврат средств
         }), 200
 
     except mysql.connector.Error as err:

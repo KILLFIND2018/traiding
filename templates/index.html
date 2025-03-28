@@ -918,7 +918,7 @@
 let isSpinning = false;
 
 async function startSpin() {
-    if(isSpinning) return;
+    if (isSpinning) return;
     
     const userId = new URLSearchParams(window.location.search).get('user_id');
     if (!userId) {
@@ -931,31 +931,25 @@ async function startSpin() {
     const sectors = prizes.length;
     const sectorAngle = 360 / sectors;
     
-    // Выбираем случайный приз (индекс от 0 до 7)
     const targetIndex = Math.floor(Math.random() * sectors);
-    
-    // Рассчитываем конечный угол с учетом того, что указатель внизу
-    // Добавляем 90 градусов, так как начальное положение - 0 градусов (приз сверху)
-    // Нам нужно, чтобы выбранный приз оказался внизу
-    const extraRotations = 5; // Количество полных оборотов
-    const finalAngle = (extraRotations * 360) + (targetIndex * sectorAngle) + (sectorAngle / 2) + 0;
+    const extraRotations = 5;
+    const finalAngle = (extraRotations * 360) + (targetIndex * sectorAngle) + (sectorAngle / 2);
 
     wheel.style.transition = 'none';
     wheel.style.transform = `rotate(${0}deg)`;
     
     setTimeout(() => {
         wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
-        wheel.style.transform = `rotate(${-finalAngle}deg)`; // Отрицательный угол для вращения по часовой стрелке
+        wheel.style.transform = `rotate(${-finalAngle}deg)`;
     }, 10);
 
     try {
-        // Отправляем запрос на сервер с выбранным индексом приза
         const response = await fetch('/spin_wheel', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 user_id: userId,
-                prize_index: targetIndex  // Отправляем индекс выбранного приза
+                prize_index: targetIndex
             })
         });
         
@@ -963,18 +957,19 @@ async function startSpin() {
         
         setTimeout(() => {
             if (data.status === "success") {
-                alert(`ПОЗДРАВЛЯЕМ! ВЫ ВЫИГРАЛИ: ${data.prize}! Ваш баланс: ${data.new_balance}`);
+                let message = `ПОЗДРАВЛЯЕМ! ВЫ ВЫИГРАЛИ: ${data.prize}! Ваш баланс: ${data.new_balance}`;
+                if (data.refund) {
+                    message = `Предмет "${data.prize}" уже есть в вашем инвентаре. Стоимость вращения (100 монет) возвращена. Ваш баланс: ${data.new_balance}`;
+                }
+                alert(message);
                 
-                // Обновляем баланс на странице
                 document.getElementById('currency-amount').textContent = data.new_balance;
                 
-                // Если выиграли предмет, обновляем инвентарь
-                if (data.prize === "кулер" || data.prize === "робот") {
+                if (data.prize === "кулер" || data.prize === "робот" && !data.refund) {
                     loadInventory(userId);
                 }
             } else {
                 alert(`Ошибка: ${data.message}`);
-                // Возвращаем колесо в исходное положение при ошибке
                 wheel.style.transition = 'none';
                 wheel.style.transform = `rotate(${0}deg)`;
             }
@@ -984,7 +979,6 @@ async function startSpin() {
     } catch (error) {
         console.error('Ошибка при вращении колеса:', error);
         alert('Произошла ошибка при соединении с сервером');
-        // Возвращаем колесо в исходное положение при ошибке
         wheel.style.transition = 'none';
         wheel.style.transform = `rotate(${0}deg)`;
         isSpinning = false;
