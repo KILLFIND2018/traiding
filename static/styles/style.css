@@ -93,7 +93,10 @@ body {
     position: relative;
 }
 
-
+.main {
+    width: 100%;
+    overflow-x: hidden;
+}
 
 .content {
     display: flex;
@@ -186,6 +189,7 @@ body {
 
 
 .auction-container {
+    padding-bottom: 30%;
     display: block;
     position: absolute;
     left: 50%;
@@ -253,39 +257,16 @@ body {
 
 
 
-.mart-container {
-    display: block; /* По умолчанию виден */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    width: 90%;
-    padding-bottom: 70px;
-    opacity: 1;
-}
-
 /* Стили для контейнера */
 .inventory-container {
     display: block;
     position: absolute;
-    top: 50%;
-    /* Позиционирование по вертикали */
     left: 50%;
-    /* Позиционирование по горизонтали */
-    transform: translate(-50%, -50%);
-    /* Центрирование */
+    transform: translate(-50%, -10%);
     text-align: center;
     width: 80%;
-    /* Ширина контейнера */
-    max-height: 300px;
-    /* Фиксированная высота контейнера */
-    overflow-y: auto;
-    /* Включаем вертикальную прокрутку */
     background-color: rgba(44, 62, 80, 0.1);
-    /* Цвет фона контейнера */
-    padding: 10px;
-    /* Отступы внутри контейнера */
+    padding-bottom: 30%;
 }
 
 /* Стили для таблицы */
@@ -321,19 +302,7 @@ body {
     /* Цвет фона при наведении */
 }
 
-/* Стили для контейнера таблицы */
-.market {
-    max-height: 300px;
-    /* Фиксированная высота контейнера */
-    overflow-y: auto;
-    /* Включаем вертикальную прокрутку */
-    width: 90%;
-    /* Ширина контейнера */
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 20px;
-    /* Отступ сверху */
-}
+
 
 /* Стили для таблицы */
 .market-table {
@@ -372,15 +341,12 @@ body {
 /* Стили для контейнера рейтинга */
 .rating-container {
     position: absolute;
-    top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -10%);
     text-align: center;
-    width: 80%;
-    max-height: 300px;
-    overflow-y: auto;
+    width: 95%;
     background-color: rgba(44, 62, 80, 0.1);
-    padding: 10px;
+    padding-bottom: 30%;
 }
 
 
@@ -503,7 +469,7 @@ td {
 
 .bitcoin-widget {
     padding: 10px;
-    background: rgba(0, 0, 0, 0.7);
+    background-color: rgba(44, 62, 80, 0.3);
     border-radius: 5px;
     margin-bottom: 10px;
     color: #fff;
@@ -597,7 +563,7 @@ td {
 .reward-timer {
     margin: 10px 0;
     padding: 10px;
-    background: rgba(0, 0, 0, 0.7);
+    background-color: rgba(44, 62, 80, 0.3);
     border-radius: 5px;
     color: white;
     text-align: center;
@@ -614,17 +580,13 @@ td {
 .wheel-container {
     display: none; /* По умолчанию скрыт */
     position: absolute; /* Позиционируем как mart-container */
-    top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%; /* Устанавливаем такую же ширину, как у mart-container */
-    max-width: 300px; /* Ограничение ширины для колеса */
-    height: auto;
+    transform: translate(-50%, -10%);
     flex-direction: column;
     align-items: center;
     opacity: 0;
     z-index: 2; /* Устанавливаем выше контента, но ниже уведомлений */
-    padding-bottom: 70px; /* Учитываем высоту меню */
+    padding-bottom: 30%; /* Учитываем высоту меню */
 }
 
 /* Колесо */
@@ -644,7 +606,7 @@ td {
     height: 0;
     border-left: 20px solid transparent;
     border-right: 20px solid transparent;
-    border-bottom: 40px solid red; /* Стрелка смотрит вверх */
+    border-bottom: 40px solid rgb(23, 61, 141); /* Стрелка смотрит вверх */
     margin-bottom: 10px; /* Отступ от кнопки */
 }
 
@@ -697,20 +659,30 @@ td {
 .mart-container {
     display: block;
     position: absolute;
-    top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -10%);
     text-align: center;
-    width: 90%;
-    padding-bottom: 70px;
+    width: 95%;
+    padding-bottom: 30%;
     opacity: 1;
     z-index: 2; /* Устанавливаем тот же уровень, что и у wheel-container */
 }
 
+.spin-btn {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: #ecf0f1;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
 /* Стили для кнопок навигации */
 .nav-button {
-    position: absolute;
     bottom: 80px; /* Чуть выше game-menu */
+    margin-top: 10px;
     padding: 10px 20px;
     background-color: #3498db;
     color: #ecf0f1;
@@ -727,11 +699,11 @@ td {
 }
 
 .nav-button.right {
-    right: 20px; /* Кнопка "Вправо" прижата к правому краю */
+    float: right; /* Кнопка "Вправо" прижата к правому краю */
 }
 
 .nav-button.left {
-    left: 20px; /* Кнопка "Влево" прижата к левому краю */
+    float: left; /* Кнопка "Влево" прижата к левому краю */
 }
 @media screen and (max-width: 768px),
 screen and (max-width: 1024px) {
