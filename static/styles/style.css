@@ -188,29 +188,13 @@ body {
 .auction-container {
     display: block;
     position: absolute;
-    /* Позиционируем относительно родителя */
-    top: 50%;
-    /* Центрирование по вертикали */
     left: 50%;
-    /* Центрирование по горизонтали */
-    transform: translate(-50%, -50%);
-    /* Смещение для точного центрирования */
-    width: 80%;
-    /* Ширина как у inventory-container и rating-container */
-    max-height: 350px;
-    /* Фиксированная высота как у обоих контейнеров */
-    overflow-y: auto;
-    /* Включаем вертикальную прокрутку */
+    transform: translate(-50%, -10%);
+    width: 95%;
     background-color: rgba(44, 62, 80, 0.1);
-    /* Полупрозрачный фон как у inventory-container */
-    padding: 10px;
-    /* Внутренние отступы как у обоих контейнеров */
     box-sizing: border-box;
-    /* Учитываем padding в ширине */
     text-align: center;
-    /* Выравнивание текста по центру как у rating-container */
     gap: 20px;
-    /* Оставляем промежуток между элементами */
 }
 
 .chat-container {
@@ -518,7 +502,6 @@ td {
 
 
 .bitcoin-widget {
-    width: 100%;
     padding: 10px;
     background: rgba(0, 0, 0, 0.7);
     border-radius: 5px;
@@ -754,6 +737,7 @@ td {
 screen and (max-width: 1024px) {
     .container {
         max-height: 100%;
+        overflow-y: auto;
     }
 
     .button {
