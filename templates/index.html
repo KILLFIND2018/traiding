@@ -133,15 +133,9 @@
                     <button class="nav-button right" id="to-wheel">Вправо</button>
                 </div>
                 <div class="wheel-container">
-                    <div class="balance">Баланс: <span id="balance">1000</span> монет</div>
                     <img src="/static/img_whell/whell.png" id="wheel" class="wheel">
                     <div class="arrow"></div>
-                    <button class="glow-on-hover" onclick="startSpin()">Крутить (100 монет)</button>
-                    <div class="inventory">
-                        <h3>Инвентарь</h3>
-                        <div id="inventory-items"></div>
-                    </div>
-                    <div class="prize-alert" id="prizeAlert"></div>
+                    <button class="spin-btn" onclick="startSpin()">КРУТИТЬ!</button>
                     <button class="nav-button left" id="to-mart">Влево</button>
                 </div>
             </div>
@@ -910,144 +904,92 @@
             }
         }
 
-        // Инициализация данных
-        let gameData = {
-            balance: 1000,
-            inventory: {},
-            spinCost: 100
-        };
-
-        // Массив призов (8 призов)
         const prizes = [
-            "2000 токенов",
-            "робот",
-            "x2",
-            "x3",
-            "1000",
-            "кулер",
-            "10000",
-            "100000",
+    "x3 токенов", 
+    "1000 токенов", 
+    "кулер", 
+    "10000 токенов", 
+    "100000 токенов", 
+    "2000 токенов", 
+    "робот", 
+    "x2 токенов"
+];
 
-        ];
+let isSpinning = false;
 
-        // Предметы, которые требуют повторной прокрутки
-        const retryItems = ['кулер', 'робот'];
+async function startSpin() {
+    if(isSpinning) return;
+    
+    const userId = new URLSearchParams(window.location.search).get('user_id');
+    if (!userId) {
+        alert("Не удалось определить пользователя");
+        return;
+    }
 
-        // Инициализация при загрузке
-        function initGame() {
-            loadData();
-            updateUI();
-        }
+    isSpinning = true;
+    const wheel = document.getElementById('wheel');
+    const sectors = prizes.length;
+    const sectorAngle = 360 / sectors;
+    
+    // Выбираем случайный приз (индекс от 0 до 7)
+    const targetIndex = Math.floor(Math.random() * sectors);
+    
+    // Рассчитываем конечный угол с учетом того, что указатель внизу
+    // Добавляем 90 градусов, так как начальное положение - 0 градусов (приз сверху)
+    // Нам нужно, чтобы выбранный приз оказался внизу
+    const extraRotations = 5; // Количество полных оборотов
+    const finalAngle = (extraRotations * 360) + (targetIndex * sectorAngle) + (sectorAngle / 2) + 0;
 
-        // Загрузка данных
-        function loadData() {
-            const savedData = localStorage.getItem('gameData');
-            if (savedData) gameData = JSON.parse(savedData);
-        }
+    wheel.style.transition = 'none';
+    wheel.style.transform = `rotate(${0}deg)`;
+    
+    setTimeout(() => {
+        wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
+        wheel.style.transform = `rotate(${-finalAngle}deg)`; // Отрицательный угол для вращения по часовой стрелке
+    }, 10);
 
-        // Сохранение данных
-        function saveData() {
-            localStorage.setItem('gameData', JSON.stringify(gameData));
-        }
-
-        // Обновление интерфейса
-        function updateUI() {
-            document.getElementById('balance').textContent = gameData.balance;
-            updateInventoryDisplay();
-        }
-
-        // Обновление инвентаря
-        function updateInventoryDisplay() {
-            const container = document.getElementById('inventory-items');
-            container.innerHTML = Object.entries(gameData.inventory)
-                .map(([item, count]) => `
-                    <div class="inventory-item">
-                        ${item} (${count})
-                    </div>
-                `).join('');
-        }
-
-        // Обработка прокрутки
-        async function startSpin() {
-            console.log('Начало прокрутки...');
-
-            // Проверка баланса
-            if (gameData.balance < gameData.spinCost) {
-                alert('Недостаточно монет!');
-                return;
-            }
-
-            // Списание средств
-            gameData.balance -= gameData.spinCost;
-            updateUI();
-            console.log(`Списано ${gameData.spinCost} монет`);
-
-            // Блокировка кнопки
-            const btn = document.querySelector('.glow-on-hover');
-            btn.disabled = true;
-
-            // Анимация вращения
-            let result = await spinWheel();
-
-            // Обработка приза
-            while (retryItems.includes(result) && gameData.inventory[result]) {
-                console.log(`Предмет "${result}" уже есть в инвентаре. Повторная прокрутка...`);
-                result = await spinWheel();
-            }
-
-            handlePrize(result);
-            saveData();
-
-            // Разблокировка кнопки
-            btn.disabled = false;
-            console.log('Прокрутка завершена');
-        }
-
-        // Логика вращения колеса
-        async function spinWheel() {
-            return new Promise(resolve => {
-                const wheel = document.getElementById('wheel');
-                const sectors = prizes.length; // 8 секторов
-                const sectorAngle = 360 / sectors; // 45° на сектор
-                const targetIndex = Math.floor(Math.random() * sectors); // Случайный индекс
-
-                // Расчет угла с учетом стрелки внизу
-                const finalAngle = 1440 + (targetIndex * sectorAngle) + (sectorAngle / 2) + 90;
-
-                wheel.style.transition = 'transform 3s cubic-bezier(0.25, 0.1, 0.25, 1)';
-                wheel.style.transform = `rotate(${finalAngle}deg)`;
-
-                setTimeout(() => {
-                    resolve(prizes[targetIndex]);
-                }, 3500);
-            });
-        }
-
-        // Обработка выигрыша
-        function handlePrize(prize) {
-            const alert = document.getElementById('prizeAlert');
-
-            if (prize.includes('токенов')) {
-                const multiplier = parseFloat(prize.replace('x', '').replace(' токенов', ''));
-                const amount = gameData.spinCost * multiplier;
-                gameData.balance += amount;
-                alert.textContent = `+${amount} монет!`;
+    try {
+        // Отправляем запрос на сервер с выбранным индексом приза
+        const response = await fetch('/spin_wheel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                user_id: userId,
+                prize_index: targetIndex  // Отправляем индекс выбранного приза
+            })
+        });
+        
+        const data = await response.json();
+        
+        setTimeout(() => {
+            if (data.status === "success") {
+                alert(`ПОЗДРАВЛЯЕМ! ВЫ ВЫИГРАЛИ: ${data.prize}! Ваш баланс: ${data.new_balance}`);
+                
+                // Обновляем баланс на странице
+                document.getElementById('currency-amount').textContent = data.new_balance;
+                
+                // Если выиграли предмет, обновляем инвентарь
+                if (data.prize === "кулер" || data.prize === "робот") {
+                    loadInventory(userId);
+                }
             } else {
-                gameData.inventory[prize] = (gameData.inventory[prize] || 0) + 1;
-                alert.textContent = `Получено: ${prize}!`;
+                alert(`Ошибка: ${data.message}`);
+                // Возвращаем колесо в исходное положение при ошибке
+                wheel.style.transition = 'none';
+                wheel.style.transform = `rotate(${0}deg)`;
             }
-
-            // Показ уведомления
-            alert.style.display = 'block';
-            setTimeout(() => alert.style.display = 'none', 3000);
-
-            updateUI();
-            console.log('Получен приз:', prize);
-        }
-
-        // Запуск игры
-        initGame();
-
+            isSpinning = false;
+        }, 4050);
+        
+    } catch (error) {
+        console.error('Ошибка при вращении колеса:', error);
+        alert('Произошла ошибка при соединении с сервером');
+        // Возвращаем колесо в исходное положение при ошибке
+        wheel.style.transition = 'none';
+        wheel.style.transform = `rotate(${0}deg)`;
+        isSpinning = false;
+    }
+}
 
         document.addEventListener('DOMContentLoaded', () => {
             const martContainer = document.querySelector('.mart-container');
