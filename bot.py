@@ -21,7 +21,7 @@ async def start(update, context):
         if not user_exists:
             query = """
                 INSERT INTO user_progress (user_id, username, first_name, last_name, balance, total_generation, progression_factor, last_updated, is_active)
-                VALUES (%s, %s, %s, %s, 0, 11, 1.0, NOW(), 0)
+                VALUES (%s, %s, %s, %s, 0, 10, 0, NOW(), 0)
             """
             cursor.execute(query, (user_id, username, first_name, last_name))
             cursor.execute("""
