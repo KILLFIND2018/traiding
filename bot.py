@@ -15,43 +15,75 @@ async def start(update, context):
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
+
+        # Проверяем существование пользователя
         cursor.execute("SELECT * FROM user_progress WHERE user_id = %s", (user_id,))
         user_exists = cursor.fetchone()
 
         if not user_exists:
+            # Создаем пользователя с генерацией 10 (от Older PC) и активируем генерацию
             query = """
-                INSERT INTO user_progress (user_id, username, first_name, last_name, balance, total_generation, progression_factor, last_updated, is_active)
-                VALUES (%s, %s, %s, %s, 0, 10, 0, NOW(), 0)
+                INSERT INTO user_progress 
+                (user_id, username, first_name, last_name, balance, total_generation, is_active, last_updated)
+                VALUES (%s, %s, %s, %s, 0, 10, 1, NOW())
             """
             cursor.execute(query, (user_id, username, first_name, last_name))
+
+            # Добавляем стартовый предмет
             cursor.execute("""
                 INSERT INTO inventory (user_id, item_name, generation_per_hour)
-                VALUES (%s, %s, %s)
-            """, (user_id, "Older PC", 10))
+                VALUES (%s, 'Older PC', 10)
+            """, (user_id,))
+
+            # Обработка реферального кода
+            if referral_code:
+                # Проверяем код и блокируем строку
+                cursor.execute("""
+                    SELECT user_id 
+                    FROM referrals 
+                    WHERE referral_code = %s AND used_by IS NULL
+                    FOR UPDATE
+                """, (referral_code,))
+                result = cursor.fetchone()
+
+                if result and result[0] != user_id:
+                    referrer_id = result[0]
+
+                    # Помечаем код как использованный
+                    cursor.execute("""
+                        UPDATE referrals 
+                        SET used_by = %s, used_at = NOW() 
+                        WHERE referral_code = %s
+                    """, (user_id, referral_code))
+
+                    # Добавляем Macbook рефереру
+                    cursor.execute("""
+                        INSERT INTO inventory (user_id, item_name, generation_per_hour)
+                        VALUES (%s, 'Macbook', 50)
+                    """, (referrer_id,))
+
+                    # Обновляем total_generation реферера
+                    cursor.execute("""
+                        UPDATE user_progress 
+                        SET total_generation = total_generation + 50 
+                        WHERE user_id = %s
+                    """, (referrer_id,))
+
+                    # Уведомление в rewards
+                    cursor.execute("""
+                        INSERT INTO rewards (user_id, item_name)
+                        VALUES (%s, 'Macbook')
+                    """, (referrer_id,))
+
             connection.commit()
 
-            if referral_code:
-                cursor.execute("SELECT user_id FROM referrals WHERE referral_code = %s AND used_by IS NULL", (referral_code,))
-                result = cursor.fetchone()
-                if result:
-                    referrer_id = result[0]
-                    if referrer_id != user_id:
-                        cursor.execute("""
-                            UPDATE referrals 
-                            SET used_by = %s, used_at = NOW()
-                            WHERE referral_code = %s
-                        """, (user_id, referral_code))
-                        cursor.execute("""
-                            INSERT INTO inventory (user_id, item_name, generation_per_hour)
-                            VALUES (%s, %s, %s)
-                        """, (referrer_id, "Macbook", 50))
-                        # Добавляем запись в таблицу rewards
-                        cursor.execute("""
-                            INSERT INTO rewards (user_id, item_name)
-                            VALUES (%s, %s)
-                        """, (referrer_id, "Macbook"))
-                        connection.commit()
-                        print(f"Пользователь {user_id} использовал реферальный код {referral_code}. Реферер {referrer_id} получил Macbook.")
+            # Запускаем генерацию через API
+            try:
+                response = requests.post('http://localhost:5000/start', json={'user_id': user_id})
+                if response.status_code != 200:
+                    print(f"Ошибка запуска генерации для {user_id}")
+            except Exception as e:
+                print(f"API error: {e}")
 
     except mysql.connector.Error as err:
         print(f"Ошибка базы данных: {err}")
@@ -59,7 +91,7 @@ async def start(update, context):
         cursor.close()
         connection.close()
 
-
+    # Отправка интерфейса
     web_app_url = WEB_APP_URL.format(user_id=user_id)
     keyboard = [
         [InlineKeyboardButton("Открыть Web App", web_app={'url': web_app_url})],
@@ -67,11 +99,7 @@ async def start(update, context):
         [InlineKeyboardButton("Пригласить друга", callback_data='invite_friend')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await update.message.reply_text(
-        'Добро пожаловать в Crypto Tycoon Simulator! Выберите действие:',
-        reply_markup=reply_markup
-    )
+    await update.message.reply_text('Добро пожаловать!', reply_markup=reply_markup)
 
 async def handle_callback(update, context):
     query = update.callback_query
