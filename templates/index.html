@@ -899,18 +899,21 @@
             const response = await fetch(`/get_login_reward_status?user_id=${userId}`);
             const data = await response.json();
             const rewardStatus = document.getElementById('reward-status');
+            const timerElement = document.querySelector('.reward-timer');
+
+            // Удаляем все классы статусов
+            timerElement.classList.remove('available');
 
             if (data.status === "available") {
                 rewardStatus.textContent = "Доступна! Кликните для получения";
-                rewardStatus.parentElement.classList.add('available');
-                rewardStatus.parentElement.onclick = () => claimLoginReward(userId);
+                timerElement.classList.add('available'); // Добавляем зеленый класс
+                timerElement.onclick = () => claimLoginReward(userId);
             } else if (data.status === "pending") {
                 const remaining = data.remaining;
                 const minutes = Math.floor(remaining / 60);
                 const seconds = Math.floor(remaining % 60);
                 rewardStatus.textContent = `Доступна через ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                rewardStatus.parentElement.classList.remove('available');
-                rewardStatus.parentElement.onclick = null;
+                timerElement.onclick = null; // Убираем обработчик клика
             } else {
                 rewardStatus.textContent = "Ошибка проверки";
             }

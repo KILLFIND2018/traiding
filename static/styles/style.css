@@ -559,6 +559,10 @@ td {
     margin-top: 5px;
 }
 
+.hidden {
+    display: none;
+}
+
 .reward-notification {
     position: absolute;
     top: 10px;
@@ -578,9 +582,7 @@ td {
     margin-top: 10px;
 }
 
-.hidden {
-    display: none;
-}
+
 
 @keyframes slideDown {
     from {
@@ -605,15 +607,45 @@ td {
 .reward-timer {
     margin: 10px 0;
     padding: 10px;
-    background-color: rgba(44, 62, 80, 0.3);
     border-radius: 5px;
     color: white;
     text-align: center;
+    position: relative;
+    overflow: hidden; /* Скрываем избыток градиента */
+    background: linear-gradient(
+        45deg,
+        #7b10108f,  /* Красный */
+        #ff4d4d8f,  /* Светло-красный */
+        #7b10108f
+    );
+    background-size: 400% 400%; /* Увеличиваем размер градиента для анимации */
+    animation: gradient-pulse 3s ease infinite; /* Анимация для запрета */
+    transition: all 0.3s ease;
+    transition: background 0.5s ease;
 }
 
 .reward-timer.available {
-    background: rgba(0, 255, 0, 0.7);
+    animation: none; /* Отключаем анимацию */
+    background: linear-gradient(
+        45deg,
+        #097e098f,  /* Зеленый */
+        #2b9b2b8f,  /* Лаймовый */
+        #097e098f
+    );
     cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); /* Свечение для разрешения */
+}
+
+@keyframes gradient-pulse {
+    0% {
+        background-position: 0% 50%; /* Начало градиента */
+    }
+    50% {
+        background-position: 100% 50%; /* Сдвиг градиента */
+    }
+    100% {
+        background-position: 0% 50%; /* Возврат в исходное положение */
+    }
 }
 
 
