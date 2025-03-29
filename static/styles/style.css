@@ -219,7 +219,7 @@ body {
 .chat-input {
     display: flex;
     gap: 10px;
-    width: 100%;
+    width: 90%;
     padding: 5px;
 }
 
@@ -537,18 +537,39 @@ td {
 
 .bet-container button {
     padding: 5px 10px;
-    background-color: #3498db;
+    background: linear-gradient(
+        45deg,
+        #097e098f,  /* Зеленый */
+        #2b9b2b8f,  /* Лаймовый */
+        #097e098f
+    );
     border: none;
     border-radius: 5px;
     cursor: pointer;
 }
 
-.bet-container button:disabled {
-    background-color: #7f8c8d;
+.bet-container button:disabled, .bet-container input:disabled {
+    overflow: hidden; /* Скрываем избыток градиента */
+    background: linear-gradient(
+        45deg,
+        #7b10108f,  /* Красный */
+        #ff4d4d8f,  /* Светло-красный */
+        #7b10108f
+    );
+    background-size: 400% 400%; /* Увеличиваем размер градиента для анимации */
+    animation: gradient-pulse 3s ease infinite; /* Анимация для запрета */
+    transition: all 0.3s ease;
+    transition: background 0.5s ease;
     cursor: not-allowed;
 }
 
 .bet-container input {
+    background: linear-gradient(
+        45deg,
+        #097e098f,  /* Зеленый */
+        #2b9b2b8f,  /* Лаймовый */
+        #097e098f
+    );
     padding: 10px 10px;
     width: 100px;
     border-radius: 5px;
