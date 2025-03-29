@@ -401,10 +401,20 @@ def create_lot():
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        # Проверка наличия предмета в инвентаре
-        cursor.execute("SELECT COUNT(*) FROM inventory WHERE user_id = %s AND item_name = %s", (user_id, item_name))
-        if cursor.fetchone()[0] == 0:
+        #Проверка наличия предмета в инвентаре и получение его генерации
+        cursor.execute("SELECT generation_per_hour FROM inventory WHERE user_id = %s AND item_name = %s", (user_id, item_name))
+        inventory_item = cursor.fetchone()
+        if not inventory_item:
             return jsonify({"status": "error", "message": "Товар не найден в инвентаре"}), 400
+
+        generation_per_hour = inventory_item[0]
+
+        # Уменьшаем total_generation продавца
+        cursor.execute("""
+            UPDATE user_progress 
+            SET total_generation = total_generation - %s 
+            WHERE user_id = %s
+        """, (generation_per_hour, user_id))
 
         # Создание лота
         cursor.execute("""
@@ -481,7 +491,7 @@ def complete_lot():
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        # Проверка лота и прав продавца
+        # Сначала получаем данные лота
         cursor.execute("""
             SELECT seller_id, item_name, current_bid, current_bidder_id 
             FROM auction_lots 
@@ -498,7 +508,14 @@ def complete_lot():
         if not current_bidder_id:
             return jsonify({"status": "error", "message": "Пока нет ставок"}), 400
 
-        # Транзакция
+        # Получаем generation_per_hour из market_items
+        cursor.execute("SELECT generation_per_hour FROM market_items WHERE name = %s", (item_name,))
+        market_item = cursor.fetchone()
+        if not market_item:
+            return jsonify({"status": "error", "message": "Предмет не найден в магазине"}), 404
+        generation_per_hour = market_item[0]
+
+        # Проверка баланса покупателя
         cursor.execute("SELECT balance FROM user_progress WHERE user_id = %s", (current_bidder_id,))
         buyer_balance = cursor.fetchone()[0]
         if buyer_balance < current_bid:
@@ -511,8 +528,14 @@ def complete_lot():
         # Передача предмета покупателю
         cursor.execute("""
             INSERT INTO inventory (user_id, item_name, generation_per_hour)
-            SELECT %s, %s, generation_per_hour FROM market_items WHERE name = %s
-        """, (current_bidder_id, item_name, item_name))
+            VALUES (%s, %s, %s)
+        """, (current_bidder_id, item_name, generation_per_hour))
+        # Увеличиваем total_generation покупателя
+        cursor.execute("""
+            UPDATE user_progress 
+            SET total_generation = total_generation + %s 
+            WHERE user_id = %s
+        """, (generation_per_hour, current_bidder_id))
         # Завершение лота
         cursor.execute("UPDATE auction_lots SET is_active = 0 WHERE lot_id = %s", (lot_id,))
 
