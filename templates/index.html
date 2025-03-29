@@ -31,8 +31,8 @@
                 <div id="bitcoin-price">Текущая цена BTC: <span id="btc-price">Загрузка...</span> $</div>
                 <div id="bitcoin-graph"></div>
                 <div class="bet-container">
-                    <button id="bet-up" disabled>Ставка: Рост</button>
-                    <button id="bet-down" disabled>Ставка: Падение</button>
+                    <button id="bet-up" disabled><img class  = "btn-bet" src="/static/img_whell/up.png" alt=""></button>
+                    <button id="bet-down" disabled><img class  = "btn-bet" src="/static/img_whell/down.png" alt="" srcset=""></button>
                     <input type="number" id="bet-amount" placeholder="Сумма ставки" min="1" disabled>
                     <p id="bet-status">Следующая ставка доступна через: <span id="bet-timer">00:00:00</span></p>
                 </div>
@@ -144,21 +144,22 @@
                     <button class = "buy-stars" id="buyButton">Купить Stars</button>
                 </div>
             </div>
+            <div class="game-menu">
+                <button class="button auction" type="button" id="auctionButton"><img src="/static/auction.png"
+                        alt="auction"></button>
+                <div class="separator"></div>
+                <button class="button rating" type="button"><img src="/static/rating.png" alt="rating"></button>
+                <div class="separator"></div>
+                <button class="button inventory" type="button"><img src="/static/inventory.png" alt="inventory"></button>
+                <div class="separator"></div>
+                <button class="button mart" type="button"><img src="/static/mart.png" alt="mart"></button>
+                <div class="separator"></div>
+                <button class="button donate" type="button"><img src="/static/bitcoin.png" alt="bitcoin"></button>
+                <div class="separator-hidden"></div>
+                <button class="button return" type="button"><img src="/static/return.png" alt="return"></button>
+            </div>
         </div>
-        <div class="game-menu">
-            <button class="button auction" type="button" id="auctionButton"><img src="/static/auction.png"
-                    alt="auction"></button>
-            <div class="separator"></div>
-            <button class="button rating" type="button"><img src="/static/rating.png" alt="rating"></button>
-            <div class="separator"></div>
-            <button class="button inventory" type="button"><img src="/static/inventory.png" alt="inventory"></button>
-            <div class="separator"></div>
-            <button class="button mart" type="button"><img src="/static/mart.png" alt="mart"></button>
-            <div class="separator"></div>
-            <button class="button donate" type="button"><img src="/static/bitcoin.png" alt="bitcoin"></button>
-            <div class="separator-hidden"></div>
-            <button class="button return" type="button"><img src="/static/return.png" alt="return"></button>
-        </div>
+        
     </div>
     <script>
         // Получаем элемент main первым
