@@ -142,7 +142,7 @@
                     <button class="buy-stars" id="buyButton">Купить Stars</button>
                     <button id="invite-friend">
                         <img src="/static/referal.png" alt="Пригласить друга">
-                      </button>
+                    </button>
                 </div>
             </div>
             <div class="game-menu">
@@ -955,13 +955,27 @@
         const prizes = [
             "x3 токенов",
             "1000 токенов",
-            "Drinking Water Dispenser",
+            "Drinking Water Dispenser", // 2% шанс
             "10000 токенов",
             "100000 токенов",
             "2000 токенов",
-            "Humanoid robot",
+            "Humanoid robot", // 2% шанс
             "x2 токенов"
         ];
+
+        // Вероятности для каждого приза в процентах
+        const probabilities = [16, 16, 2, 16, 16, 16, 2, 16];
+
+        function getRandomIndex() {
+            const total = probabilities.reduce((sum, prob) => sum + prob, 0);
+            let random = Math.random() * total;
+
+            for (let i = 0; i < probabilities.length; i++) {
+                if (random < probabilities[i]) return i;
+                random -= probabilities[i];
+            }
+            return probabilities.length - 1;
+        }
 
         let isSpinning = false;
 
@@ -979,7 +993,7 @@
             const sectors = prizes.length;
             const sectorAngle = 360 / sectors;
 
-            const targetIndex = Math.floor(Math.random() * sectors);
+            const targetIndex = getRandomIndex();
             const extraRotations = 5;
             const finalAngle = (extraRotations * 360) + (targetIndex * sectorAngle) + (sectorAngle / 2);
 
