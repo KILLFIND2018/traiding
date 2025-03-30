@@ -31,8 +31,9 @@
                 <div id="bitcoin-price">Текущая цена BTC: <span id="btc-price">Загрузка...</span> $</div>
                 <div id="bitcoin-graph"></div>
                 <div class="bet-container">
-                    <button id="bet-up" disabled><img class  = "btn-bet" src="/static/img_whell/up.png" alt=""></button>
-                    <button id="bet-down" disabled><img class  = "btn-bet" src="/static/img_whell/down.png" alt="" srcset=""></button>
+                    <button id="bet-up" disabled><img class="btn-bet" src="/static/img_whell/up.png" alt=""></button>
+                    <button id="bet-down" disabled><img class="btn-bet" src="/static/img_whell/down.png" alt=""
+                            srcset=""></button>
                     <input type="number" id="bet-amount" placeholder="Сумма ставки" min="1" disabled>
                     <p id="bet-status">Следующая ставка доступна через: <span id="bet-timer">00:00:00</span></p>
                 </div>
@@ -47,10 +48,7 @@
         </div>
         <div class="content">
             <div class="main" id="main">
-                <div id="reward-notification" class="reward-notification hidden">
-                    <p>Вы получили MacBook за приглашение друга!</p>
-                    <img id="reward-image" src="/static/referal.png" alt="MacBook Reward">
-                </div>
+
             </div>
             <div class="auction" id="auction">
                 <div class="auction-container">
@@ -59,7 +57,7 @@
                         <div class="chat-messages" id="chat-messages"></div>
                         <div class="chat-input">
                             <input type="text" id="chat-input" placeholder="Сообщение...">
-                            <button class = "sender" onclick="sendChatMessage()">Отправить</button>
+                            <button class="sender" onclick="sendChatMessage()">Отправить</button>
                         </div>
                     </div>
                     <div class="auction-lots">
@@ -85,7 +83,7 @@
                             <select id="item-select" name="item_name"></select>
                             <input type="text" name="description" placeholder="Описание лота" required>
                             <input type="number" name="start_price" placeholder="Стартовая цена" required min="1">
-                            <button class = "auctions" type="submit">Выставить лот</button>
+                            <button class="auctions" type="submit">Выставить лот</button>
                         </form>
                     </div>
                 </div>
@@ -141,7 +139,10 @@
             </div>
             <div class="donate" id="donate">
                 <div class="donate-container">
-                    <button class = "buy-stars" id="buyButton">Купить Stars</button>
+                    <button class="buy-stars" id="buyButton">Купить Stars</button>
+                    <button id="invite-friend">
+                        <img src="/static/referal.png" alt="Пригласить друга">
+                      </button>
                 </div>
             </div>
             <div class="game-menu">
@@ -150,7 +151,8 @@
                 <div class="separator"></div>
                 <button class="button rating" type="button"><img src="/static/rating.png" alt="rating"></button>
                 <div class="separator"></div>
-                <button class="button inventory" type="button"><img src="/static/inventory.png" alt="inventory"></button>
+                <button class="button inventory" type="button"><img src="/static/inventory.png"
+                        alt="inventory"></button>
                 <div class="separator"></div>
                 <button class="button mart" type="button"><img src="/static/mart.png" alt="mart"></button>
                 <div class="separator"></div>
@@ -159,7 +161,7 @@
                 <button class="button return" type="button"><img src="/static/return.png" alt="return"></button>
             </div>
         </div>
-        
+
     </div>
     <script>
         // Получаем элемент main первым
@@ -168,9 +170,9 @@
         // Инициализируем Three.js с размерами main
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(
-            70, 
+            70,
             mainElement.clientWidth / mainElement.clientHeight, // Используем пропорции main
-            0.1, 
+            0.1,
             1000
         );
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -196,20 +198,20 @@
             renderer.render(scene, camera);
         }
         animate();
-/*
-        window.addEventListener('wheel', (event) => {
-            event.preventDefault();
-            camera.position.z += event.deltaY * 0.01;
-            camera.position.z = Math.max(1, camera.position.z);
-        }, { passive: false });
-*/
+        /*
+                window.addEventListener('wheel', (event) => {
+                    event.preventDefault();
+                    camera.position.z += event.deltaY * 0.01;
+                    camera.position.z = Math.max(1, camera.position.z);
+                }, { passive: false });
+        */
         window.addEventListener('resize', () => {
             const mainElement = document.getElementById('main');
             const width = mainElement.clientWidth;
             const height = mainElement.clientHeight;
             chart.resize();
 
-            
+
             renderer.setSize(width, height);
             camera.aspect = width / height;
             camera.updateProjectionMatrix();
@@ -369,24 +371,36 @@
             await new Promise(resolve => setTimeout(resolve, 10000)); // Задержка 10 секунды
             loader.classList.add('hidden');
         }
+        // Добавляем обработчик для кнопки "Пригласить друга"
+        document.getElementById('invite-friend').addEventListener('click', async () => {
+            const response = await fetch(`/get_referral_link?user_id=${userId}`);
+            const data = await response.json();
+            if (data.status === "success") {
+                const referralLink = data.referral_link;
+                const shareText = `Присоединяйся ко мне в Crypto Tycoon Simulator! Используй эту ссылку: ${referralLink}`;
+                const shareUrl = `https://t.me/share/url?text=${encodeURIComponent(shareText)}`;
 
+                // Проверка доступности Telegram.WebApp
+                if (Telegram.WebApp && Telegram.WebApp.openLink) {
+                    Telegram.WebApp.openLink(shareUrl);
+                } else {
+                    console.error('Telegram WebApp is not available');
+                    alert('Функция шаринга недоступна. Убедитесь, что вы используете приложение в Telegram.');
+                }
+            } else {
+                alert('Ошибка при получении ссылки');
+            }
+        });
+        // Обновляем функцию checkNewRewards для показа алерта
         async function checkNewRewards(userId) {
             const response = await fetch(`/get_new_rewards?user_id=${userId}`);
             const data = await response.json();
             if (data.status === "success" && data.rewards.length > 0) {
                 data.rewards.forEach(reward => {
+                    alert(`Вы получили ${reward.item_name} за приглашение друга!`);
                     if (reward.item_name === "Macbook" && !models["Macbook"]) {
                         macbook(); // Загружаем модель в сцену
                         models["Macbook"] = true;
-
-                        // Показываем уведомление
-                        const rewardNotification = document.getElementById('reward-notification');
-                        rewardNotification.classList.remove('hidden');
-
-                        // Скрываем уведомление через 5 секунд
-                        setTimeout(() => {
-                            rewardNotification.classList.add('hidden');
-                        }, 120000);
                     }
                 });
                 // Обновляем инвентарь после получения наград
@@ -796,13 +810,13 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false, // Важная опция для кастомных размеров
-                    scales: { 
-                        x: { 
-                            display: false 
-                        }, 
-                        y: { 
-                            beginAtZero: false 
-                        } 
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            beginAtZero: false
+                        }
                     }
                 }
             });
@@ -939,85 +953,85 @@
         }
 
         const prizes = [
-    "x3 токенов", 
-    "1000 токенов", 
-    "Drinking Water Dispenser", 
-    "10000 токенов", 
-    "100000 токенов", 
-    "2000 токенов", 
-    "Humanoid robot", 
-    "x2 токенов"
-];
+            "x3 токенов",
+            "1000 токенов",
+            "Drinking Water Dispenser",
+            "10000 токенов",
+            "100000 токенов",
+            "2000 токенов",
+            "Humanoid robot",
+            "x2 токенов"
+        ];
 
-let isSpinning = false;
+        let isSpinning = false;
 
-async function startSpin() {
-    if (isSpinning) return;
-    
-    const userId = new URLSearchParams(window.location.search).get('user_id');
-    if (!userId) {
-        alert("Не удалось определить пользователя");
-        return;
-    }
+        async function startSpin() {
+            if (isSpinning) return;
 
-    isSpinning = true;
-    const wheel = document.getElementById('wheel');
-    const sectors = prizes.length;
-    const sectorAngle = 360 / sectors;
-    
-    const targetIndex = Math.floor(Math.random() * sectors);
-    const extraRotations = 5;
-    const finalAngle = (extraRotations * 360) + (targetIndex * sectorAngle) + (sectorAngle / 2);
+            const userId = new URLSearchParams(window.location.search).get('user_id');
+            if (!userId) {
+                alert("Не удалось определить пользователя");
+                return;
+            }
 
-    wheel.style.transition = 'none';
-    wheel.style.transform = `rotate(${0}deg)`;
-    
-    setTimeout(() => {
-        wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
-        wheel.style.transform = `rotate(${-finalAngle}deg)`;
-    }, 10);
+            isSpinning = true;
+            const wheel = document.getElementById('wheel');
+            const sectors = prizes.length;
+            const sectorAngle = 360 / sectors;
 
-    try {
-        const response = await fetch('/spin_wheel', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                user_id: userId,
-                prize_index: targetIndex
-            })
-        });
-        
-        const data = await response.json();
-        
-        setTimeout(() => {
-            if (data.status === "success") {
-                let message = `ПОЗДРАВЛЯЕМ! ВЫ ВЫИГРАЛИ: ${data.prize}! Ваш баланс: ${data.new_balance}`;
-                if (data.refund) {
-                    message = `Предмет "${data.prize}" уже есть в вашем инвентаре. Стоимость вращения (100 монет) возвращена. Ваш баланс: ${data.new_balance}`;
-                }
-                alert(message);
-                
-                document.getElementById('currency-amount').textContent = data.new_balance;
-                
-                if (data.prize === "кулер" || data.prize === "робот" && !data.refund) {
-                    loadInventory(userId);
-                }
-            } else {
-                alert(`Ошибка: ${data.message}`);
+            const targetIndex = Math.floor(Math.random() * sectors);
+            const extraRotations = 5;
+            const finalAngle = (extraRotations * 360) + (targetIndex * sectorAngle) + (sectorAngle / 2);
+
+            wheel.style.transition = 'none';
+            wheel.style.transform = `rotate(${0}deg)`;
+
+            setTimeout(() => {
+                wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
+                wheel.style.transform = `rotate(${-finalAngle}deg)`;
+            }, 10);
+
+            try {
+                const response = await fetch('/spin_wheel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        prize_index: targetIndex
+                    })
+                });
+
+                const data = await response.json();
+
+                setTimeout(() => {
+                    if (data.status === "success") {
+                        let message = `ПОЗДРАВЛЯЕМ! ВЫ ВЫИГРАЛИ: ${data.prize}! Ваш баланс: ${data.new_balance}`;
+                        if (data.refund) {
+                            message = `Предмет "${data.prize}" уже есть в вашем инвентаре. Стоимость вращения (100 монет) возвращена. Ваш баланс: ${data.new_balance}`;
+                        }
+                        alert(message);
+
+                        document.getElementById('currency-amount').textContent = data.new_balance;
+
+                        if (data.prize === "кулер" || data.prize === "робот" && !data.refund) {
+                            loadInventory(userId);
+                        }
+                    } else {
+                        alert(`Ошибка: ${data.message}`);
+                        wheel.style.transition = 'none';
+                        wheel.style.transform = `rotate(${0}deg)`;
+                    }
+                    isSpinning = false;
+                }, 4050);
+
+            } catch (error) {
+                console.error('Ошибка при вращении колеса:', error);
+                alert('Произошла ошибка при соединении с сервером');
                 wheel.style.transition = 'none';
                 wheel.style.transform = `rotate(${0}deg)`;
+                isSpinning = false;
             }
-            isSpinning = false;
-        }, 4050);
-        
-    } catch (error) {
-        console.error('Ошибка при вращении колеса:', error);
-        alert('Произошла ошибка при соединении с сервером');
-        wheel.style.transition = 'none';
-        wheel.style.transform = `rotate(${0}deg)`;
-        isSpinning = false;
-    }
-}
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const martContainer = document.querySelector('.mart-container');

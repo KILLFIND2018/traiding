@@ -96,7 +96,6 @@ async def start(update, context):
     keyboard = [
         [InlineKeyboardButton("Открыть Web App", web_app={'url': web_app_url})],
         [InlineKeyboardButton("Купить монеты за Stars", callback_data='buy_coins')],
-        [InlineKeyboardButton("Пригласить друга", callback_data='invite_friend')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text('Добро пожаловать!', reply_markup=reply_markup)
@@ -116,32 +115,6 @@ async def handle_callback(update, context):
             prices=prices,
             start_parameter="buy-coins"
         )
-    elif query.data == 'invite_friend':
-        await query.answer()
-        try:
-            connection = mysql.connector.connect(**MYSQL_CONFIG)
-            cursor = connection.cursor()
-            cursor.execute("SELECT referral_code FROM referrals WHERE user_id = %s AND used_by IS NULL", (str(query.from_user.id),))
-            result = cursor.fetchone()
-            
-            referral_code = result[0] if result else None
-            if not referral_code:
-                response = requests.post('http://localhost:5000/generate_referral', 
-                                      json={'user_id': str(query.from_user.id)})
-                data = response.json()
-                if data['status'] == 'success':
-                    referral_code = data['referral_code']
-            
-            referral_link = f"https://t.me/CTSimulatorBot?start={referral_code}"
-            await query.message.reply_text(f"Поделитесь этой ссылкой с другом:\n{referral_link}")
-            
-        except Exception as e:
-            await query.message.reply_text(f"Ошибка при генерации ссылки: {str(e)}")
-        finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'connection' in locals():
-                connection.close()
 
 async def precheckout_callback(update, context):
     query = update.pre_checkout_query

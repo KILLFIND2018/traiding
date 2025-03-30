@@ -1033,5 +1033,46 @@ def spin_wheel():
     finally:
         cursor.close()
         connection.close()
+
+
+@app.route('/get_referral_link', methods=['GET'])
+def get_referral_link():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+    
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+        
+        # Проверяем, есть ли неиспользованный реферальный код
+        cursor.execute("""
+            SELECT referral_code 
+            FROM referrals 
+            WHERE user_id = %s AND used_by IS NULL 
+            LIMIT 1
+        """, (user_id,))
+        result = cursor.fetchone()
+        
+        if result:
+            referral_code = result[0]
+        else:
+            # Генерируем новый код
+            import uuid
+            referral_code = str(uuid.uuid4())[:8]
+            cursor.execute("""
+                INSERT INTO referrals (user_id, referral_code, created_at)
+                VALUES (%s, %s, %s)
+            """, (user_id, referral_code, datetime.now()))
+            connection.commit()
+        
+        referral_link = f"https://t.me/CTSimulatorBot?start={referral_code}"
+        return jsonify({"status": "success", "referral_link": referral_link}), 200
+        
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
