@@ -4,6 +4,7 @@ from flask_cors import CORS
 import mysql.connector
 import threading
 import time
+import random
 from config import MYSQL_CONFIG  # Импорт конфигурации
 
 import logging
@@ -1074,5 +1075,78 @@ def get_referral_link():
     finally:
         cursor.close()
         connection.close()
+
+@app.route('/play_game', methods=['POST'])
+def play_game():
+    data = request.json
+    user_id = data.get('user_id')
+    bet = data.get('bet')
+
+    # Валидация данных
+    if not user_id:
+        return jsonify({"status": "error", "message": "Не указан пользователь"}), 400
+        
+    if not isinstance(bet, int) or bet <= 0:
+        return jsonify({"status": "error", "message": "Некорректная ставка"}), 400
+
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+
+        # Начало транзакции
+        connection.start_transaction()
+
+        # Блокировка строки для атомарного обновления
+        cursor.execute("""
+            SELECT balance 
+            FROM user_progress 
+            WHERE user_id = %s 
+            FOR UPDATE
+        """, (user_id,))
+        result = cursor.fetchone()
+
+        if not result:
+            return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
+
+        balance = result[0]
+
+        if balance < bet:
+            return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
+
+        # Логика игры
+        is_win = random.random() < 0.5
+        winning_cell = random.randint(1, 8)
+        new_balance = balance + (bet if is_win else -bet)
+
+        # Обновление баланса
+        cursor.execute("""
+            UPDATE user_progress 
+            SET balance = %s 
+            WHERE user_id = %s
+        """, (new_balance, user_id))
+
+        # Фиксация транзакции
+        connection.commit()
+
+        return jsonify({
+            "status": "success",
+            "new_balance": new_balance,
+            "result": "win" if is_win else "lose",
+            "winning_cell": winning_cell
+        }), 200
+
+    except mysql.connector.Error as err:
+        connection.rollback()
+        app.logger.error(f"Database error: {err}")
+        return jsonify({"status": "error", "message": "Ошибка базы данных"}), 500
+    except Exception as e:
+        connection.rollback()
+        app.logger.error(f"Game error: {e}")
+        return jsonify({"status": "error", "message": "Внутренняя ошибка сервера"}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

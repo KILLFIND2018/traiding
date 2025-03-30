@@ -690,7 +690,7 @@ td {
     /* Позиционируем как mart-container */
     flex-direction: column;
     align-items: center;
-    transform: translate(0, -50%) !important;
+    transform: translate(0, -30%) !important;
     opacity: 0;
     z-index: 2;
     /* Устанавливаем выше контента, но ниже уведомлений */
@@ -831,6 +831,50 @@ td {
     position: relative;
     top: 0;
     right: 40%;
+}
+
+
+.grid-game {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.game-cell {
+    width: 60px;
+    height: 60px;
+    background: #2c3e50;
+    border: 2px solid #34495e;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.game-cell.selected {
+    border-color: #f1c40f;
+    transform: scale(1.1);
+}
+
+.game-cell.winner {
+    background: #27ae60 !important;
+}
+
+.game-cell.loser {
+    background: #c0392b !important;
+}
+
+.game-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+#game-result {
+    margin-top: 10px;
+    min-height: 20px;
 }
 
 @media screen and (max-width: 768px),
