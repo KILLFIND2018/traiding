@@ -40,7 +40,7 @@ def calculate_balance(current_balance, progression_factor, last_updated, total_g
         new_progression = min(new_progression, 0.50)  # Максимум 0.50, например
         
         # Применяем прогрессию к генерации после 60 секунд
-        new_balance += total_generation * progression_time * (1 + new_progression)
+        new_balance += total_generation * progression_time * new_progression
 
     # Учитываем, что баланс — BIGINT, округляем до целого числа
     return int(new_balance), new_progression

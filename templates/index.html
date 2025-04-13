@@ -538,7 +538,7 @@
                 "Older PC": olderPC, "Speaker": speaker, "Server": server, "Cafetalg": cafetalg, "Panasonic": panasonic,
                 "Scifi Scider Robot": scifisciderrobot, "The Globe": theglobe, "Drinking Water Dispenser": drinkingWaterDispenser,
                 "Humanoid robot": humanoidRobot, "Computer with terminal": computerWithTerminal, "Conditioner": conditioner,
-                "Fridge": fridge, "PS5": ps5, "TV": tv, "Cooler": cooler, "Showcase": showcase, "Printer": printer, "Radio": radio
+                "Fridge": fridge, "PS5": ps5, "TV": tv, "Cooler": cooler, "Showcase": showcase, "Printer": printer, "Radio": radio, "Macbook":macbook
             };
 
             if (items[itemName] && !models[itemName]) {
@@ -583,11 +583,13 @@
         function radio() { if (!RadioModel) loader.load('/static/models/Radio.glb', gltf => { RadioModel = gltf.scene; RadioModel.scale.set(0.6, 0.6, 0.6); RadioModel.position.set(-1.3, 0.2, 1.7); scene.add(RadioModel); }); }
         function macbook() {
             if (!MacbookModel)
-                loader.load('/static/models/Macbook.glb', gltf => {
+                loader.load('/static/models/macbook.glb', gltf => {
                     MacbookModel = gltf.scene;
-                    MacbookModel.scale.set(0.014, 0.014, 0.014);
+                    MacbookModel.scale.set(0.1, 0.1, 0.1);
                     MacbookModel.position.set(1.5, 0.2, 2.1);
                     scene.add(MacbookModel);
+                }, undefined, function (error) {
+            console.error('Ошибка загрузки модели макбука:', error);
                 });
         }
         if (userId) startApp(userId);
