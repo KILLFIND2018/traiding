@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <title>Crypto Tycoon Simulator</title>
@@ -11,7 +10,6 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <link rel="stylesheet" href="/static/styles/style.css">
 </head>
-
 <body>
     <div class="loader" id="loader">
         <div class="spinner"></div>
@@ -27,20 +25,6 @@
     </audio>
     <div class="container">
         <div class="header">
-            <div class="bitcoin-widget">
-                <div id="bitcoin-price">Текущая цена BTC: <span id="btc-price">Загрузка...</span> $</div>
-                <div id="bitcoin-graph"></div>
-                <div class="bet-container">
-                    <button id="bet-up" disabled><img class="btn-bet" src="/static/img_whell/up.png" alt=""></button>
-                    <button id="bet-down" disabled><img class="btn-bet" src="/static/img_whell/down.png" alt=""
-                            srcset=""></button>
-                    <input type="number" id="bet-amount" placeholder="Сумма ставки" min="1" disabled>
-                    <p id="bet-status">Следующая ставка доступна через: <span id="bet-timer">00:00:00</span></p>
-                </div>
-            </div>
-            <div class="reward-timer">
-                <p>Награда за вход: <span id="reward-status">Проверка...</span></p>
-            </div>
             <h1>Crypto Tycoon Simulator</h1>
             <div class="currency-display" id="currency-display">
                 <span id="currency-amount">0</span><img src="/static/bitcoin.png" alt="balance">
@@ -48,15 +32,32 @@
         </div>
         <div class="content">
             <div class="main" id="main">
-
+                <button class="nav-main-button right" id="to-widgets"><img src="/static/img_whell/arrow/right.png" class="ctrl"></button>
+            </div>
+            <div class="widgets-container" id="widgets">
+                <div class="bitcoin-widget">
+                    <div id="bitcoin-price">Текущая цена BTC: <span id="btc-price">Загрузка...</span> $</div>
+                    <div id="bitcoin-graph"></div>
+                    <div class="bet-container">
+                        <button id="bet-up" disabled><img class="btn-bet" src="/static/img_whell/up.png" alt=""></button>
+                        <button id="bet-down" disabled><img class="btn-bet" src="/static/img_whell/down.png" alt=""></button>
+                        <input type="number" id="bet-amount" placeholder="Сумма ставки" min="1" disabled>
+                        
+                    </div>
+                    <p id="bet-status">Следующая ставка доступна через: <span id="bet-timer">00:00:00</span></p>
+                </div>
+                <div class="reward-timer">
+                    <p>Награда за вход: <span id="reward-status">Проверка...</span></p>
+                </div>
+                <button class="nav-main-button left" id="to-main"><img src="/static/img_whell/arrow/left.png" class="ctrl"></button>
             </div>
             <div class="auction" id="auction">
                 <div class="auction-container">
-                    <h1 class="sub-header">Аукцион</h1>
+                    <h1 class="sub-auction-header">Аукцион</h1>
                     <div class="chat-container">
                         <div class="chat-messages" id="chat-messages"></div>
                         <div class="chat-input">
-                            <input type="text" id="chat-input" placeholder="Сообщение...">
+                            <input class = "chat-input" type="text" id="chat-input" placeholder="Сообщение...">
                             <button class="sender" onclick="sendChatMessage()">Отправить</button>
                         </div>
                     </div>
@@ -115,7 +116,7 @@
             </div>
             <div class="mart" id="mart">
                 <div class="mart-container">
-                    <h1 class="sub-header">Магазин</h1>
+                    <h1 class="sub-auction-header">Магазин</h1>
                     <div class="market">
                         <table class="market-table">
                             <thead>
@@ -128,7 +129,7 @@
                             <tbody></tbody>
                         </table>
                     </div>
-                    <button class="nav-button right" id="to-wheel">Вправо</button>
+                    <button class="nav-button right" id="to-wheel"><img src="/static/img_whell/arrow/right.png" class="ctrl"></button>
                 </div>
                 <div class="wheel-container">
                     <img src="/static/img_whell/whell.png" id="wheel" class="wheel">
@@ -149,11 +150,11 @@
                         </div>
                         <div class="game-controls">
                             <input type="number" id="game-bet" placeholder="Ставка" min="1">
-                            <button onclick="startGame()">Играть!</button>
+                            <button class="game-btn" onclick="startGame()">Играть!</button>
                         </div>
                         <div id="game-result"></div>
                     </div>
-                    <button class="nav-button left" id="to-mart">Влево</button>
+                    <button class="nav-button left" id="to-mart"><img src="/static/img_whell/arrow/left.png" class="ctrl"></button>
                 </div>
             </div>
             <div class="donate" id="donate">
@@ -165,13 +166,11 @@
                 </div>
             </div>
             <div class="game-menu">
-                <button class="button auction" type="button" id="auctionButton"><img src="/static/auction.png"
-                        alt="auction"></button>
+                <button class="button auction" type="button" id="auctionButton"><img src="/static/auction.png" alt="auction"></button>
                 <div class="separator"></div>
                 <button class="button rating" type="button"><img src="/static/rating.png" alt="rating"></button>
                 <div class="separator"></div>
-                <button class="button inventory" type="button"><img src="/static/inventory.png"
-                        alt="inventory"></button>
+                <button class="button inventory" type="button"><img src="/static/inventory.png" alt="inventory"></button>
                 <div class="separator"></div>
                 <button class="button mart" type="button"><img src="/static/mart.png" alt="mart"></button>
                 <div class="separator"></div>
@@ -180,28 +179,15 @@
                 <button class="button return" type="button"><img src="/static/return.png" alt="return"></button>
             </div>
         </div>
-
     </div>
     <script>
-        // Получаем элемент main первым
         const mainElement = document.getElementById('main');
-
-        // Инициализируем Three.js с размерами main
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(
-            70,
-            mainElement.clientWidth / mainElement.clientHeight, // Используем пропорции main
-            0.1,
-            1000
-        );
+        const camera = new THREE.PerspectiveCamera(70, mainElement.clientWidth / mainElement.clientHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-
-        // Устанавливаем размеры рендерера согласно main
         renderer.setSize(mainElement.clientWidth, mainElement.clientHeight);
         mainElement.appendChild(renderer.domElement);
 
-        //const axesHelper = new THREE.AxesHelper(5);
-        //scene.add(axesHelper);
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         scene.add(ambientLight);
         const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -209,7 +195,7 @@
         scene.add(directionalLight);
         const loader = new THREE.GLTFLoader();
 
-        camera.position.set(-10, 10, 18);
+        camera.position.set(-5, 7, 10.5);
         camera.lookAt(0, 0, 0);
 
         function animate() {
@@ -217,23 +203,15 @@
             renderer.render(scene, camera);
         }
         animate();
-        /*
-                window.addEventListener('wheel', (event) => {
-                    event.preventDefault();
-                    camera.position.z += event.deltaY * 0.01;
-                    camera.position.z = Math.max(1, camera.position.z);
-                }, { passive: false });
-        */
+
         window.addEventListener('resize', () => {
             const mainElement = document.getElementById('main');
             const width = mainElement.clientWidth;
             const height = mainElement.clientHeight;
-            chart.resize();
-
-
             renderer.setSize(width, height);
             camera.aspect = width / height;
             camera.updateProjectionMatrix();
+            chart.resize();
         });
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -285,8 +263,6 @@
                 return;
             }
 
-
-
             const loader = document.getElementById('loader');
             loader.classList.remove('hidden');
 
@@ -325,13 +301,12 @@
                 }
             }, 5000);
 
-            // Проверка новых наград при запуске
             await checkNewRewards(userId);
             await checkLoginReward(userId);
             const rewardCheckInterval = setInterval(() => checkLoginReward(userId), 1000);
-            // Периодическая проверка инвентаря (без алертов)
+
             const inventoryCheckInterval = setInterval(async () => {
-                await loadInventory(userId); // Просто обновляем инвентарь
+                await loadInventory(userId);
             }, 10000);
 
             Telegram.WebApp.onEvent('web_app_close', async () => {
@@ -365,7 +340,6 @@
                 }
             });
 
-
             window.addEventListener('beforeunload', (event) => {
                 console.log('Закрытие вкладки');
                 clearInterval(balanceInterval);
@@ -384,13 +358,12 @@
             await loadMarket();
             await loadRating();
             await initBitcoinWidget(userId);
-
             loadAuction(userId);
 
-            await new Promise(resolve => setTimeout(resolve, 10000)); // Задержка 10 секунды
+            await new Promise(resolve => setTimeout(resolve, 10000));
             loader.classList.add('hidden');
         }
-        // Добавляем обработчик для кнопки "Пригласить друга"
+
         document.getElementById('invite-friend').addEventListener('click', async () => {
             const response = await fetch(`/get_referral_link?user_id=${userId}`);
             const data = await response.json();
@@ -398,8 +371,6 @@
                 const referralLink = data.referral_link;
                 const shareText = `Присоединяйся ко мне в Crypto Tycoon Simulator! Используй эту ссылку: ${referralLink}`;
                 const shareUrl = `https://t.me/share/url?text=${encodeURIComponent(shareText)}`;
-
-                // Проверка доступности Telegram.WebApp
                 if (Telegram.WebApp && Telegram.WebApp.openLink) {
                     Telegram.WebApp.openLink(shareUrl);
                 } else {
@@ -410,7 +381,7 @@
                 alert('Ошибка при получении ссылки');
             }
         });
-        // Обновляем функцию checkNewRewards для показа алерта
+
         async function checkNewRewards(userId) {
             const response = await fetch(`/get_new_rewards?user_id=${userId}`);
             const data = await response.json();
@@ -418,15 +389,14 @@
                 data.rewards.forEach(reward => {
                     alert(`Вы получили ${reward.item_name} за приглашение друга!`);
                     if (reward.item_name === "Macbook" && !models["Macbook"]) {
-                        macbook(); // Загружаем модель в сцену
+                        macbook();
                         models["Macbook"] = true;
                     }
                 });
-                // Обновляем инвентарь после получения наград
                 await loadInventory(userId);
             }
         }
-        // Упрощаем checkReferralStatus, убираем алерты
+
         async function checkReferralStatus(userId) {
             const response = await fetch(`/get_inventory?user_id=${userId}`);
             const data = await response.json();
@@ -434,13 +404,11 @@
                 const currentInventory = data.items.map(item => item.item_name);
                 currentInventory.forEach(item => {
                     if (!models[item]) {
-                        updateTotalGeneration(item); // Загружаем модель, если она еще не загружена
+                        updateTotalGeneration(item);
                     }
                 });
             }
         }
-
-
 
         async function loadInventory(userId) {
             const response = await fetch(`/get_inventory?user_id=${userId}`);
@@ -513,13 +481,11 @@
             try {
                 const response = await fetch(`/get_rating`);
                 const data = await response.json();
-
                 if (data.status === "success") {
                     const ratingTable = document.querySelector('.rating-table tbody');
                     while (ratingTable.rows.length > 0) {
                         ratingTable.deleteRow(0);
                     }
-
                     data.users.forEach(user => {
                         const newRow = ratingTable.insertRow(-1);
                         newRow.insertCell(0).textContent = user.position;
@@ -535,12 +501,26 @@
         let models = {};
         function updateTotalGeneration(itemName) {
             const items = {
-                "Older PC": olderPC, "Speaker": speaker, "Server": server, "Cafetalg": cafetalg, "Panasonic": panasonic,
-                "Scifi Scider Robot": scifisciderrobot, "The Globe": theglobe, "Drinking Water Dispenser": drinkingWaterDispenser,
-                "Humanoid robot": humanoidRobot, "Computer with terminal": computerWithTerminal, "Conditioner": conditioner,
-                "Fridge": fridge, "PS5": ps5, "TV": tv, "Cooler": cooler, "Showcase": showcase, "Printer": printer, "Radio": radio, "Macbook":macbook
+                "Older PC": olderPC,
+                "Speaker": speaker,
+                "Server": server,
+                "Cafetalg": cafetalg,
+                "Panasonic": panasonic,
+                "Scifi Scider Robot": scifisciderrobot,
+                "The Globe": theglobe,
+                "Drinking Water Dispenser": drinkingWaterDispenser,
+                "Humanoid robot": humanoidRobot,
+                "Computer with terminal": computerWithTerminal,
+                "Conditioner": conditioner,
+                "Fridge": fridge,
+                "PS5": ps5,
+                "TV": tv,
+                "Cooler": cooler,
+                "Showcase": showcase,
+                "Printer": printer,
+                "Radio": radio,
+                "Macbook": macbook
             };
-
             if (items[itemName] && !models[itemName]) {
                 items[itemName]();
                 models[itemName] = true;
@@ -582,19 +562,16 @@
         function printer() { if (!PrinterModel) loader.load('/static/models/Printer.glb', gltf => { PrinterModel = gltf.scene; PrinterModel.scale.set(0.002, 0.002, 0.002); PrinterModel.position.set(-3, 0.5, 2.1); PrinterModel.rotation.y = Math.PI / 2; scene.add(PrinterModel); }); }
         function radio() { if (!RadioModel) loader.load('/static/models/Radio.glb', gltf => { RadioModel = gltf.scene; RadioModel.scale.set(0.6, 0.6, 0.6); RadioModel.position.set(-1.3, 0.2, 1.7); scene.add(RadioModel); }); }
         function macbook() {
-            if (!MacbookModel)
-                loader.load('/static/models/macbook.glb', gltf => {
-                    MacbookModel = gltf.scene;
-                    MacbookModel.scale.set(0.1, 0.1, 0.1);
-                    MacbookModel.position.set(1.5, 0.2, 2.1);
-                    scene.add(MacbookModel);
-                }, undefined, function (error) {
-            console.error('Ошибка загрузки модели макбука:', error);
-                });
+            if (!MacbookModel) loader.load('/static/models/macbook.glb', gltf => {
+                MacbookModel = gltf.scene;
+                MacbookModel.scale.set(0.1, 0.1, 0.1);
+                MacbookModel.position.set(1.5, 0.2, 2.1);
+                scene.add(MacbookModel);
+            }, undefined, function (error) {
+                console.error('Ошибка загрузки модели макбука:', error);
+            });
         }
         if (userId) startApp(userId);
-
-
 
         document.addEventListener('click', function () {
             var music = document.getElementById('background-music');
@@ -604,11 +581,9 @@
 
         document.getElementById('buyButton').addEventListener('click', () => {
             const tg = window.Telegram.WebApp;
-
             if (!tg.ready) {
                 tg.ready();
             }
-
             tg.showPopup({
                 title: 'Купить монеты за Telegram Stars',
                 message: 'Купить 100 монет за 10 Telegram Stars?',
@@ -624,7 +599,6 @@
                         amount: 100,
                         stars_cost: 10
                     };
-
                     fetch('/buy_with_stars', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -646,7 +620,6 @@
             });
         });
 
-
         async function loadAuction(userId) {
             await loadLots();
             await loadChat();
@@ -658,7 +631,7 @@
             const data = await response.json();
             if (data.status === "success") {
                 const tbody = document.getElementById('lots-table-body');
-                tbody.innerHTML = ''; // Очищаем таблицу перед обновлением
+                tbody.innerHTML = '';
                 data.lots.forEach(lot => {
                     const row = tbody.insertRow();
                     row.insertCell(0).textContent = lot.lot_id;
@@ -668,16 +641,12 @@
                     row.insertCell(4).textContent = lot.current_bid || 'Нет ставок';
                     row.insertCell(5).textContent = lot.seller_username || 'Anonymous';
                     const actionCell = row.insertCell(6);
-
-                    // Кнопка "Сделать ставку"
                     const bidButton = document.createElement('button');
                     bidButton.textContent = 'Сделать ставку';
-                    bidButton.classList.add('bid-button', 'auctions-table'); // Добавляем классы
+                    bidButton.classList.add('bid-button', 'auctions-table');
                     bidButton.onclick = () => placeBid(lot.lot_id);
                     actionCell.appendChild(bidButton);
-
-                    // Кнопка "Завершить" только для продавца
-                    if (String(lot.seller_id) === userId) { // или Number(userId) === lot.seller_id
+                    if (String(lot.seller_id) === userId) {
                         const completeButton = document.createElement('button');
                         completeButton.textContent = 'Завершить';
                         completeButton.classList.add('complete-button', 'auctions-table');
@@ -724,7 +693,7 @@
             const data = await response.json();
             if (data.status === "success") {
                 const select = document.getElementById('item-select');
-                select.innerHTML = '<option value="">Выберите предмет</option>'; // Пустая опция по умолчанию
+                select.innerHTML = '<option value="">Выберите предмет</option>';
                 data.items.forEach(item => {
                     const option = document.createElement('option');
                     option.value = item.item_name;
@@ -735,7 +704,7 @@
         }
 
         document.getElementById('create-lot-form').addEventListener('submit', async (e) => {
-            e.preventDefault(); // Предотвращаем стандартное поведение формы
+            e.preventDefault();
             const formData = new FormData(e.target);
             const lotData = {
                 user_id: userId,
@@ -743,20 +712,18 @@
                 description: formData.get('description'),
                 start_price: parseInt(formData.get('start_price'))
             };
-
             const response = await fetch('/create_lot', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(lotData)
             });
-
             const data = await response.json();
             if (data.status === "success") {
-                await loadLots(); // Обновляем список лотов
-                await loadInventory(userId); // Обновляем инвентарь
-                document.getElementById('create-lot-form').reset(); // Очищаем форму
+                await loadLots();
+                await loadInventory(userId);
+                document.getElementById('create-lot-form').reset();
             } else {
-                alert(data.message); // Показываем сообщение об ошибке
+                alert(data.message);
             }
         });
 
@@ -777,14 +744,8 @@
             }
         }
 
-        // Обновление чата каждые 5 секунд
         setInterval(loadChat, 5000);
-
-        // Загрузка аукциона при нажатии на кнопку
         document.querySelector('.button.auction').addEventListener('click', () => loadAuction(userId));
-
-
-
 
         async function completeLot(lotId) {
             const response = await fetch('/complete_lot', {
@@ -801,8 +762,8 @@
             }
         }
 
+        let chart;
         async function initBitcoinWidget(userId) {
-            // Обновление цены
             async function updatePrice() {
                 const response = await fetch('/get_bitcoin_price');
                 const data = await response.json();
@@ -811,13 +772,12 @@
                 }
             }
             updatePrice();
-            setInterval(updatePrice, 60000); // Обновление каждую минуту
+            setInterval(updatePrice, 60000);
 
-            // График
             const ctx = document.createElement('canvas');
             document.getElementById('bitcoin-graph').appendChild(ctx);
             let prices = [];
-            const chart = new Chart(ctx, {
+            chart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: [],
@@ -830,14 +790,10 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Важная опция для кастомных размеров
+                    maintainAspectRatio: false,
                     scales: {
-                        x: {
-                            display: false
-                        },
-                        y: {
-                            beginAtZero: false
-                        }
+                        x: { display: false },
+                        y: { beginAtZero: false }
                     }
                 }
             });
@@ -856,7 +812,6 @@
             updateGraph();
             setInterval(updateGraph, 60000);
 
-            // Логика ставок
             const betUpButton = document.getElementById('bet-up');
             const betDownButton = document.getElementById('bet-down');
             const betAmountInput = document.getElementById('bet-amount');
@@ -865,7 +820,6 @@
             async function checkBetStatus() {
                 const response = await fetch(`/check_bitcoin_bet?user_id=${userId}`);
                 const data = await response.json();
-
                 if (data.status === "pending") {
                     const remaining = data.remaining;
                     const hours = Math.floor(remaining / 3600);
@@ -935,20 +889,17 @@
             const data = await response.json();
             const rewardStatus = document.getElementById('reward-status');
             const timerElement = document.querySelector('.reward-timer');
-
-            // Удаляем все классы статусов
             timerElement.classList.remove('available');
-
             if (data.status === "available") {
                 rewardStatus.textContent = "Доступна! Кликните для получения";
-                timerElement.classList.add('available'); // Добавляем зеленый класс
+                timerElement.classList.add('available');
                 timerElement.onclick = () => claimLoginReward(userId);
             } else if (data.status === "pending") {
                 const remaining = data.remaining;
                 const minutes = Math.floor(remaining / 60);
                 const seconds = Math.floor(remaining % 60);
                 rewardStatus.textContent = `Доступна через ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                timerElement.onclick = null; // Убираем обработчик клика
+                timerElement.onclick = null;
             } else {
                 rewardStatus.textContent = "Ошибка проверки";
             }
@@ -961,7 +912,6 @@
                 body: JSON.stringify({ user_id: userId })
             });
             const data = await response.json();
-
             if (data.status === "success") {
                 console.log(`Получена награда за вход: ${data.reward} монет. Новый баланс: ${data.new_balance}`);
                 document.getElementById('currency-amount').textContent = data.new_balance;
@@ -973,24 +923,12 @@
             }
         }
 
-        const prizes = [
-            "x3 токенов",
-            "1000 токенов",
-            "Drinking Water Dispenser", // 2% шанс
-            "10000 токенов",
-            "100000 токенов",
-            "2000 токенов",
-            "Humanoid robot", // 2% шанс
-            "x2 токенов"
-        ];
-
-        // Вероятности для каждого приза в процентах
+        const prizes = ["x3 токенов", "1000 токенов", "Drinking Water Dispenser", "10000 токенов", "100000 токенов", "2000 токенов", "Humanoid robot", "x2 токенов"];
         const probabilities = [16, 16, 2, 16, 16, 16, 2, 16];
 
         function getRandomIndex() {
             const total = probabilities.reduce((sum, prob) => sum + prob, 0);
             let random = Math.random() * total;
-
             for (let i = 0; i < probabilities.length; i++) {
                 if (random < probabilities[i]) return i;
                 random -= probabilities[i];
@@ -999,45 +937,33 @@
         }
 
         let isSpinning = false;
-
         async function startSpin() {
             if (isSpinning) return;
-
             const userId = new URLSearchParams(window.location.search).get('user_id');
             if (!userId) {
                 alert("Не удалось определить пользователя");
                 return;
             }
-
             isSpinning = true;
             const wheel = document.getElementById('wheel');
             const sectors = prizes.length;
             const sectorAngle = 360 / sectors;
-
             const targetIndex = getRandomIndex();
             const extraRotations = 5;
             const finalAngle = (extraRotations * 360) + (targetIndex * sectorAngle) + (sectorAngle / 2);
-
             wheel.style.transition = 'none';
             wheel.style.transform = `rotate(${0}deg)`;
-
             setTimeout(() => {
                 wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
                 wheel.style.transform = `rotate(${-finalAngle}deg)`;
             }, 10);
-
             try {
                 const response = await fetch('/spin_wheel', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        prize_index: targetIndex
-                    })
+                    body: JSON.stringify({ user_id: userId, prize_index: targetIndex })
                 });
-
                 const data = await response.json();
-
                 setTimeout(() => {
                     if (data.status === "success") {
                         let message = `ПОЗДРАВЛЯЕМ! ВЫ ВЫИГРАЛИ: ${data.prize}! Ваш баланс: ${data.new_balance}`;
@@ -1045,9 +971,7 @@
                             message = `Предмет "${data.prize}" уже есть в вашем инвентаре. Стоимость вращения (100 монет) возвращена. Ваш баланс: ${data.new_balance}`;
                         }
                         alert(message);
-
                         document.getElementById('currency-amount').textContent = data.new_balance;
-
                         if (data.prize === "кулер" || data.prize === "робот" && !data.refund) {
                             loadInventory(userId);
                         }
@@ -1058,7 +982,6 @@
                     }
                     isSpinning = false;
                 }, 4050);
-
             } catch (error) {
                 console.error('Ошибка при вращении колеса:', error);
                 alert('Произошла ошибка при соединении с сервером');
@@ -1070,7 +993,6 @@
 
         let selectedCell = null;
         let isGameActive = false;
-
         document.querySelectorAll('.game-cell').forEach(cell => {
             cell.addEventListener('click', () => {
                 if (!isGameActive) {
@@ -1086,47 +1008,33 @@
                 alert('Выберите блок!');
                 return;
             }
-
             const userId = new URLSearchParams(window.location.search).get('user_id');
             const betInput = document.getElementById('game-bet');
             const betAmount = parseInt(betInput.value);
-
-            // Клиентские проверки
             if (!betAmount || betAmount < 1) {
                 alert('Введите корректную ставку!');
                 return;
             }
-
             if (betAmount <= 0) {
                 alert('Ставка должна быть больше нуля!');
                 return;
             }
-
             isGameActive = true;
             const cells = document.querySelectorAll('.game-cell');
-
             try {
                 const response = await fetch('/play_game', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        bet: betAmount
-                    })
+                    body: JSON.stringify({ user_id: userId, bet: betAmount })
                 });
-
                 if (!response.ok) {
                     throw new Error(`Недостаточно средств!`);
                 }
-
                 const data = await response.json();
-
                 if (data.status === "error") {
                     alert(data.message);
                     return;
                 }
-
-                // Анимация
                 let current = 0;
                 const totalSteps = 15;
                 for (let i = 0; i < totalSteps; i++) {
@@ -1135,25 +1043,16 @@
                     current = (current + 1) % 8;
                     cells[current].classList.add('active');
                 }
-
-                // Отображение результата
                 const resultCell = document.querySelector(`[data-index="${data.winning_cell}"]`);
                 resultCell.classList.add(data.result === "win" ? 'winner' : 'loser');
-
-                document.getElementById('game-result').textContent = data.result === "win"
-                    ? `Победа! +${betAmount * 2} монет`
-                    : `Проигрыш. -${betAmount} монет`;
-
+                document.getElementById('game-result').textContent = data.result === "win" ? `Победа! +${betAmount * 2} монет` : `Проигрыш. -${betAmount} монет`;
                 document.getElementById('currency-amount').textContent = data.new_balance;
-
             } catch (error) {
                 console.error('Ошибка игры:', error);
                 alert(error.message || 'Ошибка соединения с сервером');
             } finally {
                 setTimeout(() => {
-                    cells.forEach(c => {
-                        c.classList.remove('active', 'winner', 'loser', 'selected');
-                    });
+                    cells.forEach(c => { c.classList.remove('active', 'winner', 'loser', 'selected'); });
                     document.getElementById('game-result').textContent = '';
                     selectedCell = null;
                     isGameActive = false;
@@ -1167,12 +1066,11 @@
             const wheelContainer = document.querySelector('.wheel-container');
             const toWheelButton = document.getElementById('to-wheel');
             const toMartButton = document.getElementById('to-mart');
+            const mainContainer = document.querySelector('.main');
+            const widgetsContainer = document.querySelector('.widgets-container');
+            const toWidgetsButton = document.getElementById('to-widgets');
+            const toMainButton = document.getElementById('to-main');
 
-
-
-
-
-            // Инициализация
             martContainer.style.display = 'block';
             martContainer.style.opacity = '1';
             martContainer.style.zIndex = '2';
@@ -1180,7 +1078,13 @@
             wheelContainer.style.opacity = '0';
             wheelContainer.style.zIndex = '1';
 
-            // Переключение на wheel-container
+            mainContainer.style.display = 'block';
+            mainContainer.style.opacity = '1';
+            mainContainer.style.zIndex = '2';
+            widgetsContainer.style.display = 'none';
+            widgetsContainer.style.opacity = '0';
+            widgetsContainer.style.zIndex = '1';
+
             toWheelButton.addEventListener('click', (event) => {
                 event.preventDefault();
                 martContainer.style.display = 'none';
@@ -1191,7 +1095,6 @@
                 wheelContainer.style.zIndex = '2';
             });
 
-            // Переключение на mart-container
             toMartButton.addEventListener('click', (event) => {
                 event.preventDefault();
                 wheelContainer.style.display = 'none';
@@ -1201,10 +1104,31 @@
                 martContainer.style.opacity = '1';
                 martContainer.style.zIndex = '2';
             });
+
+            toWidgetsButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                mainContainer.style.display = 'none';
+                mainContainer.style.opacity = '0';
+                mainContainer.style.zIndex = '1';
+                widgetsContainer.style.display = 'block';
+                widgetsContainer.style.opacity = '1';
+                widgetsContainer.style.zIndex = '2';
+            });
+
+            toMainButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                widgetsContainer.style.display = 'none';
+                widgetsContainer.style.opacity = '0';
+                widgetsContainer.style.zIndex = '1';
+                mainContainer.style.display = 'block';
+                mainContainer.style.opacity = '1';
+                mainContainer.style.zIndex = '2';
+            });
         });
-        /* меню*/
+
         function hideAllSections() {
             document.querySelector('.main').style.display = 'none';
+            document.querySelector('.widgets-container').style.display = 'none';
             document.getElementById('auction').style.display = 'none';
             document.getElementById('rating').style.display = 'none';
             document.getElementById('inventory').style.display = 'none';
@@ -1233,13 +1157,11 @@
             document.querySelector('.separator-hidden').style.display = 'block';
         });
 
-        // Обработчик кнопки Mart в меню
         document.querySelector('.button.mart').addEventListener('click', function () {
             hideAllSections();
             document.getElementById('mart').style.display = 'block';
             document.querySelector('.button.return').style.display = 'flex';
             document.querySelector('.separator-hidden').style.display = 'block';
-
             const martContainer = document.querySelector('.mart-container');
             const wheelContainer = document.querySelector('.wheel-container');
             martContainer.style.display = 'block';
@@ -1262,11 +1184,17 @@
             document.querySelector('.button.return').style.display = 'none';
             document.getElementById('main').style.display = 'block';
             document.querySelector('.separator-hidden').style.display = 'none';
+            const mainContainer = document.querySelector('.main');
+            const widgetsContainer = document.querySelector('.widgets-container');
+            mainContainer.style.display = 'block';
+            mainContainer.style.opacity = '1';
+            mainContainer.style.zIndex = '2';
+            widgetsContainer.style.display = 'none';
+            widgetsContainer.style.opacity = '0';
+            widgetsContainer.style.zIndex = '1';
         });
-
     </script>
-
     <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'922d9f64bad0d1b6',t:'MTc0MjM5NDE1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93029a38b8961d6a',t:'MTc0NDYyNzQwOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
-
 </html>

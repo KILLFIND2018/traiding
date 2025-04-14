@@ -5,6 +5,13 @@ body {
     max-width: 100%;
 }
 
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%; /* Фиксируем высоту на 100% экрана */
+    overflow: hidden; /* Убираем любую прокрутку */
+}
+
 body {
     margin: 0;
     font-family: Arial, sans-serif;
@@ -50,7 +57,7 @@ body {
     height: 50px;
     border: 5px solid #f3f3f3;
     /* Светлый цвет */
-    border-top: 5px solid #3498db;
+    border-top: 5px solid #7FFFD4;
     /* Основной цвет */
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -131,6 +138,12 @@ body {
     margin: 5px;
 }
 
+.sub-auction-header {
+    text-align: center;
+    position: relative;
+    margin: 5px;
+}
+
 .main {
     width: 100%;
     overflow-x: hidden;
@@ -143,7 +156,7 @@ body {
     padding: 5px;
     padding-top: 30px;
     padding-bottom: 5px;
-    height: calc(100vh - 70px - 60px);
+    height: 77vh;
     width: 90%;
 }
 
@@ -227,13 +240,22 @@ body {
     background-color: rgba(44, 62, 80, 0.1);
     text-align: center;
     gap: 20px;
+    width: 100vw;
+    height: 85vh;
+    overflow-y: auto;
+    left: 0;
+    transform: translate(0, -50%);
+    padding: 20px;
+    box-sizing: border-box;
+    background: linear-gradient(to bottom, rgba(44, 62, 80, 0.1) 0%, rgba(44, 62, 80, 0.1) 90%, rgba(44, 62, 80, 0.5) 100%);
 }
+
 
 .chat-container {
     border: 1px solid #366e7f;
     border-radius: 5px;
     padding: 10px;
-    height: 250px;
+    height: 200px;
     display: flex;
     flex-direction: column;
 }
@@ -294,6 +316,10 @@ select {
     padding: 10px 20px;
 }
 
+#chat-input {
+    width: 100%;
+}
+
 #main {
     position: relative;
     width: 100%;
@@ -313,6 +339,11 @@ select {
     position: absolute;
     text-align: center;
     background-color: rgba(44, 62, 80, 0.1);
+    width: 100vw;
+    left: 0;
+    transform: translate(0, -50%);
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .donate-container {
@@ -322,6 +353,11 @@ select {
     position: absolute;
     text-align: center;
     background-color: rgba(44, 62, 80, 0.1);
+    width: 100vw;
+    left: 0;
+    transform: translate(0, -50%);
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .donate-container button {
@@ -406,12 +442,7 @@ select {
     background-color: rgba(44, 62, 80, 0.1);
 }
 
-.auction-container,
-.inventory-container,
-.donate-container,
-.rating-container,
-.mart-container,
-.wheel-container {
+.rating-container{
     width: 100vw;
     left: 0;
     transform: translate(0, -25%);
@@ -487,23 +518,24 @@ td {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #3498db;
+    background-color: #7FFFD4;
     border: none;
     border-radius: 5px;
     padding: 5px 10px;
     cursor: pointer;
-    color: #ecf0f1;
+    color: #000000;
     font-size: 1em;
     transition: background-color 0.3s ease;
     width: 100%;
+    font-weight: bold;
 }
 
 .buy-button:hover {
-    background-color: #3498db;
+    background-color: #7FFFD4;
 }
 
 .buy-button:active {
-    background-color: #1c60a0;
+    background-color: #75d8b7;
     /* Цвет при нажатии */
 }
 
@@ -690,11 +722,17 @@ td {
     /* Позиционируем как mart-container */
     flex-direction: column;
     align-items: center;
-    transform: translate(0, -30%) !important;
+    transform: translate(0, -50%) !important;
+    width: 100vw;
+    left: 0;
+    padding: 20px;
+    box-sizing: border-box;
     opacity: 0;
     z-index: 2;
-    /* Устанавливаем выше контента, но ниже уведомлений */
+    background: linear-gradient(to bottom, rgba(44, 62, 80, 0.1) 0%, rgba(44, 62, 80, 0.1) 90%, rgba(44, 62, 80, 0.5) 100%);
 }
+    /* Устанавливаем выше контента, но ниже уведомлений */
+
 
 /* Колесо */
 .wheel {
@@ -779,23 +817,35 @@ td {
     text-align: center;
     opacity: 1;
     z-index: 2;
-    /* Устанавливаем тот же уровень, что и у wheel-container */
+    width: 100vw;
+    left: 0;
+    transform: translate(0, -50%);
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .spin-btn,
 .sender,
 .auctions,
 .auctions-table,
-.buy-stars {
+.buy-stars, .game-btn {
     padding: 10px 20px;
-    background-color: #3498db;
-    color: #ecf0f1;
+    background-color: #7FFFD4;
+    color: #000000;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
+    font-weight: bold;
     transition: background-color 0.3s ease;
 }
+
+.ctrl {
+    width: 50px;
+    height: auto;
+}
+
+
 
 .auctions-table {
     margin: 5px;
@@ -803,11 +853,14 @@ td {
 
 /* Стили для кнопок навигации */
 .nav-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     bottom: 80px;
     /* Чуть выше game-menu */
     margin-top: 10px;
-    padding: 10px 20px;
-    background-color: #3498db;
+    padding: 0px 10px;
+    background-color: #7FFFD4;
     color: #ecf0f1;
     border: none;
     border-radius: 5px;
@@ -818,8 +871,34 @@ td {
     /* Выше контента, но ниже уведомлений */
 }
 
+.nav-main-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    bottom: 80px;
+    /* Чуть выше game-menu */
+    margin-top: 10px;
+    padding: 0px 10px;
+    background-color: #7FFFD4;
+    color: #ecf0f1;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    z-index: 5;
+}
+
+.nav-main-button.right {
+    float: right;
+    position: relative;
+    top: 55%
+}
+
+
+
 .nav-button:hover {
-    background-color: #2980b9;
+    background-color: #7FFFD4;
 }
 
 .nav-button.right {
@@ -831,6 +910,30 @@ td {
     position: relative;
     top: 0;
     right: 40%;
+}
+.main,
+.auction-container,
+.inventory-container,
+.rating-container,
+.mart-container,
+.wheel-container,
+.widgets-container,
+.donate-container {
+    max-height: 60vh; /* Настройте высоту по вашему усмотрению */
+    overflow-y: auto; /* Включаем прокрутку внутри секции */
+}
+
+.widgets-container {
+    display: none;
+    position: absolute;
+    text-align: center;
+    background-color: rgba(44, 62, 80, 0.1);
+    width: 95vw;
+    transform: translate(0, 10%);
+    padding: 20px;
+    box-sizing: border-box;
+    opacity: 0;
+    z-index: 1;
 }
 
 
@@ -882,7 +985,6 @@ screen and (max-width: 1024px) {
     .container {
         overflow-x: hidden;
         width: 100vw !important;
-        overflow-y: auto;
     }
 
     .button {
