@@ -42,7 +42,6 @@
                         <button id="bet-up" disabled><img class="btn-bet" src="/static/img_whell/up.png" alt=""></button>
                         <button id="bet-down" disabled><img class="btn-bet" src="/static/img_whell/down.png" alt=""></button>
                         <input type="number" id="bet-amount" placeholder="Сумма ставки" min="1" disabled>
-                        
                     </div>
                     <p id="bet-status">Следующая ставка доступна через: <span id="bet-timer">00:00:00</span></p>
                 </div>
@@ -57,7 +56,7 @@
                     <div class="chat-container">
                         <div class="chat-messages" id="chat-messages"></div>
                         <div class="chat-input">
-                            <input class = "chat-input" type="text" id="chat-input" placeholder="Сообщение...">
+                            <input class="chat-input" type="text" id="chat-input" placeholder="Сообщение...">
                             <button class="sender" onclick="sendChatMessage()">Отправить</button>
                         </div>
                     </div>
@@ -121,6 +120,7 @@
                         <table class="market-table">
                             <thead>
                                 <tr>
+                                    <th>Изображение</th>
                                     <th>Предмет</th>
                                     <th>Генерация в сек</th>
                                     <th>Стоимость</th>
@@ -432,8 +432,8 @@
             document.querySelectorAll('.buy-button').forEach(button => {
                 button.addEventListener('click', async function () {
                     const row = this.closest('tr');
-                    const itemName = row.querySelector('td:nth-child(1)').textContent.trim();
-                    const itemGeneration = parseInt(row.querySelector('td:nth-child(2)').textContent, 10);
+                    const itemName = row.querySelector('td:nth-child(2)').textContent.trim();
+                    const itemGeneration = parseInt(row.querySelector('td:nth-child(3)').textContent, 10);
                     const itemCost = parseInt(this.querySelector('span').textContent, 10);
 
                     const response = await fetch('/buy_item', {
@@ -455,7 +455,7 @@
                         alert(data.message || 'Ошибка покупки');
                     }
                 });
-            });
+                });
         }
 
         async function loadMarket() {
@@ -463,11 +463,18 @@
             const data = await response.json();
             if (data.status === "success") {
                 const tbody = document.querySelector('.market-table tbody');
+                tbody.innerHTML = '';  // Очищаем таблицу
                 data.items.forEach(item => {
                     const row = tbody.insertRow();
-                    row.insertCell(0).textContent = item.name;
-                    row.insertCell(1).textContent = item.generation;
-                    const priceCell = row.insertCell(2);
+                    const imgCell = row.insertCell(0);
+                    const img = document.createElement('img');
+                    img.src = item.image_path;
+                    img.alt = item.name;
+                    img.style.width = '50px';  // Задайте размер по желанию
+                    imgCell.appendChild(img);
+                    row.insertCell(1).textContent = item.name;
+                    row.insertCell(2).textContent = item.generation;
+                    const priceCell = row.insertCell(3);
                     const button = document.createElement('button');
                     button.className = 'buy-button';
                     button.innerHTML = `<span>${item.price}</span><img src="/static/bitcoin.png" alt="bitcoin">`;
@@ -1193,8 +1200,42 @@
             widgetsContainer.style.opacity = '0';
             widgetsContainer.style.zIndex = '1';
         });
+
+
+
+        let touchStartX = 0;
+const marketWrapper = document.querySelector('.market');
+
+marketWrapper.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+});
+
+marketWrapper.addEventListener('touchmove', (e) => {
+    const touchEndX = e.touches[0].clientX;
+    if (Math.abs(touchEndX - touchStartX) > 10) {
+        marketWrapper.classList.add('scrollable');
+    }
+});
+
+marketWrapper.addEventListener('touchend', () => {
+    marketWrapper.classList.remove('scrollable');
+});
+
+
+if (!localStorage.getItem('swipeHintShown')) {
+    const hint = document.createElement('div');
+    hint.textContent = '← Свайпайте → чтобы увидеть больше';
+    hint.style.position = 'absolute';
+    hint.style.bottom = '10px';
+    hint.style.color = '#7FFFD4';
+    hint.style.fontSize = '14px';
+    marketWrapper.appendChild(hint);
+    
+    setTimeout(() => hint.remove(), 3000);
+    localStorage.setItem('swipeHintShown', 'true');
+}
     </script>
     <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'922d9f64bad0d1b6',t:'MTc0MjM5NDE1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
     <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93029a38b8961d6a',t:'MTc0NDYyNzQwOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93045683df90db15',t:'MTc0NDY0NTYwNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

@@ -398,11 +398,54 @@ select {
     /* Цвет фона при наведении */
 }
 
+/* Обертка для таблицы */
+.market {
+    width: 100%; /* Наследовать ширину от mart-container */
+    position: relative;
+    overflow-x: auto;
+    scrollbar-width: thin; /* Для Firefox */
+    scrollbar-color: #7FFFD4 rgba(44, 62, 80, 0.3); /* Цвет полосы прокрутки */
+}
+
+* Стилизация скроллбара для Chrome/Safari */
+.market::-webkit-scrollbar {
+    height: 8px;
+    background: rgba(44, 62, 80, 0.3);
+}
+
+.market::-webkit-scrollbar-thumb {
+    background: #7FFFD4;
+    border-radius: 4px;
+}
+
+/* Градиенты по краям для мобильных устройств */
+.market::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 30px;
+    height: 100%;
+    background: linear-gradient(to right, transparent 0%, rgba(44, 62, 80, 0.5) 100%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.market.scrollable::after {
+    opacity: 1;
+}
+
+
 
 
 /* Стили для таблицы */
 .market-table {
-    width: 100%;
+    width: 100%; /* Занимает всю ширину обертки */
+    min-width: 100vw; /* Минимальная ширина равна ширине экрана */
+    table-layout: auto; /* Автоматическое распределение ширины колонок */
+    border-collapse: collapse; /* Убрать двойные границы */
+    overflow-x: auto;
     border-radius: 5px;
     /* Таблица занимает всю ширину контейнера */
     border-collapse: collapse;
@@ -414,8 +457,8 @@ select {
 /* Стили для заголовков и ячеек таблицы */
 .market-table th,
 .market-table td {
-    padding: 10px;
-    /* Отступы внутри ячеек */
+    white-space: nowrap; /* Запретить перенос текста */
+    padding: 10px 15px; /* Увеличить отступы для читаемости */
     text-align: center;
     /* Выравнивание текста по центру */
 }
@@ -822,6 +865,7 @@ td {
     transform: translate(0, -50%);
     padding: 20px;
     box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .spin-btn,
@@ -1002,4 +1046,17 @@ screen and (max-width: 1024px) {
     .separator-hidden {
         height: 75%;
     }
+}
+
+@media (pointer: coarse) {
+    .market-table {
+        animation: swipe-hint 1.5s ease-in-out 2;
+    }
+}
+
+@keyframes swipe-hint {
+    0% { transform: translateX(0); }
+    30% { transform: translateX(-20px); }
+    60% { transform: translateX(20px); }
+    100% { transform: translateX(0); }
 }

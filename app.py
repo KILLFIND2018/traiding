@@ -266,6 +266,11 @@ def get_market():
         cursor.execute("SELECT name, generation_per_hour AS generation, price FROM market_items")
         items = cursor.fetchall()
 
+        # Добавляем путь к изображению для каждого предмета
+        for item in items:
+            image_name = item['name'].replace(' ', '_').lower() + '.png'
+            item['image_path'] = f'/static/img-market/{image_name}'
+
         return jsonify({"status": "success", "items": items}), 200
 
     except mysql.connector.Error as err:
@@ -607,60 +612,98 @@ def place_bitcoin_bet():
     data = request.json
     user_id = data.get('user_id')
     bet_amount = data.get('bet_amount')
-    bet_direction = data.get('bet_direction')  # 'up' или 'down'
+    bet_direction = data.get('bet_direction')
 
     if not all([user_id, bet_amount, bet_direction]):
         return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
 
+    connection = None
+    cursor = None
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
+        connection.autocommit = False  # Отключаем авто-коммит
+
         cursor = connection.cursor()
 
         # Проверка последней ставки
-        cursor.execute("SELECT bet_time FROM bitcoin_bets WHERE user_id = %s", (user_id,))
+        cursor.execute("SELECT bet_time FROM bitcoin_bets WHERE user_id = %s ORDER BY bet_time DESC LIMIT 1", (user_id,))
         last_bet = cursor.fetchone()
-        if last_bet and (datetime.now() - last_bet[0]).total_seconds() < 60:  # 24 часа
-            return jsonify({"status": "error", "message": "Ставка доступна раз в сутки"}), 400
+        cursor.fetchall()  # Очистка буфера
 
-        # Проверка баланса
-        cursor.execute("SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s", (user_id,))
+        if last_bet:
+            last_bet_time = last_bet[0]
+            cooldown = 100  # 100 секунд
+            if (datetime.now() - last_bet_time).total_seconds() < cooldown:
+                return jsonify({"status": "error", "message": "Ставка доступна раз в 100 секунд"}), 400
+
+        # Получение баланса с блокировкой строки
+        cursor.execute(
+            "SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s FOR UPDATE", 
+            (user_id,)
+        )
         result = cursor.fetchone()
+        cursor.fetchall()
+
         if not result:
             return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
-        
-        balance, total_generation, last_updated = result
-        total_generation = total_generation or 1
-        last_updated = last_updated or datetime.now()
-        new_balance, _ = calculate_balance(balance, 1.0, last_updated, total_generation)
 
-        if new_balance < bet_amount:
+        balance, total_generation, last_updated = result
+        current_balance, _ = calculate_balance(
+            balance, 
+            1.0, 
+            last_updated or datetime.now(), 
+            total_generation or 1
+        )
+
+        if current_balance < bet_amount:
             return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
 
-        # Получение текущей цены биткоина
-        btc_price_response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd').json()
-        btc_price = btc_price_response['bitcoin']['usd']
+        # Получение цены BTC
+        try:
+            response = requests.get(
+                'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
+                timeout=5
+            )
+            btc_price = response.json()['bitcoin']['usd']
+        except Exception as e:
+            connection.rollback()
+            return jsonify({"status": "error", "message": f"Ошибка получения цены BTC: {str(e)}"}), 500
 
         # Списание средств
-        new_balance -= bet_amount
-        cursor.execute("UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s", 
-                       (new_balance, datetime.now(), user_id))
+        cursor.execute(
+            "UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s",
+            (current_balance - bet_amount, datetime.now(), user_id)
+        )
 
-        # Сохранение ставки
-        cursor.execute("""
-            INSERT INTO bitcoin_bets (user_id, bet_amount, bet_direction, bet_time, bet_price)
-            VALUES (%s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE bet_amount = %s, bet_direction = %s, bet_time = %s, bet_price = %s, resolved = FALSE
-        """, (user_id, bet_amount, bet_direction, datetime.now(), btc_price, 
-              bet_amount, bet_direction, datetime.now(), btc_price))
-        
-        connection.commit()
-        return jsonify({"status": "success", "balance": new_balance}), 200
+        # Запись ставки
+        cursor.execute(
+            """INSERT INTO bitcoin_bets 
+            (user_id, bet_amount, bet_direction, bet_time, bet_price)
+            VALUES (%s, %s, %s, %s, %s)""",
+            (user_id, bet_amount, bet_direction, datetime.now(), btc_price)
+        )
+
+        connection.commit()  # Фиксация транзакции
+
+        return jsonify({
+            "status": "success",
+            "new_balance": current_balance - bet_amount,
+            "bet_price": btc_price
+        }), 200
 
     except mysql.connector.Error as err:
-        return jsonify({"status": "error", "message": str(err)}), 500
+        if connection:
+            connection.rollback()
+        return jsonify({"status": "error", "message": f"Ошибка БД: {str(err)}"}), 500
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        return jsonify({"status": "error", "message": f"Ошибка: {str(e)}"}), 500
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
 
 @app.route('/check_bitcoin_bet', methods=['GET'])
 def check_bitcoin_bet():
@@ -672,14 +715,25 @@ def check_bitcoin_bet():
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
+        # Читаем все результаты запроса
         cursor.execute("SELECT bet_amount, bet_direction, bet_time, bet_price, resolved FROM bitcoin_bets WHERE user_id = %s", (user_id,))
-        bet = cursor.fetchone()
-        if not bet or bet[4]:  # resolved = True
+        bets = cursor.fetchall()
+
+        # Если ставок нет или все разрешены
+        if not bets or all(bet[4] for bet in bets):
             return jsonify({"status": "success", "message": "Нет активных ставок"}), 200
 
-        bet_amount, bet_direction, bet_time, bet_price = bet[0:4]
-        if (datetime.now() - bet_time).total_seconds() < 60:  # Проверка через 24 часа
-            remaining = 60 - (datetime.now() - bet_time).total_seconds()
+        # Берем первую активную ставку
+        for bet in bets:
+            if not bet[4]:  # Ищем unresolved ставку
+                bet_amount, bet_direction, bet_time, bet_price = bet[0:4]
+                break
+        else:
+            return jsonify({"status": "success", "message": "Нет активных ставок"}), 200
+
+        # Проверка времени
+        if (datetime.now() - bet_time).total_seconds() < 10:  # 24 часа
+            remaining = 10 - (datetime.now() - bet_time).total_seconds()
             return jsonify({"status": "pending", "remaining": int(remaining)}), 200
 
         # Получение текущей цены
@@ -690,22 +744,22 @@ def check_bitcoin_bet():
         won = (bet_direction == 'up' and current_price > bet_price) or (bet_direction == 'down' and current_price < bet_price)
         prize = bet_amount * 2 if won else 0
 
-        # Обновление баланса
-        cursor.execute("SELECT balance FROM user_progress WHERE user_id = %s", (user_id,))
-        balance = cursor.fetchone()[0]
-        new_balance = balance + prize
-
-        cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", (new_balance, user_id))
+        # Обновление данных
+        cursor.execute("UPDATE user_progress SET balance = balance + %s WHERE user_id = %s", (prize, user_id))
         cursor.execute("UPDATE bitcoin_bets SET resolved = TRUE WHERE user_id = %s", (user_id,))
         connection.commit()
 
-        return jsonify({"status": "success", "won": won, "prize": prize, "balance": new_balance}), 200
+        return jsonify({"status": "success", "won": won, "prize": prize}), 200
 
     except mysql.connector.Error as err:
         return jsonify({"status": "error", "message": str(err)}), 500
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
     finally:
-        cursor.close()
-        connection.close()
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()
 
 @app.route('/generate_referral', methods=['POST'])
 def generate_referral():
