@@ -9,7 +9,70 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <link rel="stylesheet" href="/static/styles/style.css">
+<style>
+   /* Стили для всплывающего блока */
+.purchase-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #f1c40f;
+    border-radius: 15px;
+    padding: 20px;
+    z-index: 1000;
+    text-align: center;
+    color: #fff;
+    display: none;
+    animation: popupFadeIn 0.5s ease-out;
+}
 
+.purchase-popup.show {
+    display: block;
+}
+
+.purchase-popup img {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 10px;
+}
+
+.purchase-popup h2 {
+    font-size: 24px;
+    margin: 10px 0;
+}
+
+.purchase-popup p {
+    font-size: 16px;
+    color: #ccc;
+}
+
+@keyframes popupFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -60%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+.sparkle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #f1c40f;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: sparkle 0.8s ease-out forwards;
+}
+
+@keyframes sparkle {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0) translate(var(--x), var(--y)); opacity: 0; }
+} 
+</style>
 </head>
 <body>
     <div class="loader" id="loader">
@@ -891,31 +954,35 @@
             const betAmountInput = document.getElementById('bet-amount');
             const betTimer = document.getElementById('bet-timer');
 
-            async function checkBetStatus() {
-                const response = await fetch(`/check_bitcoin_bet?user_id=${userId}`);
-                const data = await response.json();
-                if (data.status === "pending") {
-                    const remaining = data.remaining;
-                    const hours = Math.floor(remaining / 3600);
-                    const minutes = Math.floor((remaining % 3600) / 60);
-                    const seconds = Math.floor(remaining % 60);
-                    betTimer.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                    betUpButton.disabled = true;
-                    betDownButton.disabled = true;
-                    betAmountInput.disabled = true;
-                } else {
-                    betTimer.textContent = "Ставка доступна!";
-                    betUpButton.disabled = false;
-                    betDownButton.disabled = false;
-                    betAmountInput.disabled = false;
-                    if (data.won !== undefined) {
-                        alert(data.won ? `Вы выиграли! Ваш приз: ${data.prize} монет` : "Вы проиграли.");
-                        document.getElementById('currency-amount').textContent = data.balance;
+                    async function checkBetStatus() {
+            const response = await fetch(`/check_bitcoin_bet?user_id=${userId}`);
+            const data = await response.json();
+            if (data.status === "pending") {
+                const remaining = data.remaining;
+                const hours = Math.floor(remaining / 3600);
+                const minutes = Math.floor((remaining % 3600) / 60);
+                const seconds = Math.floor(remaining % 60);
+                betTimer.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                betUpButton.disabled = true;
+                betDownButton.disabled = true;
+                betAmountInput.disabled = true;
+            } else {
+                betTimer.textContent = "Ставка доступна!";
+                betUpButton.disabled = false;
+                betDownButton.disabled = false;
+                betAmountInput.disabled = false;
+                if (data.won !== undefined) {
+                    if (data.won) {
+                        showNotificationPopup("Вы выиграли!", "/static/bitcoin.png", `Ваш приз: ${data.prize} монет`);
+                    } else {
+                        showNotificationPopup("Вы проиграли", "/static/bitcoin.png", "Попробуйте еще раз!");
                     }
+                    document.getElementById('currency-amount').textContent = data.balance;
                 }
             }
-            checkBetStatus();
-            setInterval(checkBetStatus, 1000);
+        }
+        checkBetStatus();
+        setInterval(checkBetStatus, 1000);
 
             betUpButton.addEventListener('click', async () => {
                 const amount = parseInt(betAmountInput.value);
@@ -980,22 +1047,22 @@
         }
 
         async function claimLoginReward(userId) {
-            const response = await fetch('/claim_login_reward', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userId })
-            });
-            const data = await response.json();
-            if (data.status === "success") {
-                console.log(`Получена награда за вход: ${data.reward} монет. Новый баланс: ${data.new_balance}`);
-                document.getElementById('currency-amount').textContent = data.new_balance;
-                alert(`Вы получили ${data.reward} монет за вход!`);
-                await checkLoginReward(userId);
-            } else {
-                console.error('Ошибка получения награды:', data.message);
-                alert('Ошибка получения награды: ' + data.message);
-            }
+        const response = await fetch('/claim_login_reward', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId })
+        });
+        const data = await response.json();
+        if (data.status === "success") {
+            console.log(`Получена награда за вход: ${data.reward} монет. Новый баланс: ${data.new_balance}`);
+            document.getElementById('currency-amount').textContent = data.new_balance;
+            showNotificationPopup("Награда за вход", "/static/bitcoin.png", `Вы получили ${data.reward} монет!`);
+            await checkLoginReward(userId);
+        } else {
+            console.error('Ошибка получения награды:', data.message);
+            alert('Ошибка получения награды: ' + data.message);
         }
+    }
 
         const prizes = ["x3 токенов", "1000 токенов", "Drinking Water Dispenser", "10000 токенов", "100000 токенов", "2000 токенов", "Humanoid robot", "x2 токенов"];
         const probabilities = [16, 16, 2, 16, 16, 16, 2, 16];
