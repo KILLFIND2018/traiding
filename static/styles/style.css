@@ -868,6 +868,14 @@ td {
     overflow-x: hidden;
 }
 
+.coin-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 25px;
+}
+
 .spin-btn,
 .sender,
 .auctions,
@@ -884,16 +892,24 @@ td {
     transition: background-color 0.3s ease;
 }
 
-.spin-btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+    .spin-btn {
+        width: 120px; /* Фиксированная ширина */
+        height: 40px; /* Фиксированная высота */
+        padding: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+    }
 
-.spin-btn img {
-    width: 25px;
-    padding-left: 5px;
-}
+
+    .spin-btn img {
+        width: 25px !important;
+        height: 25px !important; /* Добавляем фиксированную высоту */
+        object-fit: contain; /* Гарантирует правильное масштабирование */
+        padding-left: 5px;
+        flex-shrink: 0; /* Запрещаем уменьшение размера */
+    }
 
 .ctrl {
     width: 50px;
@@ -1055,15 +1071,43 @@ screen and (max-width: 1024px) {
         /* Уменьшаем размер иконок */
     }
 
+    .spin-btn {
+        width: 110px;
+        height: 38px;
+        font-size: 14px;
+    }
     .spin-btn img {
-        width: 25px;
-        padding-left: 5px;
+        width: 22px !important;
+        height: 22px !important;
     }
 
     .separator,
     .separator-hidden {
         height: 75%;
     }
+}
+
+/* Медиа-запросы для мобилок */
+@media (max-width: 480px) {
+    .spin-btn {
+        min-width: 100px;
+        height: 36px;
+        padding: 4px 8px;
+        font-size: 14px;
+    }
+    
+    .spin-btn img {
+        width: 24px !important;
+        height: 24px !important;
+    }
+}
+
+/* Reset для кнопок */
+button {
+    margin: 0;
+    border: 0;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 @media (pointer: coarse) {

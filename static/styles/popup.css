@@ -1,0 +1,83 @@
+/* Стили для всплывающего блока */
+.purchase-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #f1c40f;
+    border-radius: 15px;
+    padding: 20px;
+    z-index: 1000;
+    text-align: center;
+    color: #fff;
+    display: none;
+    animation: popupFadeIn 0.5s ease-out;
+}
+
+.purchase-popup.show {
+    display: block;
+}
+
+.purchase-popup img {
+    width: 50%;
+    height: auto;
+    margin-bottom: 10px;
+    object-fit: contain; /* Добавьте это свойство */
+}
+
+.purchase-popup h2 {
+    font-size: 24px;
+    margin: 10px 0;
+}
+
+.purchase-popup p {
+    font-size: 16px;
+    color: #ccc;
+}
+
+.purchase-popup.error {
+    background: rgba(161, 33, 33, 0.719);
+    border-color: #b12e2e;
+}
+
+.purchase-popup.error .sparkle {
+    background: #aa2b2b;
+}
+
+@keyframes popupFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -60%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+.sparkle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #f1c40f;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: sparkle 0.8s ease-out forwards;
+}
+
+@keyframes sparkle {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0) translate(var(--x), var(--y)); opacity: 0; }
+} 
+
+/* Добавить сразу после основной анимации */
+@keyframes sparkle-error {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(3) translate(var(--x), var(--y)); opacity: 0; }
+    }
+
+    .sparkle.error-sparkle {
+        background: #ff5555;
+        animation: sparkle-error 0.8s ease-out forwards;
+    }
