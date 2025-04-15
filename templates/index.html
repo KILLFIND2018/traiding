@@ -139,6 +139,7 @@
                     <div class="game-block">
                         <h3>Угадай блок</h3>
                         <div class="grid-game">
+                            <div class="game-cell" data-index="0"></div>
                             <div class="game-cell" data-index="1"></div>
                             <div class="game-cell" data-index="2"></div>
                             <div class="game-cell" data-index="3"></div>
@@ -146,7 +147,6 @@
                             <div class="game-cell" data-index="5"></div>
                             <div class="game-cell" data-index="6"></div>
                             <div class="game-cell" data-index="7"></div>
-                            <div class="game-cell" data-index="8"></div>
                         </div>
                         <div class="game-controls">
                             <input type="number" id="game-bet" placeholder="Ставка" min="1">
@@ -1011,62 +1011,71 @@
         });
 
         async function startGame() {
-            if (!selectedCell) {
-                alert('Выберите блок!');
-                return;
-            }
-            const userId = new URLSearchParams(window.location.search).get('user_id');
-            const betInput = document.getElementById('game-bet');
-            const betAmount = parseInt(betInput.value);
-            if (!betAmount || betAmount < 1) {
-                alert('Введите корректную ставку!');
-                return;
-            }
-            if (betAmount <= 0) {
-                alert('Ставка должна быть больше нуля!');
-                return;
-            }
-            isGameActive = true;
-            const cells = document.querySelectorAll('.game-cell');
-            try {
-                const response = await fetch('/play_game', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, bet: betAmount })
-                });
-                if (!response.ok) {
-                    throw new Error(`Недостаточно средств!`);
-                }
-                const data = await response.json();
-                if (data.status === "error") {
-                    alert(data.message);
-                    return;
-                }
-                let current = 0;
-                const totalSteps = 15;
-                for (let i = 0; i < totalSteps; i++) {
-                    await new Promise(resolve => setTimeout(resolve, 100 + (i * 20)));
-                    cells.forEach(c => c.classList.remove('active'));
-                    current = (current + 1) % 8;
-                    cells[current].classList.add('active');
-                }
-                const resultCell = document.querySelector(`[data-index="${data.winning_cell}"]`);
-                resultCell.classList.add(data.result === "win" ? 'winner' : 'loser');
-                document.getElementById('game-result').textContent = data.result === "win" ? `Победа! +${betAmount * 2} монет` : `Проигрыш. -${betAmount} монет`;
-                document.getElementById('currency-amount').textContent = data.new_balance;
-            } catch (error) {
-                console.error('Ошибка игры:', error);
-                alert(error.message || 'Ошибка соединения с сервером');
-            } finally {
-                setTimeout(() => {
-                    cells.forEach(c => { c.classList.remove('active', 'winner', 'loser', 'selected'); });
-                    document.getElementById('game-result').textContent = '';
-                    selectedCell = null;
-                    isGameActive = false;
-                    betInput.value = '';
-                }, 5000);
-            }
+    if (!selectedCell) {
+        alert('Выберите блок!');
+        return;
+    }
+    const userId = new URLSearchParams(window.location.search).get('user_id');
+    const betInput = document.getElementById('game-bet');
+    const betAmount = parseInt(betInput.value);
+    const selectedCellIndex = parseInt(selectedCell.dataset.index);
+
+    if (!betAmount || betAmount < 1) {
+        alert('Введите корректную ставку!');
+        return;
+    }
+
+    if (isGameActive) return;
+    isGameActive = true;
+
+    try {
+        const response = await fetch('/play_game', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, bet: betAmount, selected_cell: selectedCellIndex })
+        });
+        if (!response.ok) throw new Error(`Ошибка: ${response.statusText}`);
+
+        const data = await response.json();
+        if (data.status === "error") {
+            alert(data.message);
+            isGameActive = false;
+            return;
         }
+
+        let current = 0;
+        const totalSteps = 15;
+        const cells = document.querySelectorAll('.game-cell');
+
+        // Анимация
+        for (let i = 0; i < totalSteps; i++) {
+            await new Promise(resolve => setTimeout(resolve, 100 + (i * 20)));
+            cells.forEach(c => c.classList.remove('active'));
+            current = (current + 1) % 8;
+            cells[current].classList.add('active');
+        }
+
+        // Показ результата
+        const resultCell = document.querySelector(`[data-index="${data.winning_cell}"]`);
+        resultCell.classList.add(data.result === "win" ? 'winner' : 'loser');
+        document.getElementById('game-result').textContent = 
+            data.result === "win" ? `Победа! +${betAmount * 2} монет` : `Проигрыш. -${betAmount} монет`;
+        document.getElementById('currency-amount').textContent = data.new_balance;
+
+    } catch (error) {
+        alert(error.message || 'Ошибка соединения');
+    } finally {
+        setTimeout(() => {
+            document.querySelectorAll('.game-cell').forEach(c => {
+                c.classList.remove('active', 'winner', 'loser', 'selected');
+            });
+            selectedCell = null;
+            isGameActive = false;
+            betInput.value = '';
+            document.getElementById('game-result').textContent = '';
+        }, 3000);
+    }
+}
 
         document.addEventListener('DOMContentLoaded', () => {
             const martContainer = document.querySelector('.mart-container');

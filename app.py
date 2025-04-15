@@ -1135,6 +1135,7 @@ def play_game():
     data = request.json
     user_id = data.get('user_id')
     bet = data.get('bet')
+    selected_cell = data.get('selected_cell')
 
     # Валидация данных
     if not user_id:
@@ -1142,6 +1143,9 @@ def play_game():
         
     if not isinstance(bet, int) or bet <= 0:
         return jsonify({"status": "error", "message": "Некорректная ставка"}), 400
+
+    if not isinstance(selected_cell, int) or selected_cell < 0 or selected_cell > 7:
+        return jsonify({"status": "error", "message": "Некорректный выбор блока"}), 400
 
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
@@ -1160,16 +1164,18 @@ def play_game():
         result = cursor.fetchone()
 
         if not result:
+            connection.rollback()
             return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
 
         balance = result[0]
 
         if balance < bet:
+            connection.rollback()
             return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
 
         # Логика игры
-        is_win = random.random() < 0.5
-        winning_cell = random.randint(1, 8)
+        winning_cell = random.randint(0, 7)
+        is_win = selected_cell == winning_cell
         new_balance = balance + (bet if is_win else -bet)
 
         # Обновление баланса
