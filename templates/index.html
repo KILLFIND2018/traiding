@@ -47,6 +47,15 @@
     color: #ccc;
 }
 
+.purchase-popup.error {
+    background: rgba(161, 33, 33, 0.719);
+    border-color: #b12e2e;
+}
+
+.purchase-popup.error .sparkle {
+    background: #aa2b2b;
+}
+
 @keyframes popupFadeIn {
     from {
         opacity: 0;
@@ -72,6 +81,17 @@
     0% { transform: scale(1); opacity: 1; }
     100% { transform: scale(0) translate(var(--x), var(--y)); opacity: 0; }
 } 
+
+/* Добавить сразу после основной анимации */
+@keyframes sparkle-error {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(3) translate(var(--x), var(--y)); opacity: 0; }
+    }
+
+    .sparkle.error-sparkle {
+        background: #ff5555;
+        animation: sparkle-error 0.8s ease-out forwards;
+    }
 </style>
 </head>
 <body>
@@ -498,7 +518,9 @@
             }
         }
 
-        function showNotificationPopup(title, image, message) {
+        function showNotificationPopup(title, image, message ,isError = false) {
+            const popup = document.getElementById('purchase-popup');
+            popup.classList.toggle('error', isError);
             const loader = document.getElementById('loader');
             const showPopup = () => {
                 const popup = document.getElementById('purchase-popup');
@@ -518,7 +540,7 @@
 
                 for (let i = 0; i < numSparkles; i++) {
                     const sparkle = document.createElement('div');
-                    sparkle.className = 'sparkle';
+                    sparkle.className = isError ? 'sparkle error-sparkle' : 'sparkle';
                     const side = Math.floor(Math.random() * 4);
                     let x, y;
                     switch (side) {
@@ -536,7 +558,7 @@
                     sparkle.style.setProperty('--x', `${dx}px`);
                     sparkle.style.setProperty('--y', `${dy}px`);
                     popup.appendChild(sparkle);
-                    setTimeout(() => sparkle.remove(), 3000);
+                    setTimeout(() => sparkle.remove(), 5000);
                 }
 
                 setTimeout(() => {
@@ -557,36 +579,33 @@
         }
 
         function setupBuyButtons(userId) {
-            document.querySelectorAll('.buy-button').forEach(button => {
-                button.addEventListener('click', async function () {
-                    const row = this.closest('tr');
-                    const itemName = row.querySelector('td:nth-child(2)').textContent.trim();
-                    const itemGeneration = parseInt(row.querySelector('td:nth-child(3)').textContent, 10);
-                    const itemCost = parseInt(this.querySelector('span').textContent, 10);
-                    const itemImage = row.querySelector('td:nth-child(1) img').src;
+    document.querySelectorAll('.buy-button').forEach(button => {
+        button.addEventListener('click', async function () {
+            const row = this.closest('tr');
+            const itemName = row.querySelector('td:nth-child(2)').textContent.trim();
+            const itemImage = row.querySelector('td:nth-child(1) img').src;
 
-                    const response = await fetch('/buy_item', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            user_id: userId,
-                            item_name: itemName,
-                            item_cost: itemCost,
-                            item_generation: itemGeneration
-                        })
-                    });
-
-                    const data = await response.json();
-                    if (data.status === "success") {
-                        document.getElementById('currency-amount').textContent = data.balance;
-                        showNotificationPopup(itemName, itemImage, 'Успешно добавлено в инвентарь!');
-                        await loadInventory(userId);
-                    } else {
-                        alert(data.message || 'Ошибка покупки');
-                    }
-                });
+            const response = await fetch('/buy_item', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: userId,
+                    item_name: itemName,
+                    item_cost: parseInt(this.querySelector('span').textContent, 10),
+                    item_generation: parseInt(row.querySelector('td:nth-child(3)').textContent, 10)
+                })
             });
-        }
+
+            const data = await response.json();
+            if (data.status === "success") {
+                document.getElementById('currency-amount').textContent = data.balance;
+                showNotificationPopup(itemName, itemImage, 'Успешно добавлено в инвентарь!');
+            } else {
+                // Показываем красный блок с ошибкой
+                showNotificationPopup("Ошибка", itemImage, data.message || 'Этот предмет уже куплен!', true);            }
+        });
+    });
+}
 
         async function loadMarket() {
             const response = await fetch('/get_market');

@@ -217,7 +217,10 @@ def buy_item():
 
         cursor.execute("SELECT COUNT(*) FROM inventory WHERE user_id = %s AND item_name = %s", (user_id, item_name))
         if cursor.fetchone()[0] > 0:
-            return jsonify({"status": "error", "message": "Предмет уже есть в инвентаре"}), 400
+            return jsonify({
+                "status": "error", 
+                "message": f"⚠️ {item_name} уже есть в вашем инвентаре!"
+            }), 400
 
         cursor.execute("SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s", (user_id,))
         result = cursor.fetchone()
