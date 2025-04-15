@@ -456,7 +456,8 @@
             const data = await response.json();
             if (data.status === "success" && data.rewards.length > 0) {
                 data.rewards.forEach(reward => {
-                    alert(`Вы получили ${reward.item_name} за приглашение друга!`);
+                    const itemImage = `/static/img-market/${reward.item_name.replace(' ', '_').toLowerCase()}.png`;
+                    showNotificationPopup(reward.item_name, itemImage, `Вы получили ${reward.item_name} за приглашение друга!`);
                     if (reward.item_name === "Macbook" && !models["Macbook"]) {
                         macbook();
                         models["Macbook"] = true;
@@ -497,97 +498,62 @@
             }
         }
 
-        function showPurchasePopup(itemName, itemImage) {
-            const popup = document.getElementById('purchase-popup');
-            const itemNameElement = document.getElementById('popup-item-name');
-            const itemImageElement = document.getElementById('popup-item-image');
-            const messageElement = document.getElementById('popup-message');
+        function showNotificationPopup(title, image, message) {
+            const loader = document.getElementById('loader');
+            const showPopup = () => {
+                const popup = document.getElementById('purchase-popup');
+                const itemNameElement = document.getElementById('popup-item-name');
+                const itemImageElement = document.getElementById('popup-item-image');
+                const messageElement = document.getElementById('popup-message');
 
-            itemNameElement.textContent = itemName;
-            itemImageElement.src = itemImage;
-            messageElement.textContent = 'Успешно добавлено в инвентарь!';
-            popup.classList.add('show');
+                itemNameElement.textContent = title;
+                itemImageElement.src = image;
+                messageElement.textContent = message;
+                popup.classList.add('show');
 
-            const rect = popup.getBoundingClientRect();
-            const width = rect.width;
-            const height = rect.height;
-            const numSparkles = 20;
+                const rect = popup.getBoundingClientRect();
+                const width = rect.width;
+                const height = rect.height;
+                const numSparkles = 20;
 
-            for (let i = 0; i < numSparkles; i++) {
-                const sparkle = document.createElement('div');
-                sparkle.className = 'sparkle';
-                const side = Math.floor(Math.random() * 4);
-                let x, y;
-                switch (side) {
-                    case 0: x = Math.random() * width; y = 0; break;
-                    case 1: x = width; y = Math.random() * height; break;
-                    case 2: x = Math.random() * width; y = height; break;
-                    case 3: x = 0; y = Math.random() * height; break;
+                for (let i = 0; i < numSparkles; i++) {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'sparkle';
+                    const side = Math.floor(Math.random() * 4);
+                    let x, y;
+                    switch (side) {
+                        case 0: x = Math.random() * width; y = 0; break;
+                        case 1: x = width; y = Math.random() * height; break;
+                        case 2: x = Math.random() * width; y = height; break;
+                        case 3: x = 0; y = Math.random() * height; break;
+                    }
+                    sparkle.style.left = `${x}px`;
+                    sparkle.style.top = `${y}px`;
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 60 + 30;
+                    const dx = Math.cos(angle) * distance;
+                    const dy = Math.sin(angle) * distance;
+                    sparkle.style.setProperty('--x', `${dx}px`);
+                    sparkle.style.setProperty('--y', `${dy}px`);
+                    popup.appendChild(sparkle);
+                    setTimeout(() => sparkle.remove(), 3000);
                 }
-                sparkle.style.left = `${x}px`;
-                sparkle.style.top = `${y}px`;
-                const angle = Math.random() * Math.PI * 2;
-                const distance = Math.random() * 60 + 30;
-                const dx = Math.cos(angle) * distance;
-                const dy = Math.sin(angle) * distance;
-                sparkle.style.setProperty('--x', `${dx}px`);
-                sparkle.style.setProperty('--y', `${dy}px`);
-                popup.appendChild(sparkle);
-                setTimeout(() => sparkle.remove(), 3000);
+
+                setTimeout(() => {
+                    popup.classList.remove('show');
+                }, 3000);
+            };
+
+            if (loader.classList.contains('hidden')) {
+                showPopup();
+            } else {
+                const interval = setInterval(() => {
+                    if (loader.classList.contains('hidden')) {
+                        clearInterval(interval);
+                        showPopup();
+                    }
+                }, 100);
             }
-
-            setTimeout(() => {
-                popup.classList.remove('show');
-            }, 3000);
-        }
-
-        function showPrizePopup(prizeType, prizeValue, prizeImage) {
-            const popup = document.getElementById('purchase-popup');
-            const itemNameElement = document.getElementById('popup-item-name');
-            const itemImageElement = document.getElementById('popup-item-image');
-            const messageElement = document.getElementById('popup-message');
-
-            if (prizeType === "token") {
-                itemNameElement.textContent = `${prizeValue} токенов`;
-                messageElement.textContent = 'Вы выиграли токены!';
-            } else if (prizeType === "item") {
-                itemNameElement.textContent = prizeValue;
-                messageElement.textContent = 'Вы выиграли предмет!';
-            }
-            itemImageElement.src = prizeImage;
-            popup.classList.add('show');
-
-            const rect = popup.getBoundingClientRect();
-            const width = rect.width;
-            const height = rect.height;
-            const numSparkles = 20;
-
-            for (let i = 0; i < numSparkles; i++) {
-                const sparkle = document.createElement('div');
-                sparkle.className = 'sparkle';
-                const side = Math.floor(Math.random() * 4);
-                let x, y;
-                switch (side) {
-                    case 0: x = Math.random() * width; y = 0; break;
-                    case 1: x = width; y = Math.random() * height; break;
-                    case 2: x = Math.random() * width; y = height; break;
-                    case 3: x = 0; y = Math.random() * height; break;
-                }
-                sparkle.style.left = `${x}px`;
-                sparkle.style.top = `${y}px`;
-                const angle = Math.random() * Math.PI * 2;
-                const distance = Math.random() * 60 + 30;
-                const dx = Math.cos(angle) * distance;
-                const dy = Math.sin(angle) * distance;
-                sparkle.style.setProperty('--x', `${dx}px`);
-                sparkle.style.setProperty('--y', `${dy}px`);
-                popup.appendChild(sparkle);
-                setTimeout(() => sparkle.remove(), 3000);
-            }
-
-            setTimeout(() => {
-                popup.classList.remove('show');
-            }, 3000);
         }
 
         function setupBuyButtons(userId) {
@@ -613,7 +579,7 @@
                     const data = await response.json();
                     if (data.status === "success") {
                         document.getElementById('currency-amount').textContent = data.balance;
-                        showPurchasePopup(itemName, itemImage);
+                        showNotificationPopup(itemName, itemImage, 'Успешно добавлено в инвентарь!');
                         await loadInventory(userId);
                     } else {
                         alert(data.message || 'Ошибка покупки');
@@ -1156,7 +1122,11 @@
                             message = `Предмет "${data.prize}" уже есть в вашем инвентаре. Стоимость вращения (100 монет) возвращена. Ваш баланс: ${data.new_balance}`;
                         }
                         document.getElementById('currency-amount').textContent = data.new_balance;
-                        showPrizePopup(prizeType, prizeValue, prizeImage);
+                        if (prizeType === "token") {
+                            showNotificationPopup(`${prizeValue} токенов`, prizeImage, 'Вы выиграли токены!');
+                        } else if (prizeType === "item") {
+                            showNotificationPopup(prizeValue, prizeImage, 'Вы выиграли предмет!');
+                        }
                         if ((data.prize === "Drinking Water Dispenser" || data.prize === "Humanoid robot") && !data.refund) {
                             loadInventory(userId);
                         }
@@ -1417,5 +1387,5 @@
             localStorage.setItem('swipeHintShown', 'true');
         }
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'930decb09cb48f34',t:'MTc0NDc0NjEzMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'930e04ce29b3c797',t:'MTc0NDc0NzExNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
