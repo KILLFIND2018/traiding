@@ -9,6 +9,70 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <link rel="stylesheet" href="/static/styles/style.css">
+    <style>
+        /* Стили для всплывающего блока */
+        .purchase-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #f1c40f;
+            border-radius: 15px;
+            padding: 20px;
+            z-index: 1000;
+            text-align: center;
+            color: #fff;
+            display: none;
+            animation: popupFadeIn 0.5s ease-out;
+        }
+
+        .purchase-popup.show {
+            display: block;
+        }
+
+        .purchase-popup img {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+
+        .purchase-popup h2 {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        .purchase-popup p {
+            font-size: 16px;
+            color: #ccc;
+        }
+
+        @keyframes popupFadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #f1c40f;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkle 0.8s ease-out forwards;
+        }
+
+        @keyframes sparkle {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0) translate(var(--x), var(--y)); opacity: 0; }
+        }
+    </style>
 </head>
 <body>
     <div class="loader" id="loader">
@@ -177,6 +241,11 @@
                 <button class="button donate" type="button"><img src="/static/bitcoin.png" alt="bitcoin"></button>
                 <div class="separator-hidden"></div>
                 <button class="button return" type="button"><img src="/static/return.png" alt="return"></button>
+            </div>
+            <div class="purchase-popup" id="purchase-popup">
+                <img id="popup-item-image" src="" alt="Item">
+                <h2 id="popup-item-name"></h2>
+                <p id="popup-message">Успешно добавлено в инвентарь!</p>
             </div>
         </div>
     </div>
@@ -428,6 +497,99 @@
             }
         }
 
+        function showPurchasePopup(itemName, itemImage) {
+            const popup = document.getElementById('purchase-popup');
+            const itemNameElement = document.getElementById('popup-item-name');
+            const itemImageElement = document.getElementById('popup-item-image');
+            const messageElement = document.getElementById('popup-message');
+
+            itemNameElement.textContent = itemName;
+            itemImageElement.src = itemImage;
+            messageElement.textContent = 'Успешно добавлено в инвентарь!';
+            popup.classList.add('show');
+
+            const rect = popup.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            const numSparkles = 20;
+
+            for (let i = 0; i < numSparkles; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                const side = Math.floor(Math.random() * 4);
+                let x, y;
+                switch (side) {
+                    case 0: x = Math.random() * width; y = 0; break;
+                    case 1: x = width; y = Math.random() * height; break;
+                    case 2: x = Math.random() * width; y = height; break;
+                    case 3: x = 0; y = Math.random() * height; break;
+                }
+                sparkle.style.left = `${x}px`;
+                sparkle.style.top = `${y}px`;
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 60 + 30;
+                const dx = Math.cos(angle) * distance;
+                const dy = Math.sin(angle) * distance;
+                sparkle.style.setProperty('--x', `${dx}px`);
+                sparkle.style.setProperty('--y', `${dy}px`);
+                popup.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 3000);
+            }
+
+            setTimeout(() => {
+                popup.classList.remove('show');
+            }, 3000);
+        }
+
+        function showPrizePopup(prizeType, prizeValue, prizeImage) {
+            const popup = document.getElementById('purchase-popup');
+            const itemNameElement = document.getElementById('popup-item-name');
+            const itemImageElement = document.getElementById('popup-item-image');
+            const messageElement = document.getElementById('popup-message');
+
+            if (prizeType === "token") {
+                itemNameElement.textContent = `${prizeValue} токенов`;
+                messageElement.textContent = 'Вы выиграли токены!';
+            } else if (prizeType === "item") {
+                itemNameElement.textContent = prizeValue;
+                messageElement.textContent = 'Вы выиграли предмет!';
+            }
+            itemImageElement.src = prizeImage;
+            popup.classList.add('show');
+
+            const rect = popup.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            const numSparkles = 20;
+
+            for (let i = 0; i < numSparkles; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                const side = Math.floor(Math.random() * 4);
+                let x, y;
+                switch (side) {
+                    case 0: x = Math.random() * width; y = 0; break;
+                    case 1: x = width; y = Math.random() * height; break;
+                    case 2: x = Math.random() * width; y = height; break;
+                    case 3: x = 0; y = Math.random() * height; break;
+                }
+                sparkle.style.left = `${x}px`;
+                sparkle.style.top = `${y}px`;
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 60 + 30;
+                const dx = Math.cos(angle) * distance;
+                const dy = Math.sin(angle) * distance;
+                sparkle.style.setProperty('--x', `${dx}px`);
+                sparkle.style.setProperty('--y', `${dy}px`);
+                popup.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 3000);
+            }
+
+            setTimeout(() => {
+                popup.classList.remove('show');
+            }, 3000);
+        }
+
         function setupBuyButtons(userId) {
             document.querySelectorAll('.buy-button').forEach(button => {
                 button.addEventListener('click', async function () {
@@ -435,6 +597,7 @@
                     const itemName = row.querySelector('td:nth-child(2)').textContent.trim();
                     const itemGeneration = parseInt(row.querySelector('td:nth-child(3)').textContent, 10);
                     const itemCost = parseInt(this.querySelector('span').textContent, 10);
+                    const itemImage = row.querySelector('td:nth-child(1) img').src;
 
                     const response = await fetch('/buy_item', {
                         method: 'POST',
@@ -450,12 +613,13 @@
                     const data = await response.json();
                     if (data.status === "success") {
                         document.getElementById('currency-amount').textContent = data.balance;
+                        showPurchasePopup(itemName, itemImage);
                         await loadInventory(userId);
                     } else {
                         alert(data.message || 'Ошибка покупки');
                     }
                 });
-                });
+            });
         }
 
         async function loadMarket() {
@@ -463,14 +627,14 @@
             const data = await response.json();
             if (data.status === "success") {
                 const tbody = document.querySelector('.market-table tbody');
-                tbody.innerHTML = '';  // Очищаем таблицу
+                tbody.innerHTML = '';
                 data.items.forEach(item => {
                     const row = tbody.insertRow();
                     const imgCell = row.insertCell(0);
                     const img = document.createElement('img');
                     img.src = item.image_path;
                     img.alt = item.name;
-                    img.style.width = '50px';  // Задайте размер по желанию
+                    img.style.width = '50px';
                     imgCell.appendChild(img);
                     row.insertCell(1).textContent = item.name;
                     row.insertCell(2).textContent = item.generation;
@@ -973,13 +1137,27 @@
                 const data = await response.json();
                 setTimeout(() => {
                     if (data.status === "success") {
-                        let message = `ПОЗДРАВЛЯЕМ! ВЫ ВЫИГРАЛИ: ${data.prize}! Ваш баланс: ${data.new_balance}`;
+                        let prizeType, prizeValue, prizeImage;
+                        if (data.prize.includes("токенов")) {
+                            prizeType = "token";
+                            const match = data.prize.match(/(\d+|x\d+)\s*токенов/);
+                            prizeValue = match ? match[1] : "Неизвестно";
+                            if (prizeValue.startsWith('x')) {
+                                prizeValue = prizeValue.slice(1);
+                            }
+                            prizeImage = "/static/bitcoin.png";
+                        } else {
+                            prizeType = "item";
+                            prizeValue = data.prize;
+                            prizeImage = `/static/img-market/${data.prize.replace(' ', '_').toLowerCase()}.png`;
+                        }
+
                         if (data.refund) {
                             message = `Предмет "${data.prize}" уже есть в вашем инвентаре. Стоимость вращения (100 монет) возвращена. Ваш баланс: ${data.new_balance}`;
                         }
-                        alert(message);
                         document.getElementById('currency-amount').textContent = data.new_balance;
-                        if (data.prize === "кулер" || data.prize === "робот" && !data.refund) {
+                        showPrizePopup(prizeType, prizeValue, prizeImage);
+                        if ((data.prize === "Drinking Water Dispenser" || data.prize === "Humanoid robot") && !data.refund) {
                             loadInventory(userId);
                         }
                     } else {
@@ -1011,71 +1189,69 @@
         });
 
         async function startGame() {
-    if (!selectedCell) {
-        alert('Выберите блок!');
-        return;
-    }
-    const userId = new URLSearchParams(window.location.search).get('user_id');
-    const betInput = document.getElementById('game-bet');
-    const betAmount = parseInt(betInput.value);
-    const selectedCellIndex = parseInt(selectedCell.dataset.index);
+            if (!selectedCell) {
+                alert('Выберите блок!');
+                return;
+            }
+            const userId = new URLSearchParams(window.location.search).get('user_id');
+            const betInput = document.getElementById('game-bet');
+            const betAmount = parseInt(betInput.value);
+            const selectedCellIndex = parseInt(selectedCell.dataset.index);
 
-    if (!betAmount || betAmount < 1) {
-        alert('Введите корректную ставку!');
-        return;
-    }
+            if (!betAmount || betAmount < 1) {
+                alert('Введите корректную ставку!');
+                return;
+            }
 
-    if (isGameActive) return;
-    isGameActive = true;
+            if (isGameActive) return;
+            isGameActive = true;
 
-    try {
-        const response = await fetch('/play_game', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, bet: betAmount, selected_cell: selectedCellIndex })
-        });
-        if (!response.ok) throw new Error(`Ошибка: ${response.statusText}`);
+            try {
+                const response = await fetch('/play_game', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, bet: betAmount, selected_cell: selectedCellIndex })
+                });
+                if (!response.ok) throw new Error(`Ошибка: ${response.statusText}`);
 
-        const data = await response.json();
-        if (data.status === "error") {
-            alert(data.message);
-            isGameActive = false;
-            return;
+                const data = await response.json();
+                if (data.status === "error") {
+                    alert(data.message);
+                    isGameActive = false;
+                    return;
+                }
+
+                let current = 0;
+                const totalSteps = 15;
+                const cells = document.querySelectorAll('.game-cell');
+
+                for (let i = 0; i < totalSteps; i++) {
+                    await new Promise(resolve => setTimeout(resolve, 100 + (i * 20)));
+                    cells.forEach(c => c.classList.remove('active'));
+                    current = (current + 1) % 8;
+                    cells[current].classList.add('active');
+                }
+
+                const resultCell = document.querySelector(`[data-index="${data.winning_cell}"]`);
+                resultCell.classList.add(data.result === "win" ? 'winner' : 'loser');
+                document.getElementById('game-result').textContent = 
+                    data.result === "win" ? `Победа! +${betAmount * 2} монет` : `Проигрыш. -${betAmount} монет`;
+                document.getElementById('currency-amount').textContent = data.new_balance;
+
+            } catch (error) {
+                alert(error.message || 'Ошибка соединения');
+            } finally {
+                setTimeout(() => {
+                    document.querySelectorAll('.game-cell').forEach(c => {
+                        c.classList.remove('active', 'winner', 'loser', 'selected');
+                    });
+                    selectedCell = null;
+                    isGameActive = false;
+                    betInput.value = '';
+                    document.getElementById('game-result').textContent = '';
+                }, 3000);
+            }
         }
-
-        let current = 0;
-        const totalSteps = 15;
-        const cells = document.querySelectorAll('.game-cell');
-
-        // Анимация
-        for (let i = 0; i < totalSteps; i++) {
-            await new Promise(resolve => setTimeout(resolve, 100 + (i * 20)));
-            cells.forEach(c => c.classList.remove('active'));
-            current = (current + 1) % 8;
-            cells[current].classList.add('active');
-        }
-
-        // Показ результата
-        const resultCell = document.querySelector(`[data-index="${data.winning_cell}"]`);
-        resultCell.classList.add(data.result === "win" ? 'winner' : 'loser');
-        document.getElementById('game-result').textContent = 
-            data.result === "win" ? `Победа! +${betAmount * 2} монет` : `Проигрыш. -${betAmount} монет`;
-        document.getElementById('currency-amount').textContent = data.new_balance;
-
-    } catch (error) {
-        alert(error.message || 'Ошибка соединения');
-    } finally {
-        setTimeout(() => {
-            document.querySelectorAll('.game-cell').forEach(c => {
-                c.classList.remove('active', 'winner', 'loser', 'selected');
-            });
-            selectedCell = null;
-            isGameActive = false;
-            betInput.value = '';
-            document.getElementById('game-result').textContent = '';
-        }, 3000);
-    }
-}
 
         document.addEventListener('DOMContentLoaded', () => {
             const martContainer = document.querySelector('.mart-container');
@@ -1210,41 +1386,36 @@
             widgetsContainer.style.zIndex = '1';
         });
 
-
-
         let touchStartX = 0;
-const marketWrapper = document.querySelector('.market');
+        const marketWrapper = document.querySelector('.market');
 
-marketWrapper.addEventListener('touchstart', (e) => {
-    touchStartX = e.touches[0].clientX;
-});
+        marketWrapper.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
 
-marketWrapper.addEventListener('touchmove', (e) => {
-    const touchEndX = e.touches[0].clientX;
-    if (Math.abs(touchEndX - touchStartX) > 10) {
-        marketWrapper.classList.add('scrollable');
-    }
-});
+        marketWrapper.addEventListener('touchmove', (e) => {
+            const touchEndX = e.touches[0].clientX;
+            if (Math.abs(touchEndX - touchStartX) > 10) {
+                marketWrapper.classList.add('scrollable');
+            }
+        });
 
-marketWrapper.addEventListener('touchend', () => {
-    marketWrapper.classList.remove('scrollable');
-});
+        marketWrapper.addEventListener('touchend', () => {
+            marketWrapper.classList.remove('scrollable');
+        });
 
-
-if (!localStorage.getItem('swipeHintShown')) {
-    const hint = document.createElement('div');
-    hint.textContent = '← Свайпайте → чтобы увидеть больше';
-    hint.style.position = 'absolute';
-    hint.style.bottom = '10px';
-    hint.style.color = '#7FFFD4';
-    hint.style.fontSize = '14px';
-    marketWrapper.appendChild(hint);
-    
-    setTimeout(() => hint.remove(), 3000);
-    localStorage.setItem('swipeHintShown', 'true');
-}
+        if (!localStorage.getItem('swipeHintShown')) {
+            const hint = document.createElement('div');
+            hint.textContent = '← Свайпайте → чтобы увидеть больше';
+            hint.style.position = 'absolute';
+            hint.style.bottom = '10px';
+            hint.style.color = '#7FFFD4';
+            hint.style.fontSize = '14px';
+            marketWrapper.appendChild(hint);
+            
+            setTimeout(() => hint.remove(), 3000);
+            localStorage.setItem('swipeHintShown', 'true');
+        }
     </script>
-    <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'922d9f64bad0d1b6',t:'MTc0MjM5NDE1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
-    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93029a38b8961d6a',t:'MTc0NDYyNzQwOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93045683df90db15',t:'MTc0NDY0NTYwNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
