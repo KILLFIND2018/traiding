@@ -215,6 +215,7 @@ def buy_item():
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
+        # Проверяем, есть ли предмет уже в инвентаре
         cursor.execute("SELECT COUNT(*) FROM inventory WHERE user_id = %s AND item_name = %s", (user_id, item_name))
         if cursor.fetchone()[0] > 0:
             return jsonify({
@@ -222,9 +223,9 @@ def buy_item():
                 "message": f"⚠️ {item_name} уже есть в вашем инвентаре!"
             }), 400
 
+        # Получаем текущий прогресс пользователя
         cursor.execute("SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s", (user_id,))
         result = cursor.fetchone()
-
         if not result:
             return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
 
@@ -232,11 +233,17 @@ def buy_item():
         total_generation = total_generation or 1
         last_updated = last_updated or datetime.now()
 
+        # Рассчитываем новый баланс с учетом времени
         new_balance, _ = calculate_balance(balance, 1.0, last_updated, total_generation)
 
+        # Проверяем, хватает ли средств после обновления баланса
         if new_balance < item_cost:
-            return jsonify({"status": "error", "message": "Insufficient funds"}), 400
+            return jsonify({
+                "status": "error", 
+                "message": "Недостаточно средств для покупки!"
+            }), 400  # Сообщение на русском
 
+        # Обновляем баланс и генерацию
         new_balance -= item_cost
         new_total_generation = total_generation + item_generation
 
@@ -246,19 +253,26 @@ def buy_item():
             WHERE user_id = %s
         """, (new_balance, new_total_generation, datetime.now(), user_id))
 
+        # Добавляем предмет в инвентарь
         cursor.execute("""
             INSERT INTO inventory (user_id, item_name, generation_per_hour) 
             VALUES (%s, %s, %s)
         """, (user_id, item_name, item_generation))
 
         connection.commit()
-        return jsonify({"status": "success", "balance": new_balance, "total_generation": new_total_generation}), 200
+        return jsonify({
+            "status": "success", 
+            "balance": new_balance, 
+            "total_generation": new_total_generation
+        }), 200
 
     except mysql.connector.Error as err:
-        return jsonify({"status": "error", "message": str(err)}), 500
+        return jsonify({"status": "error", "message": f"Ошибка базы данных: {err}"}), 500
     finally:
-        cursor.close()
-        connection.close()
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals():
+            connection.close()
 
 @app.route('/get_market', methods=['GET'])
 def get_market():

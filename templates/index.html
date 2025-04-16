@@ -468,7 +468,7 @@
                     newRow.dataset.itemName = item.item_name;
                     newRow.dataset.generation = item.generation_per_hour;
                     newRow.insertCell(0).textContent = item.item_name;
-                    newRow.insertCell(1).textContent = formatNumber(item.generation_per_hour);                    
+                    newRow.insertCell(1).textContent = formatNumber(item.generation_per_hour);
                     newRow.insertCell(2).textContent = 'активен';
                     updateTotalGeneration(item.item_name);
                 });
@@ -557,6 +557,9 @@
                     const row = this.closest('tr');
                     const itemName = row.querySelector('td:nth-child(2)').textContent.trim();
                     const itemImage = row.querySelector('td:nth-child(1) img').src;
+                    // Исправление: Удаляем все нецифровые символы из стоимости
+                    const costText = this.querySelector('span').textContent;
+                    const itemCost = parseInt(costText.replace(/\D/g, ''), 10);
 
                     const response = await fetch('/buy_item', {
                         method: 'POST',
@@ -564,7 +567,7 @@
                         body: JSON.stringify({
                             user_id: userId,
                             item_name: itemName,
-                            item_cost: parseInt(this.querySelector('span').textContent, 10),
+                            item_cost: itemCost,
                             item_generation: parseInt(row.querySelector('td:nth-child(3)').textContent, 10)
                         })
                     });
@@ -574,8 +577,8 @@
                         document.getElementById('currency-amount').textContent = Number(data.balance).toLocaleString('ru-RU');
                         showNotificationPopup(itemName, itemImage, 'Успешно добавлено в инвентарь!');
                     } else {
-                        // Показываем красный блок с ошибкой
-                        showNotificationPopup("Ошибка", itemImage, data.message || 'Этот предмет уже куплен!', true);
+                        // Передаем сообщение об ошибке с бэкенда
+                        showNotificationPopup("Ошибка", itemImage, data.message || 'Произошла ошибка!', true);
                     }
                 });
             });
@@ -1158,98 +1161,98 @@
         });
 
         const CELL_COLORS = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
-    '#FFEEAD', '#FF9F76', '#D4A5A5', '#A283C4'
-];
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
+            '#FFEEAD', '#FF9F76', '#D4A5A5', '#A283C4'
+        ];
 
-async function startGame() {
-    if (!selectedCell) {
-        alert('Выберите блок!');
-        return;
-    }
+        async function startGame() {
+            if (!selectedCell) {
+                alert('Выберите блок!');
+                return;
+            }
 
-    // Назначение фиксированных цветов (без рандома)
-    document.querySelectorAll('.game-cell').forEach((cell, index) => {
-        cell.style.backgroundColor = CELL_COLORS[index];
-        cell.style.borderColor = CELL_COLORS[index];
-    });
-
-    const userId = new URLSearchParams(window.location.search).get('user_id');
-    const betInput = document.getElementById('game-bet');
-    const betAmount = parseInt(betInput.value);
-    const selectedCellIndex = parseInt(selectedCell.dataset.index);
-
-    if (!betAmount || betAmount < 1) {
-        alert('Введите корректную ставку!');
-        return;
-    }
-
-    if (isGameActive) return;
-    isGameActive = true;
-
-    try {
-        const response = await fetch('/play_game', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, bet: betAmount, selected_cell: selectedCellIndex })
-        });
-        
-        if (!response.ok) throw new Error(`Ошибка: ${response.statusText}`);
-
-        const data = await response.json();
-        if (data.status === "error") {
-            alert(data.message);
-            isGameActive = false;
-            return;
-        }
-
-        let current = 0;
-        const totalSteps = 15;
-        const cells = document.querySelectorAll('.game-cell');
-
-        for (let i = 0; i < totalSteps; i++) {
-            await new Promise(resolve => setTimeout(resolve, 100 + (i * 20)));
-            cells.forEach(c => c.classList.remove('active'));
-            current = (current + 1) % 8;
-            cells[current].classList.add('active');
-        }
-
-        const resultCell = document.querySelector(`[data-index="${data.winning_cell}"]`);
-        resultCell.classList.add(data.result === "win" ? 'winner' : 'loser');
-        
-        if (data.result === "win") {
-            showNotificationPopup(
-                "Победа!",
-                "/static/bitcoin.png",
-                `+${betAmount * 2} монет`,
-                false
-            );
-        } else {
-            showNotificationPopup(
-                "Проигрыш",
-                "/static/bitcoin.png",
-                `-${betAmount} монет`,
-                true
-            );
-        }
-        
-        document.getElementById('currency-amount').textContent = data.new_balance;
-
-    } catch (error) {
-        alert(error.message || 'Ошибка соединения');
-    } finally {
-        setTimeout(() => {
-            document.querySelectorAll('.game-cell').forEach(c => {
-                c.classList.remove('active', 'winner', 'loser', 'selected');
+            // Назначение фиксированных цветов (без рандома)
+            document.querySelectorAll('.game-cell').forEach((cell, index) => {
+                cell.style.backgroundColor = CELL_COLORS[index];
+                cell.style.borderColor = CELL_COLORS[index];
             });
-            selectedCell = null;
-            isGameActive = false;
-            betInput.value = '';
-        }, 3000);
-    }
-}
 
-        
+            const userId = new URLSearchParams(window.location.search).get('user_id');
+            const betInput = document.getElementById('game-bet');
+            const betAmount = parseInt(betInput.value);
+            const selectedCellIndex = parseInt(selectedCell.dataset.index);
+
+            if (!betAmount || betAmount < 1) {
+                alert('Введите корректную ставку!');
+                return;
+            }
+
+            if (isGameActive) return;
+            isGameActive = true;
+
+            try {
+                const response = await fetch('/play_game', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, bet: betAmount, selected_cell: selectedCellIndex })
+                });
+
+                if (!response.ok) throw new Error(`Ошибка: ${response.statusText}`);
+
+                const data = await response.json();
+                if (data.status === "error") {
+                    alert(data.message);
+                    isGameActive = false;
+                    return;
+                }
+
+                let current = 0;
+                const totalSteps = 15;
+                const cells = document.querySelectorAll('.game-cell');
+
+                for (let i = 0; i < totalSteps; i++) {
+                    await new Promise(resolve => setTimeout(resolve, 100 + (i * 20)));
+                    cells.forEach(c => c.classList.remove('active'));
+                    current = (current + 1) % 8;
+                    cells[current].classList.add('active');
+                }
+
+                const resultCell = document.querySelector(`[data-index="${data.winning_cell}"]`);
+                resultCell.classList.add(data.result === "win" ? 'winner' : 'loser');
+
+                if (data.result === "win") {
+                    showNotificationPopup(
+                        "Победа!",
+                        "/static/bitcoin.png",
+                        `+${betAmount * 2} монет`,
+                        false
+                    );
+                } else {
+                    showNotificationPopup(
+                        "Проигрыш",
+                        "/static/bitcoin.png",
+                        `-${betAmount} монет`,
+                        true
+                    );
+                }
+
+                document.getElementById('currency-amount').textContent = data.new_balance;
+
+            } catch (error) {
+                alert(error.message || 'Ошибка соединения');
+            } finally {
+                setTimeout(() => {
+                    document.querySelectorAll('.game-cell').forEach(c => {
+                        c.classList.remove('active', 'winner', 'loser', 'selected');
+                    });
+                    selectedCell = null;
+                    isGameActive = false;
+                    betInput.value = '';
+                }, 3000);
+            }
+        }
+
+
 
         document.addEventListener('DOMContentLoaded', () => {
             const martContainer = document.querySelector('.mart-container');
