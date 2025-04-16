@@ -515,6 +515,19 @@ select {
     text-align: center;
 }
 
+.rating-table td:nth-child(3) {
+    font-variant-numeric: tabular-nums;
+    font-family: 'Arial', sans-serif;
+    text-align: right !important;
+    padding-right: 25px !important;
+}
+
+.rating-table td:nth-child(3)::after {
+    color: #7FFFD4;
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
 /* Стили для заголовков таблицы */
 .rating-table th {
     background-color: rgba(44, 62, 80, 0.5);
@@ -533,6 +546,7 @@ select {
 
 /* Стили для отображения валюты */
 .currency-display {
+
     position: absolute;
     right: 20px;
     background-color: rgba(44, 62, 80, 0.7);
@@ -546,6 +560,8 @@ select {
     justify-content: center;
     gap: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    font-family: 'Arial', sans-serif; /* Используем шрифт с моноширинными цифрами */
+    font-variant-numeric: tabular-nums; /* Выравнивание чисел по ширине */
 }
 
 .currency-display img {

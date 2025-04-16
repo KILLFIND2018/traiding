@@ -237,6 +237,10 @@
             chart.resize();
         });
 
+        function formatNumber(num) {
+    return Number(num).toLocaleString('ru-RU');
+}
+
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('user_id');
 
@@ -291,7 +295,7 @@
 
             const initialBalance = await startGeneration(userId);
             if (initialBalance !== null) {
-                document.getElementById('currency-amount').textContent = initialBalance;
+                document.getElementById('currency-amount').textContent = Number(initialBalance).toLocaleString('ru-RU');
             }
 
             const balanceInterval = setInterval(async () => {
@@ -299,7 +303,7 @@
                     const response = await fetch(`/get_balance?user_id=${userId}`);
                     const data = await response.json();
                     if (data.status === "success") {
-                        document.getElementById('currency-amount').textContent = data.balance;
+                        document.getElementById('currency-amount').textContent = Number(data.balance).toLocaleString('ru-RU');
                         console.log(`Обновление баланса для user_id ${userId}: ${data.balance}`);
                     }
                 } catch (error) {
@@ -551,7 +555,7 @@
 
             const data = await response.json();
             if (data.status === "success") {
-                document.getElementById('currency-amount').textContent = data.balance;
+                document.getElementById('currency-amount').textContent = Number(data.balance).toLocaleString('ru-RU');
                 showNotificationPopup(itemName, itemImage, 'Успешно добавлено в инвентарь!');
             } else {
                 // Показываем красный блок с ошибкой
@@ -587,25 +591,25 @@
         }
 
         async function loadRating() {
-            try {
-                const response = await fetch(`/get_rating`);
-                const data = await response.json();
-                if (data.status === "success") {
-                    const ratingTable = document.querySelector('.rating-table tbody');
-                    while (ratingTable.rows.length > 0) {
-                        ratingTable.deleteRow(0);
-                    }
-                    data.users.forEach(user => {
-                        const newRow = ratingTable.insertRow(-1);
-                        newRow.insertCell(0).textContent = user.position;
-                        newRow.insertCell(1).textContent = user.username || 'Anonymous';
-                        newRow.insertCell(2).textContent = user.balance;
-                    });
-                }
-            } catch (error) {
-                console.error('Ошибка при загрузке рейтинга:', error);
-            }
+    try {
+        const response = await fetch(`/get_rating`);
+        const data = await response.json();
+        if (data.status === "success") {
+            const ratingTable = document.querySelector('.rating-table tbody');
+            ratingTable.innerHTML = '';
+            data.users.forEach(user => {
+                const newRow = ratingTable.insertRow(-1);
+                newRow.insertCell(0).textContent = user.position;
+                newRow.insertCell(1).textContent = user.username || 'Anonymous';
+                // Форматируем баланс
+                newRow.insertCell(2).textContent = 
+                    Number(user.balance).toLocaleString('ru-RU');
+            });
         }
+    } catch (error) {
+        console.error('Ошибка при загрузке рейтинга:', error);
+    }
+}
 
         let models = {};
         function updateTotalGeneration(itemName) {
@@ -949,7 +953,7 @@
                     } else {
                         showNotificationPopup("Вы проиграли", "/static/bitcoin.png", "Попробуйте еще раз!");
                     }
-                    document.getElementById('currency-amount').textContent = data.balance;
+                    document.getElementById('currency-amount').textContent = Number(data.balance).toLocaleString('ru-RU');
                 }
             }
         }
@@ -966,7 +970,7 @@
                     });
                     const data = await response.json();
                     if (data.status === "success") {
-                        document.getElementById('currency-amount').textContent = data.balance;
+                        document.getElementById('currency-amount').textContent = Number(data.balance).toLocaleString('ru-RU');
                         checkBetStatus();
                     } else {
                         alert(data.message);
@@ -986,7 +990,7 @@
                     });
                     const data = await response.json();
                     if (data.status === "success") {
-                        document.getElementById('currency-amount').textContent = data.balance;
+                        document.getElementById('currency-amount').textContent = Number(data.balance).toLocaleString('ru-RU');
                         checkBetStatus();
                     } else {
                         alert(data.message);
