@@ -1067,6 +1067,10 @@ td {
     background: #c0392b !important;
 }
 
+.game-cell img {
+    width: 40px;
+}
+
 .game-controls {
     display: flex;
     gap: 10px;
@@ -1091,6 +1095,10 @@ screen and (max-width: 1024px) {
         
         width: 60px;
         height: auto;
+    }
+
+    .game-cell img {
+        width: 40px;
     }
 
     .button {
