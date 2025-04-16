@@ -659,6 +659,13 @@ td {
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    
+}
+
+#bet-up, #bet-down {
+        
+    width: 60px;
+    height: auto;
 }
 
 .bet-container button:disabled,
@@ -924,30 +931,38 @@ td {
 
 /* Стили для кнопок навигации */
 .nav-button {
+    position: fixed; /* Фиксация к окну браузера */
     display: flex;
     justify-content: center;
     align-items: center;
-    bottom: 80px;
-    /* Чуть выше game-menu */
-    margin-top: 10px;
-    padding: 0px 10px;
+    width: 50px;
+    height: 50px;
     background-color: #7FFFD4;
-    color: #ecf0f1;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 16px;
+    z-index: 15;
     transition: background-color 0.3s ease;
-    z-index: 3;
-    /* Выше контента, но ниже уведомлений */
+}
+
+.nav-button.right {
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.nav-button.left {
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .nav-main-button {
+    position: fixed; /* Фиксация к окну браузера */
     display: flex;
     justify-content: center;
     align-items: center;
     bottom: 80px;
-    /* Чуть выше game-menu */
     margin-top: 10px;
     padding: 0px 10px;
     background-color: #7FFFD4;
@@ -957,7 +972,7 @@ td {
     cursor: pointer;
     font-size: 16px;
     transition: background-color 0.3s ease;
-    z-index: 5;
+    z-index: 15;
 }
 
 .nav-main-button.right {
@@ -972,16 +987,6 @@ td {
     background-color: #7FFFD4;
 }
 
-.nav-button.right {
-    float: right;
-    /* Кнопка "Вправо" прижата к правому краю */
-}
-
-.nav-button.left {
-    position: relative;
-    top: 0;
-    right: 40%;
-}
 .main,
 .auction-container,
 .inventory-container,
@@ -1058,6 +1063,12 @@ screen and (max-width: 1024px) {
     .container {
         overflow-x: hidden;
         width: 100vw !important;
+    }
+
+    #bet-up, #bet-down {
+        
+        width: 60px;
+        height: auto;
     }
 
     .button {
