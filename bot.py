@@ -25,14 +25,14 @@ async def start(update, context):
             query = """
                 INSERT INTO user_progress 
                 (user_id, username, first_name, last_name, balance, total_generation, is_active, last_updated)
-                VALUES (%s, %s, %s, %s, 0, 10, 1, NOW())
+                VALUES (%s, %s, %s, %s, 0, 6, 1, NOW())
             """
             cursor.execute(query, (user_id, username, first_name, last_name))
 
             # Добавляем стартовый предмет
             cursor.execute("""
                 INSERT INTO inventory (user_id, item_name, generation_per_hour)
-                VALUES (%s, 'Older PC', 10)
+                VALUES (%s, 'Older PC', 6)
             """, (user_id,))
 
             # Обработка реферального кода

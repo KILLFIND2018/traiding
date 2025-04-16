@@ -122,7 +122,7 @@
                     <table class="inventory-table">
                         <tr>
                             <th>Предмет</th>
-                            <th>Генерация в сек</th>
+                            <th>Генерация в час</th>
                             <th>Статус</th>
                         </tr>
                     </table>
@@ -137,7 +137,7 @@
                                 <tr>
                                     <th>Изображение</th>
                                     <th>Предмет</th>
-                                    <th>Генерация в сек</th>
+                                    <th>Генерация в час</th>
                                     <th>Стоимость</th>
                                 </tr>
                             </thead>
@@ -468,7 +468,7 @@
                     newRow.dataset.itemName = item.item_name;
                     newRow.dataset.generation = item.generation_per_hour;
                     newRow.insertCell(0).textContent = item.item_name;
-                    newRow.insertCell(1).textContent = item.generation_per_hour;
+                    newRow.insertCell(1).textContent = formatNumber(item.generation_per_hour);                    
                     newRow.insertCell(2).textContent = 'активен';
                     updateTotalGeneration(item.item_name);
                 });
@@ -477,7 +477,7 @@
                 document.querySelectorAll('.inventory-item').forEach(row => {
                     row.addEventListener('click', () => {
                         const itemName = row.dataset.itemName;
-                        const generation = parseInt(row.dataset.generation) * 3600; // Конвертация в час
+                        const generation = parseInt(row.dataset.generation) / 3600; //конвертация в секунду
                         const itemImage = `/static/img-market/${itemName.replace(/ /g, '_').toLowerCase()}.png`;
 
                         document.getElementById('item-popup-name').textContent = itemName;
@@ -596,11 +596,11 @@
                     img.style.width = '50px';
                     imgCell.appendChild(img);
                     row.insertCell(1).textContent = item.name;
-                    row.insertCell(2).textContent = item.generation;
+                    row.insertCell(2).textContent = formatNumber(item.generation);
                     const priceCell = row.insertCell(3);
                     const button = document.createElement('button');
                     button.className = 'buy-button';
-                    button.innerHTML = `<span>${item.price}</span><img src="/static/bitcoin.png" alt="bitcoin">`;
+                    button.innerHTML = `<span>${formatNumber(item.price)}</span><img src="/static/bitcoin.png" alt="bitcoin">`;
                     priceCell.appendChild(button);
                 });
                 setupBuyButtons(userId);
