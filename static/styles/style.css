@@ -367,6 +367,8 @@ select {
 /* Стили для таблицы */
 .inventory-table {
     width: 100%;
+    cursor: pointer;
+    transition: background-color 0.2s;
     border-radius: 5px;
     /* Таблица занимает всю ширину контейнера */
     border-collapse: collapse;
@@ -390,6 +392,10 @@ select {
     /* Цвет фона заголовков */
     color: white;
     /* Цвет текста заголовков */
+}
+
+.inventory-table tr:hover {
+    background-color: rgba(44, 62, 80, 0.4) !important;
 }
 
 /* Стили для строк таблицы */
