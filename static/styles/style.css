@@ -690,32 +690,6 @@ td {
     margin-left: 5px;
 }
 
-
-
-
-
-
-
-@media (max-width: 768px) {
-    .lots-table {
-        min-width: 100% !important;
-        width: 100% !important;
-    }
-
-    auction-lots {
-        overflow-x: auto;
-        width: 100vw;
-        margin-left: -2.5%;
-    }
-
-    .lots-table th,
-    .lots-table td {
-        min-width: 100px;
-        /* Уменьшенная ширина колонок */
-    }
-}
-
-
 .bitcoin-widget {
     padding: 10px;
     background-color: rgba(44, 62, 80, 0.3);
@@ -1001,29 +975,26 @@ td {
     transition: background-color 0.3s ease;
 }
 
-    .spin-btn {
-        width: 120px; /* Фиксированная ширина */
-        height: 40px; /* Фиксированная высота */
-        padding: 5px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 5px;
-    }
-
-
-    .spin-btn img {
-        width: 25px !important;
-        height: 25px !important; /* Добавляем фиксированную высоту */
-        object-fit: contain; /* Гарантирует правильное масштабирование */
-        padding-left: 5px;
-        flex-shrink: 0; /* Запрещаем уменьшение размера */
-    }
-
-.ctrl {
-    width: 50px;
-    height: auto;
+.spin-btn {
+    width: 120px; /* Фиксированная ширина */
+    height: 40px; /* Фиксированная высота */
+    padding: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
 }
+
+
+.spin-btn img {
+    width: 25px !important;
+    height: 25px !important; /* Добавляем фиксированную высоту */
+    object-fit: contain; /* Гарантирует правильное масштабирование */
+    padding-left: 5px;
+    flex-shrink: 0; /* Запрещаем уменьшение размера */
+}
+
+
 
 
 
@@ -1031,62 +1002,108 @@ td {
     margin: 5px;
 }
 
-/* Стили для кнопок навигации */
-.nav-button {
-    position: fixed; /* Фиксация к окну браузера */
+
+
+
+/* Стили для кнопки to-widgets */
+.nav-main-button.right#to-widgets, .nav-button.right#to-wheel {
+    background-color: #7FFFD4;
+    border-radius: 50%; /* Делаем кнопку круглой для большей привлекательности */
+    width: 60px; /* Увеличиваем размер */
+    height: 60px;
+    box-shadow: 0 0 10px rgba(127, 255, 212, 0.5); /* Легкое свечение */
+    transition: all 0.3s ease;
+    animation: pulse 2s infinite ease-in-out; /* Пульсация */
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 50px;
-    height: 50px;
-    background-color: #7FFFD4;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+    position: fixed;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 15;
-    transition: background-color 0.3s ease;
 }
 
-.nav-button.right {
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
+.nav-main-button.right#to-widgets:hover , .nav-button.right#to-wheel:hover {
+    box-shadow: 0 0 20px rgba(127, 255, 212, 0.8); /* Усиленное свечение при наведении */
+    transform: translateY(-50%) scale(1.1); /* Легкое увеличение при наведении */
+    animation: none; /* Отключаем пульсацию при наведении */
 }
 
-.nav-button.left {
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
+.nav-main-button.right#to-widgets .ctrl, .nav-button.right#to-wheel .ctrl {
+    width: 40px; /* Уменьшаем размер стрелки */
+    height: auto;
+    animation: nudge 1.5s infinite ease-in-out; /* Легкое движение стрелки */
 }
 
-.nav-main-button {
-    position: fixed; /* Фиксация к окну браузера */
+.nav-main-button.left#to-main , .nav-button.left#to-mart{
+    background-color: #7FFFD4;
+    border-radius: 50%; /* Делаем кнопку круглой для большей привлекательности */
+    width: 60px; /* Увеличиваем размер */
+    height: 60px;
+    box-shadow: 0 0 10px rgba(127, 255, 212, 0.5); /* Легкое свечение */
+    transition: all 0.3s ease;
+    animation: pulse 2s infinite ease-in-out; /* Пульсация */
     display: flex;
     justify-content: center;
     align-items: center;
-    bottom: 80px;
-    margin-top: 10px;
-    padding: 0px 10px;
-    background-color: #7FFFD4;
-    color: #ecf0f1;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s ease;
+    position: fixed;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 15;
 }
 
-.nav-main-button.right {
-    float: right;
-    position: relative;
-    top: 55%
+.nav-main-button.left#to-main:hover , .nav-button.left#to-mart:hover{
+    box-shadow: 0 0 20px rgba(127, 255, 212, 0.8); /* Усиленное свечение при наведении */
+    transform: translateY(-50%) scale(1.1); /* Легкое увеличение при наведении */
+    animation: none; /* Отключаем пульсацию при наведении */
+}
+
+.nav-main-button.left#to-main .ctrl , .nav-button.left#to-mart .ctrl{
+    width: 40px; /* Уменьшаем размер стрелки */
+    height: auto;
+    animation: nudge 1.5s infinite ease-in-out; /* Легкое движение стрелки */
 }
 
 
 
-.nav-button:hover {
-    background-color: #7FFFD4;
+/* Анимация пульсации */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 10px rgba(127, 255, 212, 0.5), 0 0 20px rgba(127, 255, 212, 0.3);
+        transform: translateY(-50%) scale(1);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(127, 255, 212, 0.7), 0 0 30px rgba(127, 255, 212, 0.5);
+        transform: translateY(-50%) scale(1.05);
+    }
+    100% {
+        box-shadow: 0 0 10px rgba(127, 255, 212, 0.5), 0 0 20px rgba(127, 255, 212, 0.3);
+        transform: translateY(-50%) scale(1);
+    }
+}
+
+/* Анимация легкого движения стрелки */
+@keyframes nudge {
+    0% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(5px); /* Стрелка слегка сдвигается вправо */
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+/* Дополнительно: эффект нажатия */
+.nav-main-button.right#to-widgets:active, 
+.nav-main-button.left#to-main:active,
+.nav-button.right#to-wheel:active, 
+.nav-button.left#to-mart:active {
+    transform: translateY(-50%) scale(0.95); /* Легкое сжатие при нажатии */
+    box-shadow: 0 0 5px rgba(127, 255, 212, 0.3); /* Уменьшение свечения */
 }
 
 .main,
@@ -1113,7 +1130,6 @@ td {
     opacity: 0;
     z-index: 1;
 }
-
 
 .grid-game {
     display: grid;
@@ -1183,6 +1199,23 @@ screen and (max-width: 1024px) {
         width: 100vw !important;
     }
 
+    .lots-table {
+        min-width: 100% !important;
+        width: 100% !important;
+    }
+
+    auction-lots {
+        overflow-x: auto;
+        width: 100vw;
+        margin-left: -2.5%;
+    }
+
+    .lots-table th,
+    .lots-table td {
+        min-width: 100px;
+        /* Уменьшенная ширина колонок */
+    }
+    
     #bet-up, #bet-down {
         
         width: 60px;
