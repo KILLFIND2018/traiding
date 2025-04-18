@@ -1,0 +1,333 @@
+async function stopGeneration(userId) {
+    try {
+        const response = await fetch('/stop', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId })
+        });
+        const data = await response.json();
+        if (data.status === "success") {
+            console.log(`Генерация для user_id ${userId} успешно остановлена: ${data.message}`);
+        } else {
+            console.error(`Ошибка остановки генерации для user_id ${userId}: ${data.message}`);
+        }
+    } catch (error) {
+        console.error(`Ошибка при отправке запроса на остановку для user_id ${userId}: ${error}`);
+    }
+}
+
+async function startGeneration(userId) {
+    try {
+        const response = await fetch('/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId })
+        });
+        const data = await response.json();
+        if (data.status === "success") {
+            console.log(`Генерация для user_id ${userId} запущена, начальный баланс: ${data.balance}`);
+            return data.balance;
+        } else {
+            console.error('Ошибка при старте:', data.message);
+            return null;
+        }
+    } catch (error) {
+        console.error('Ошибка при запуске генерации:', error);
+        return null;
+    }
+}
+
+async function checkNewRewards(userId) {
+    const response = await fetch(`/get_new_rewards?user_id=${userId}`);
+    const data = await response.json();
+    if (data.status === "success" && data.rewards.length > 0) {
+        data.rewards.forEach(reward => {
+            const itemImage = `/static/img-market/${reward.item_name.replace(' ', '_').toLowerCase()}.png`;
+            showNotificationPopup(reward.item_name, itemImage, `Вы получили ${reward.item_name} за приглашение друга!`);
+            if (reward.item_name === "Macbook" && !models["Macbook"]) {
+                macbook();
+                models["Macbook"] = true;
+            }
+        });
+        await loadInventory(userId);
+    }
+}
+
+async function loadAuction(userId) {
+    await loadLots();
+    await loadChat();
+    await loadUserItems(userId);
+}
+
+async function loadLots() {
+    const response = await fetch('/get_auction_lots');
+    const data = await response.json();
+    if (data.status === "success") {
+        const tbody = document.getElementById('lots-table-body');
+        tbody.innerHTML = '';
+        data.lots.forEach(lot => {
+            const row = tbody.insertRow();
+            row.insertCell(0).textContent = lot.lot_id;
+            row.insertCell(1).textContent = lot.item_name;
+            row.insertCell(2).textContent = lot.description;
+            row.insertCell(3).textContent = lot.start_price;
+            row.insertCell(4).textContent = lot.current_bid || 'Нет ставок';
+            row.insertCell(5).textContent = lot.seller_username || 'Anonymous';
+            const actionCell = row.insertCell(6);
+            const bidButton = document.createElement('button');
+            bidButton.textContent = 'Сделать ставку';
+            bidButton.classList.add('bid-button', 'auctions-table');
+            bidButton.onclick = () => placeBid(lot.lot_id);
+            actionCell.appendChild(bidButton);
+            if (String(lot.seller_id) === userId) {
+                const completeButton = document.createElement('button');
+                completeButton.textContent = 'Завершить';
+                completeButton.classList.add('complete-button', 'auctions-table');
+                completeButton.onclick = () => completeLot(lot.lot_id);
+                actionCell.appendChild(completeButton);
+            }
+        });
+    } else {
+        console.error('Ошибка загрузки лотов:', data.message);
+    }
+}
+
+async function loadChat() {
+    const response = await fetch('/get_chat');
+    const data = await response.json();
+    if (data.status === "success") {
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.innerHTML = '';
+        data.messages.forEach(msg => {
+            const p = document.createElement('p');
+            p.textContent = `${msg.username}: ${msg.message} (${new Date(msg.timestamp).toLocaleTimeString()})`;
+            chatMessages.appendChild(p);
+        });
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    if (message) {
+        await fetch('/send_chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, message })
+        });
+        input.value = '';
+        await loadChat();
+    }
+}
+
+async function loadUserItems(userId) {
+    const response = await fetch(`/get_inventory?user_id=${userId}`);
+    const data = await response.json();
+    if (data.status === "success") {
+        const select = document.getElementById('item-select');
+        select.innerHTML = '<option value="">Выберите предмет</option>';
+        data.items.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.item_name;
+            option.textContent = item.item_name;
+            select.appendChild(option);
+        });
+    }
+}
+
+async function placeBid(lotId) {
+    const bidAmount = prompt('Введите сумму ставки:');
+    if (bidAmount && !isNaN(bidAmount)) {
+        const response = await fetch('/place_bid', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, lot_id: lotId, bid_amount: parseInt(bidAmount) })
+        });
+        const data = await response.json();
+        if (data.status === "success") {
+            await loadLots();
+        } else {
+            alert(data.message);
+        }
+    }
+}
+
+async function completeLot(lotId) {
+    const response = await fetch('/complete_lot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, lot_id: lotId })
+    });
+    const data = await response.json();
+    if (data.status === "success") {
+        await loadLots();
+        await loadInventory(userId);
+    } else {
+        alert(data.message);
+    }
+}
+
+async function initBitcoinWidget(userId) {
+    async function updatePrice() {
+        const response = await fetch('/get_bitcoin_price');
+        const data = await response.json();
+        if (data.status === "success") {
+            document.getElementById('btc-price').textContent = data.price;
+        }
+    }
+    updatePrice();
+    setInterval(updatePrice, 60000);
+
+    const ctx = document.createElement('canvas');
+    document.getElementById('bitcoin-graph').appendChild(ctx);
+    let prices = [];
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'BTC Price (USD)',
+                data: prices,
+                borderColor: '#f1c40f',
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { display: false },
+                y: { beginAtZero: false }
+            }
+        }
+    });
+
+    async function updateGraph() {
+        const response = await fetch('/get_bitcoin_price');
+        const data = await response.json();
+        if (data.status === "success") {
+            prices.push(data.price);
+            if (prices.length > 60) prices.shift();
+            chart.data.labels = prices.map((_, i) => i);
+            chart.data.datasets[0].data = prices;
+            chart.update();
+        }
+    }
+    updateGraph();
+    setInterval(updateGraph, 60000);
+
+    const betUpButton = document.getElementById('bet-up');
+    const betDownButton = document.getElementById('bet-down');
+    const betAmountInput = document.getElementById('bet-amount');
+    const betTimer = document.getElementById('bet-timer');
+
+    async function checkBetStatus() {
+        const response = await fetch(`/check_bitcoin_bet?user_id=${userId}`);
+        const data = await response.json();
+        if (data.status === "pending") {
+            const remaining = data.remaining;
+            const hours = Math.floor(remaining / 3600);
+            const minutes = Math.floor((remaining % 3600) / 60);
+            const seconds = Math.floor(remaining % 60);
+            betTimer.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            betUpButton.disabled = true;
+            betDownButton.disabled = true;
+            betAmountInput.disabled = true;
+        } else {
+            betTimer.textContent = "Ставка доступна!";
+            betUpButton.disabled = false;
+            betDownButton.disabled = false;
+            betAmountInput.disabled = false;
+            if (data.won !== undefined) {
+                if (data.won) {
+                    showNotificationPopup("Вы выиграли!", "/static/bitcoin.png", `Ваш приз: ${data.prize} монет`);
+                } else {
+                    showNotificationPopup("Вы проиграли", "/static/bitcoin.png", "Попробуйте еще раз!");
+                }
+                document.getElementById('currency-amount').textContent = Number(data.balance).toLocaleString('ru-RU');
+            }
+        }
+    }
+    checkBetStatus();
+    setInterval(checkBetStatus, 1000);
+
+    betUpButton.addEventListener('click', async () => {
+        const amount = parseInt(betAmountInput.value);
+        if (amount > 0) {
+            const response = await fetch('/place_bitcoin_bet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, bet_amount: amount, bet_direction: 'up' })
+            });
+            const data = await response.json();
+            if (data.status === "success") {
+                document.getElementById('currency-amount').textContent = Number(data.balance).toLocaleString('ru-RU');
+                checkBetStatus();
+            } else {
+                alert(data.message);
+            }
+        } else {
+            alert("Введите корректную сумму ставки!");
+        }
+    });
+
+    betDownButton.addEventListener('click', async () => {
+        const amount = parseInt(betAmountInput.value);
+        if (amount > 0) {
+            const response = await fetch('/place_bitcoin_bet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, bet_amount: amount, bet_direction: 'down' })
+            });
+            const data = await response.json();
+            if (data.status === "success") {
+                document.getElementById('currency-amount').textContent = Number(data.balance).toLocaleString('ru-RU');
+                checkBetStatus();
+            } else {
+                alert(data.message);
+            }
+        } else {
+            alert("Введите корректную сумму ставки!");
+        }
+    });
+}
+
+async function checkLoginReward(userId) {
+    const response = await fetch(`/get_login_reward_status?user_id=${userId}`);
+    const data = await response.json();
+    const rewardStatus = document.getElementById('reward-status');
+    const timerElement = document.querySelector('.reward-timer');
+    timerElement.classList.remove('available');
+    if (data.status === "available") {
+        rewardStatus.textContent = "Доступна! Кликните для получения";
+        timerElement.classList.add('available');
+        timerElement.onclick = () => claimLoginReward(userId);
+    } else if (data.status === "pending") {
+        const remaining = data.remaining;
+        const minutes = Math.floor(remaining / 60);
+        const seconds = Math.floor(remaining % 60);
+        rewardStatus.textContent = `Доступна через ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        timerElement.onclick = null;
+    } else {
+        rewardStatus.textContent = "Ошибка проверки";
+    }
+}
+
+async function claimLoginReward(userId) {
+    const response = await fetch('/claim_login_reward', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId })
+    });
+    const data = await response.json();
+    if (data.status === "success") {
+        console.log(`Получена награда за вход: ${data.reward} монет. Новый баланс: ${data.new_balance}`);
+        document.getElementById('currency-amount').textContent = data.new_balance;
+        showNotificationPopup("Награда за вход", "/static/bitcoin.png", `Вы получили ${data.reward} монет!`);
+        await checkLoginReward(userId);
+    } else {
+        console.error('Ошибка получения награды:', data.message);
+        alert('Ошибка получения награды: ' + data.message);
+    }
+}
