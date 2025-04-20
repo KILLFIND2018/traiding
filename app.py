@@ -649,7 +649,7 @@ def place_bitcoin_bet():
 
         if last_bet:
             last_bet_time = last_bet[0]
-            cooldown = 100  # 100 секунд
+            cooldown = 14400  # 4 часа
             if (datetime.now() - last_bet_time).total_seconds() < cooldown:
                 return jsonify({"status": "error", "message": "Ставка доступна раз в 100 секунд"}), 400
 
@@ -749,8 +749,8 @@ def check_bitcoin_bet():
             return jsonify({"status": "success", "message": "Нет активных ставок"}), 200
 
         # Проверка времени
-        if (datetime.now() - bet_time).total_seconds() < 10:  # 24 часа
-            remaining = 10 - (datetime.now() - bet_time).total_seconds()
+        if (datetime.now() - bet_time).total_seconds() < 14400:  # 4 часа
+            remaining = 14400 - (datetime.now() - bet_time).total_seconds()
             return jsonify({"status": "pending", "remaining": int(remaining)}), 200
 
         # Получение текущей цены
@@ -916,7 +916,7 @@ def get_login_reward_status():
         last_updated = last_updated or datetime.now()
 
         current_time = datetime.now()
-        reward_interval = 240  # 4 минуты в секундах
+        reward_interval = 14400  # 4 минуты в секундах
 
         # Если время последнего вознаграждения не установлено
         if not last_reward_time:
@@ -974,16 +974,16 @@ def claim_login_reward():
         last_updated = last_updated or datetime.now()
 
         current_time = datetime.now()
-        reward_interval = 240  # 4 минуты в секундах
+        reward_interval = 14400  # 4 часа
 
         # Проверяем, доступна ли награда
         if last_reward_time and (current_time - last_reward_time).total_seconds() < reward_interval:
             return jsonify({"status": "error", "message": "Reward not available yet"}), 400
 
-        # Рассчитываем прибыль за 4 минуты (240 секунд)
+        # Рассчитываем прибыль за 4 часа 
         profit_per_second = total_generation
-        period_profit = profit_per_second * 240
-        reward = int(period_profit * 0.05)  # 5% от прибыли за 4 минуты
+        period_profit = profit_per_second * 14400
+        reward = int(period_profit * 0.05)  # 5% от прибыли за 4 часа
         
         # Обновляем баланс и время последнего получения награды
         new_balance = balance + reward

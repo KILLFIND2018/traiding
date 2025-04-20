@@ -299,15 +299,19 @@ async function checkLoginReward(userId) {
     const rewardStatus = document.getElementById('reward-status');
     const timerElement = document.querySelector('.reward-timer');
     timerElement.classList.remove('available');
+
     if (data.status === "available") {
         rewardStatus.textContent = "Доступна! Кликните для получения";
         timerElement.classList.add('available');
         timerElement.onclick = () => claimLoginReward(userId);
     } else if (data.status === "pending") {
         const remaining = data.remaining;
-        const minutes = Math.floor(remaining / 60);
+        // Преобразуем секунды в часы, минуты и секунды
+        const hours = Math.floor(remaining / 3600);
+        const minutes = Math.floor((remaining % 3600) / 60);
         const seconds = Math.floor(remaining % 60);
-        rewardStatus.textContent = `Доступна через ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        // Форматируем время в HH:MM:SS
+        rewardStatus.textContent = `Доступна через ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         timerElement.onclick = null;
     } else {
         rewardStatus.textContent = "Ошибка проверки";
