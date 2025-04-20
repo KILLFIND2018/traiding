@@ -3,7 +3,7 @@ const userId = urlParams.get('user_id');
 
 async function startApp(userId) {
     if (!userId) {
-        console.error("User ID is missing in the URL.");
+        console.error("User ID отсутствует в URL.");
         document.getElementById('loader').classList.add('hidden');
         return;
     }
@@ -27,7 +27,7 @@ async function startApp(userId) {
         } catch (error) {
             console.error('Ошибка при обновлении баланса:', error);
         }
-    }, 10000);
+    }, 5000);  // Обновление каждые 5 секунд
 
     const ratingInterval = setInterval(() => {
         loadRating();

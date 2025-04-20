@@ -5,7 +5,7 @@ import mysql.connector
 import threading
 import time
 import random
-from config import MYSQL_CONFIG  # Импорт конфигурации
+from config import MYSQL_CONFIG
 
 import logging
 
@@ -18,32 +18,16 @@ CORS(app, resources={r"/static/*": {"origins": "*"}})
 
 user_heartbeats = {}
 
-def calculate_balance(current_balance, progression_factor, last_updated, total_generation):
+def calculate_balance(current_balance, last_updated, total_generation):
     now = datetime.now()
     seconds_elapsed = (now - last_updated).total_seconds()
+    hours_elapsed = seconds_elapsed / 3600  # Конвертируем секунды в часы
     
-    # Базовая генерация за первые 60 секунд без прогрессии
-    if seconds_elapsed <= 60:
-        new_balance = current_balance + total_generation * seconds_elapsed
-        new_progression = 0  # Прогрессия начинается с 0
-    else:
-        # Базовая генерация за первые 60 секунд
-        progression_time = max(0, seconds_elapsed - 60)
-        new_balance = current_balance + total_generation * 60
-        
-        # Расчет увеличения прогрессии: 0.01 за каждые, например, 300 секунд (5 минут)
-        progression_step = 0.01  # Начальный шаг прогрессии
-        progression_increase = int(progression_time / 300)  # Каждые 5 минут +0.01
-        new_progression = progression_step * progression_increase  # Например, 0.01, 0.02, 0.03...
-        
-        # Ограничение прогрессии, чтобы не уйти в бесконечность (опционально)
-        new_progression = min(new_progression, 0.50)  # Максимум 0.50, например
-        
-        # Применяем прогрессию к генерации после 60 секунд
-        new_balance += total_generation * progression_time * new_progression
-
-    # Учитываем, что баланс — BIGINT, округляем до целого числа
-    return int(new_balance), new_progression
+    # Рассчитываем новый баланс на основе почасовой генерации
+    new_balance = current_balance + (total_generation * hours_elapsed)
+    
+    # Округляем до целого, так как баланс BIGINT
+    return int(new_balance)
 
 def generation_loop(user_id):
     while True:
@@ -51,7 +35,7 @@ def generation_loop(user_id):
             connection = mysql.connector.connect(**MYSQL_CONFIG)
             cursor = connection.cursor()
 
-            cursor.execute("SELECT is_active, balance, total_generation, progression_factor, last_updated FROM user_progress WHERE user_id = %s", (user_id,))
+            cursor.execute("SELECT is_active, balance, total_generation, last_updated FROM user_progress WHERE user_id = %s", (user_id,))
             result = cursor.fetchone()
 
             if not result or result[0] == 0:
@@ -60,27 +44,27 @@ def generation_loop(user_id):
 
             if user_id in user_heartbeats:
                 last_heartbeat = user_heartbeats[user_id]
-                if (datetime.now() - last_heartbeat).total_seconds() > 10:  # Уменьшенный тайм-аут
+                if (datetime.now() - last_heartbeat).total_seconds() > 10:
                     cursor.execute("UPDATE user_progress SET is_active = 0 WHERE user_id = %s", (user_id,))
                     connection.commit()
                     print(f"Генерация для user_id {user_id} остановлена: нет heartbeat более 10 секунд")
                     break
 
-            balance, total_generation, progression_factor, last_updated = result[1:]
-            total_generation = total_generation or 1
+            balance, total_generation, last_updated = result[1:]
+            total_generation = total_generation or 0  # Почасовая ставка
             last_updated = last_updated or datetime.now()
 
-            new_balance, new_progression = calculate_balance(balance, progression_factor or 1.0, last_updated, total_generation)
+            new_balance = calculate_balance(balance, last_updated, total_generation)
 
             cursor.execute("""
                 UPDATE user_progress 
-                SET balance = %s, progression_factor = %s, last_updated = %s 
+                SET balance = %s, last_updated = %s 
                 WHERE user_id = %s
-            """, (new_balance, new_progression, datetime.now(), user_id))
+            """, (new_balance, datetime.now(), user_id))
             connection.commit()
-            print(f"Генерация для user_id {user_id}: balance = {new_balance}, progression_factor = {new_progression}")
+            print(f"Генерация для user_id {user_id}: баланс = {new_balance}, генерация = {total_generation} (в час)")
 
-            time.sleep(1)
+            time.sleep(5)  # Обновление каждые 5 секунд
         except mysql.connector.Error as err:
             print(f"Ошибка в генерации для user_id {user_id}: {err}")
         finally:
@@ -94,7 +78,7 @@ def heartbeat():
     data = request.json
     user_id = data.get('user_id')
     if not user_id:
-        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
     
     user_heartbeats[user_id] = datetime.now()
     print(f"Heartbeat получен для user_id {user_id}")
@@ -110,7 +94,7 @@ def start_generation():
     user_id = data.get('user_id')
 
     if not user_id:
-        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
 
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
@@ -122,13 +106,13 @@ def start_generation():
         if result:
             balance, total_generation, is_active = result
             if not is_active:
-                cursor.execute("UPDATE user_progress SET is_active = 1, last_updated = %s, progression_factor = 0 WHERE user_id = %s", (datetime.now(), user_id))
+                cursor.execute("UPDATE user_progress SET is_active = 1, last_updated = %s WHERE user_id = %s", (datetime.now(), user_id))
                 threading.Thread(target=generation_loop, args=(user_id,), daemon=True).start()
                 print(f"Генерация для user_id {user_id} запущена")
             connection.commit()
             return jsonify({"status": "success", "balance": balance}), 200
         else:
-            return jsonify({"status": "error", "message": "Пользователь не найден, пожалуйста, начните через Telegram-бота"}), 404
+            return jsonify({"status": "error", "message": "Пользователь не найден, начните через Telegram-бота"}), 404
 
     except mysql.connector.Error as err:
         return jsonify({"status": "error", "message": str(err)}), 500
@@ -142,7 +126,7 @@ def stop_generation():
     user_id = data.get('user_id')
 
     if not user_id:
-        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
 
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
@@ -150,10 +134,10 @@ def stop_generation():
 
         cursor.execute("UPDATE user_progress SET is_active = 0 WHERE user_id = %s", (user_id,))
         connection.commit()
-        print(f"Генерация для user_id {user_id} остановлена по запросу клиента")
+        print(f"Генерация для user_id {user_id} остановлена по запросу")
         if user_id in user_heartbeats:
             del user_heartbeats[user_id]
-        return jsonify({"status": "success", "message": "Generation stopped"}), 200
+        return jsonify({"status": "success", "message": "Генерация остановлена"}), 200
 
     except mysql.connector.Error as err:
         print(f"Ошибка при остановке генерации для user_id {user_id}: {err}")
@@ -166,33 +150,32 @@ def stop_generation():
 def get_balance():
     user_id = request.args.get('user_id')
     if not user_id:
-        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
 
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        cursor.execute("SELECT balance, total_generation, progression_factor, last_updated, is_active FROM user_progress WHERE user_id = %s", (user_id,))
+        cursor.execute("SELECT balance, total_generation, last_updated, is_active FROM user_progress WHERE user_id = %s", (user_id,))
         result = cursor.fetchone()
 
         if result:
-            balance, total_generation, progression_factor, last_updated, is_active = result
-            total_generation = total_generation or 1
-            last_updated = last_updated or datetime.now()
+            balance, total_generation, last_updated, is_active = result
+            total_generation = total_generation or 0
 
             if is_active:
-                new_balance, new_progression = calculate_balance(balance, progression_factor or 1.0, last_updated, total_generation)
+                new_balance = calculate_balance(balance, last_updated or datetime.now(), total_generation)
                 cursor.execute("""
                     UPDATE user_progress 
-                    SET balance = %s, progression_factor = %s, last_updated = %s 
+                    SET balance = %s, last_updated = %s 
                     WHERE user_id = %s
-                """, (new_balance, new_progression, datetime.now(), user_id))
+                """, (new_balance, datetime.now(), user_id))
                 connection.commit()
                 balance = new_balance
 
             return jsonify({"status": "success", "balance": balance}), 200
         else:
-            return jsonify({"status": "error", "message": "User not found"}), 404
+            return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
 
     except mysql.connector.Error as err:
         return jsonify({"status": "error", "message": str(err)}), 500
@@ -206,7 +189,7 @@ def buy_item():
     user_id = data.get('user_id')
     item_name = data.get('item_name')
     item_cost = data.get('item_cost')
-    item_generation = data.get('item_generation')
+    item_generation = data.get('item_generation')  # Это generation_per_hour
 
     if not all([user_id, item_name, item_cost, item_generation]):
         return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
@@ -215,7 +198,7 @@ def buy_item():
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        # Проверяем, есть ли предмет уже в инвентаре
+        # Проверяем наличие предмета в инвентаре
         cursor.execute("SELECT COUNT(*) FROM inventory WHERE user_id = %s AND item_name = %s", (user_id, item_name))
         if cursor.fetchone()[0] > 0:
             return jsonify({
@@ -223,29 +206,29 @@ def buy_item():
                 "message": f"⚠️ {item_name} уже есть в вашем инвентаре!"
             }), 400
 
-        # Получаем текущий прогресс пользователя
+        # Получаем прогресс пользователя
         cursor.execute("SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s", (user_id,))
         result = cursor.fetchone()
         if not result:
             return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
 
         balance, total_generation, last_updated = result
-        total_generation = total_generation or 1
+        total_generation = total_generation or 0
         last_updated = last_updated or datetime.now()
 
-        # Рассчитываем новый баланс с учетом времени
-        new_balance, _ = calculate_balance(balance, 1.0, last_updated, total_generation)
+        # Рассчитываем баланс
+        new_balance = calculate_balance(balance, last_updated, total_generation)
 
-        # Проверяем, хватает ли средств после обновления баланса
+        # Проверяем наличие средств
         if new_balance < item_cost:
             return jsonify({
                 "status": "error", 
-                "message": "Недостаточно средств для покупки!"
-            }), 400  # Сообщение на русском
+                "message": "Недостаточно средств!"
+            }), 400
 
         # Обновляем баланс и генерацию
         new_balance -= item_cost
-        new_total_generation = total_generation + item_generation
+        new_total_generation = total_generation + item_generation  # Добавляем почасовую генерацию
 
         cursor.execute("""
             UPDATE user_progress 
@@ -283,7 +266,7 @@ def get_market():
         cursor.execute("SELECT name, generation_per_hour AS generation, price FROM market_items")
         items = cursor.fetchall()
 
-        # Добавляем путь к изображению для каждого предмета
+        # Добавляем путь к изображению
         for item in items:
             image_name = item['name'].replace(' ', '_').lower() + '.png'
             item['image_path'] = f'/static/img-market/{image_name}'
@@ -300,7 +283,7 @@ def get_market():
 def get_inventory():
     user_id = request.args.get('user_id')
     if not user_id:
-        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
 
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
@@ -323,7 +306,6 @@ def get_rating():
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor(dictionary=True)
 
-        # Получаем всех активных пользователей, сортируем по убыванию баланса
         cursor.execute("""
             SELECT username, balance 
             FROM user_progress 
@@ -331,7 +313,6 @@ def get_rating():
         """)
         users = cursor.fetchall()
 
-        # Добавляем позицию в рейтинге
         for index, user in enumerate(users, start=1):
             user['position'] = index
 
@@ -347,8 +328,8 @@ def get_rating():
 def buy_with_stars():
     data = request.json
     user_id = data.get('user_id')
-    amount = data.get('amount')  # Количество монет
-    stars_cost = data.get('stars_cost')  # Стоимость в Stars
+    amount = data.get('amount')
+    stars_cost = data.get('stars_cost')
 
     if not all([user_id, amount, stars_cost]):
         return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
@@ -357,7 +338,6 @@ def buy_with_stars():
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        # Получаем текущие данные пользователя
         cursor.execute("SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s", (user_id,))
         result = cursor.fetchone()
 
@@ -365,14 +345,12 @@ def buy_with_stars():
             return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
 
         balance, total_generation, last_updated = result
-        total_generation = total_generation or 1
+        total_generation = total_generation or 0
         last_updated = last_updated or datetime.now()
 
-        # Рассчитываем обновленный баланс (Stars обрабатываются Telegram, мы добавляем монеты)
-        new_balance, _ = calculate_balance(balance, 1.0, last_updated, total_generation)
-        new_balance += amount  # Добавляем купленные монеты
+        new_balance = calculate_balance(balance, last_updated, total_generation)
+        new_balance += amount
 
-        # Обновляем баланс в базе данных
         cursor.execute("""
             UPDATE user_progress 
             SET balance = %s, last_updated = %s 
@@ -424,28 +402,24 @@ def create_lot():
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        #Проверка наличия предмета в инвентаре и получение его генерации
         cursor.execute("SELECT generation_per_hour FROM inventory WHERE user_id = %s AND item_name = %s", (user_id, item_name))
         inventory_item = cursor.fetchone()
         if not inventory_item:
-            return jsonify({"status": "error", "message": "Товар не найден в инвентаре"}), 400
+            return jsonify({"status": "error", "message": "Предмет не найден в инвентаре"}), 400
 
         generation_per_hour = inventory_item[0]
 
-        # Уменьшаем total_generation продавца
         cursor.execute("""
             UPDATE user_progress 
             SET total_generation = total_generation - %s 
             WHERE user_id = %s
         """, (generation_per_hour, user_id))
 
-        # Создание лота
         cursor.execute("""
             INSERT INTO auction_lots (seller_id, item_name, description, start_price)
             VALUES (%s, %s, %s, %s)
         """, (user_id, item_name, description, start_price))
 
-        # Удаление предмета из инвентаря продавца
         cursor.execute("DELETE FROM inventory WHERE user_id = %s AND item_name = %s LIMIT 1", (user_id, item_name))
         
         connection.commit()
@@ -470,7 +444,6 @@ def place_bid():
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        # Проверка лота
         cursor.execute("SELECT start_price, current_bid, seller_id FROM auction_lots WHERE lot_id = %s AND is_active = 1", (lot_id,))
         lot = cursor.fetchone()
         if not lot:
@@ -478,19 +451,17 @@ def place_bid():
 
         start_price, current_bid, seller_id = lot
         if user_id == seller_id:
-            return jsonify({"status": "error", "message": "Вы не можете делать ставки на свой собственный лот."}), 400
+            return jsonify({"status": "error", "message": "Нельзя ставить на свой лот"}), 400
 
         min_bid = current_bid or start_price
         if bid_amount <= min_bid:
-            return jsonify({"status": "error", "message": "Ставка должна быть выше текущей ставки"}), 400
+            return jsonify({"status": "error", "message": "Ставка должна быть выше текущей"}), 400
 
-        # Проверка баланса
         cursor.execute("SELECT balance FROM user_progress WHERE user_id = %s", (user_id,))
         balance = cursor.fetchone()[0]
         if balance < bid_amount:
             return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
 
-        # Обновление ставки
         cursor.execute("""
             UPDATE auction_lots 
             SET current_bid = %s, current_bidder_id = %s 
@@ -514,7 +485,6 @@ def complete_lot():
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        # Сначала получаем данные лота
         cursor.execute("""
             SELECT seller_id, item_name, current_bid, current_bidder_id 
             FROM auction_lots 
@@ -526,40 +496,31 @@ def complete_lot():
 
         seller_id, item_name, current_bid, current_bidder_id = lot
         if seller_id != user_id:
-            return jsonify({"status": "error", "message": "Только продавец может завершить лот."}), 403
+            return jsonify({"status": "error", "message": "Только продавец может завершить лот"}), 403
 
         if not current_bidder_id:
-            return jsonify({"status": "error", "message": "Пока нет ставок"}), 400
+            return jsonify({"status": "error", "message": "Нет ставок"}), 400
 
-        # Получаем generation_per_hour из market_items
-        cursor.execute("SELECT generation_per_hour FROM market_items WHERE name = %s", (item_name,))
-        market_item = cursor.fetchone()
-        if not market_item:
-            return jsonify({"status": "error", "message": "Предмет не найден в магазине"}), 404
-        generation_per_hour = market_item[0]
+        cursor.execute("SELECT generation_per_hour FROM inventory WHERE user_id = %s AND item_name = %s", (seller_id, item_name))
+        inventory_item = cursor.fetchone()
+        generation_per_hour = inventory_item[0] if inventory_item else 0
 
-        # Проверка баланса покупателя
         cursor.execute("SELECT balance FROM user_progress WHERE user_id = %s", (current_bidder_id,))
         buyer_balance = cursor.fetchone()[0]
         if buyer_balance < current_bid:
             return jsonify({"status": "error", "message": "У покупателя недостаточно средств"}), 400
 
-        # Списание средств у покупателя
         cursor.execute("UPDATE user_progress SET balance = balance - %s WHERE user_id = %s", (current_bid, current_bidder_id))
-        # Начисление средств продавцу
         cursor.execute("UPDATE user_progress SET balance = balance + %s WHERE user_id = %s", (current_bid, seller_id))
-        # Передача предмета покупателю
         cursor.execute("""
             INSERT INTO inventory (user_id, item_name, generation_per_hour)
             VALUES (%s, %s, %s)
         """, (current_bidder_id, item_name, generation_per_hour))
-        # Увеличиваем total_generation покупателя
         cursor.execute("""
             UPDATE user_progress 
             SET total_generation = total_generation + %s 
             WHERE user_id = %s
         """, (generation_per_hour, current_bidder_id))
-        # Завершение лота
         cursor.execute("UPDATE auction_lots SET is_active = 0 WHERE lot_id = %s", (lot_id,))
 
         connection.commit()
@@ -611,7 +572,6 @@ def send_chat():
         cursor.close()
         connection.close()
 
-
 import requests
 
 @app.route('/get_bitcoin_price', methods=['GET'])
@@ -638,22 +598,20 @@ def place_bitcoin_bet():
     cursor = None
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
-        connection.autocommit = False  # Отключаем авто-коммит
+        connection.autocommit = False
 
         cursor = connection.cursor()
 
-        # Проверка последней ставки
         cursor.execute("SELECT bet_time FROM bitcoin_bets WHERE user_id = %s ORDER BY bet_time DESC LIMIT 1", (user_id,))
         last_bet = cursor.fetchone()
-        cursor.fetchall()  # Очистка буфера
+        cursor.fetchall()
 
         if last_bet:
             last_bet_time = last_bet[0]
-            cooldown = 14400  # 4 часа
+            cooldown = 14400
             if (datetime.now() - last_bet_time).total_seconds() < cooldown:
-                return jsonify({"status": "error", "message": "Ставка доступна раз в 100 секунд"}), 400
+                return jsonify({"status": "error", "message": "Ставка доступна раз в 4 часа"}), 400
 
-        # Получение баланса с блокировкой строки
         cursor.execute(
             "SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s FOR UPDATE", 
             (user_id,)
@@ -665,17 +623,15 @@ def place_bitcoin_bet():
             return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
 
         balance, total_generation, last_updated = result
-        current_balance, _ = calculate_balance(
+        current_balance = calculate_balance(
             balance, 
-            1.0, 
             last_updated or datetime.now(), 
-            total_generation or 1
+            total_generation or 0
         )
 
         if current_balance < bet_amount:
             return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
 
-        # Получение цены BTC
         try:
             response = requests.get(
                 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
@@ -686,13 +642,11 @@ def place_bitcoin_bet():
             connection.rollback()
             return jsonify({"status": "error", "message": f"Ошибка получения цены BTC: {str(e)}"}), 500
 
-        # Списание средств
         cursor.execute(
             "UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s",
             (current_balance - bet_amount, datetime.now(), user_id)
         )
 
-        # Запись ставки
         cursor.execute(
             """INSERT INTO bitcoin_bets 
             (user_id, bet_amount, bet_direction, bet_time, bet_price)
@@ -700,7 +654,7 @@ def place_bitcoin_bet():
             (user_id, bet_amount, bet_direction, datetime.now(), btc_price)
         )
 
-        connection.commit()  # Фиксация транзакции
+        connection.commit()
 
         return jsonify({
             "status": "success",
@@ -726,42 +680,35 @@ def place_bitcoin_bet():
 def check_bitcoin_bet():
     user_id = request.args.get('user_id')
     if not user_id:
-        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
 
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        # Читаем все результаты запроса
         cursor.execute("SELECT bet_amount, bet_direction, bet_time, bet_price, resolved FROM bitcoin_bets WHERE user_id = %s", (user_id,))
         bets = cursor.fetchall()
 
-        # Если ставок нет или все разрешены
         if not bets or all(bet[4] for bet in bets):
             return jsonify({"status": "success", "message": "Нет активных ставок"}), 200
 
-        # Берем первую активную ставку
         for bet in bets:
-            if not bet[4]:  # Ищем unresolved ставку
+            if not bet[4]:
                 bet_amount, bet_direction, bet_time, bet_price = bet[0:4]
                 break
         else:
             return jsonify({"status": "success", "message": "Нет активных ставок"}), 200
 
-        # Проверка времени
-        if (datetime.now() - bet_time).total_seconds() < 14400:  # 4 часа
+        if (datetime.now() - bet_time).total_seconds() < 14400:
             remaining = 14400 - (datetime.now() - bet_time).total_seconds()
             return jsonify({"status": "pending", "remaining": int(remaining)}), 200
 
-        # Получение текущей цены
         btc_price_response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd').json()
         current_price = btc_price_response['bitcoin']['usd']
 
-        # Проверка результата
         won = (bet_direction == 'up' and current_price > bet_price) or (bet_direction == 'down' and current_price < bet_price)
         prize = bet_amount * 2 if won else 0
 
-        # Обновление данных
         cursor.execute("UPDATE user_progress SET balance = balance + %s WHERE user_id = %s", (prize, user_id))
         cursor.execute("UPDATE bitcoin_bets SET resolved = TRUE WHERE user_id = %s", (user_id,))
         connection.commit()
@@ -783,13 +730,12 @@ def generate_referral():
     data = request.json
     user_id = data.get('user_id')
     if not user_id:
-        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
     
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
         
-        # Генерируем уникальный реферальный код
         import uuid
         referral_code = str(uuid.uuid4())[:8]
         
@@ -814,7 +760,7 @@ def use_referral():
     referral_code = data.get('referral_code')
     
     if not all([user_id, referral_code]):
-        return jsonify({"status": "error", "message": "Missing required fields"}), 400
+        return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
     
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
@@ -824,16 +770,16 @@ def use_referral():
         result = cursor.fetchone()
         
         if not result:
-            return jsonify({"status": "error", "message": "Invalid or used referral code"}), 400
+            return jsonify({"status": "error", "message": "Неверный или использованный код"}), 400
             
         referrer_id = result[0]
         
         if referrer_id == user_id:
-            return jsonify({"status": "error", "message": "You cannot use your own referral"}), 400
+            return jsonify({"status": "error", "message": "Нельзя использовать свой код"}), 400
             
         cursor.execute("SELECT COUNT(*) FROM referrals WHERE used_by = %s", (user_id,))
         if cursor.fetchone()[0] > 0:
-            return jsonify({"status": "error", "message": "You have already used a referral"}), 400
+            return jsonify({"status": "error", "message": "Вы уже использовали реферальный код"}), 400
             
         cursor.execute("""
             UPDATE referrals 
@@ -846,8 +792,14 @@ def use_referral():
             VALUES (%s, %s, %s)
         """, (referrer_id, "Macbook", 150))
         
+        cursor.execute("""
+            UPDATE user_progress 
+            SET total_generation = total_generation + %s 
+            WHERE user_id = %s
+        """, (150, referrer_id))
+        
         connection.commit()
-        return jsonify({"status": "success", "message": "Referral used successfully"}), 200
+        return jsonify({"status": "success", "message": "Реферальный код успешно использован"}), 200
         
     except mysql.connector.Error as err:
         return jsonify({"status": "error", "message": str(err)}), 500
@@ -859,13 +811,12 @@ def use_referral():
 def get_new_rewards():
     user_id = request.args.get('user_id')
     if not user_id:
-        return jsonify({"status": "error", "message": "Missing user_id"}), 400
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
 
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor(dictionary=True)
         
-        # Получаем награды, для которых алерт еще не показан
         cursor.execute("""
             SELECT id, item_name, awarded_at 
             FROM rewards 
@@ -873,9 +824,7 @@ def get_new_rewards():
         """, (user_id,))
         rewards = cursor.fetchall()
 
-        # Если есть новые награды, возвращаем их
         if rewards:
-            # Отмечаем алерт как показанный
             cursor.execute("""
                 UPDATE rewards 
                 SET alert_shown = TRUE 
@@ -890,17 +839,17 @@ def get_new_rewards():
     finally:
         cursor.close()
         connection.close()
+
 @app.route('/get_login_reward_status', methods=['GET'])
 def get_login_reward_status():
     user_id = request.args.get('user_id')
     if not user_id:
-        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
 
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        # Проверяем время последнего получения награды
         cursor.execute("""
             SELECT last_reward_time, total_generation, balance, last_updated 
             FROM user_progress 
@@ -909,16 +858,15 @@ def get_login_reward_status():
         result = cursor.fetchone()
 
         if not result:
-            return jsonify({"status": "error", "message": "User not found"}), 404
+            return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
 
         last_reward_time, total_generation, balance, last_updated = result
-        total_generation = total_generation or 1
+        total_generation = total_generation or 0
         last_updated = last_updated or datetime.now()
 
         current_time = datetime.now()
-        reward_interval = 14400  # 4 минуты в секундах
+        reward_interval = 14400
 
-        # Если время последнего вознаграждения не установлено
         if not last_reward_time:
             return jsonify({
                 "status": "available",
@@ -953,7 +901,7 @@ def claim_login_reward():
     data = request.json
     user_id = data.get('user_id')
     if not user_id:
-        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
 
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
@@ -967,25 +915,22 @@ def claim_login_reward():
         result = cursor.fetchone()
 
         if not result:
-            return jsonify({"status": "error", "message": "User not found"}), 404
+            return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
 
         last_reward_time, total_generation, balance, last_updated = result
-        total_generation = total_generation or 1
+        total_generation = total_generation or 0
         last_updated = last_updated or datetime.now()
 
         current_time = datetime.now()
-        reward_interval = 14400  # 4 часа
+        reward_interval = 14400
 
-        # Проверяем, доступна ли награда
         if last_reward_time and (current_time - last_reward_time).total_seconds() < reward_interval:
-            return jsonify({"status": "error", "message": "Reward not available yet"}), 400
+            return jsonify({"status": "error", "message": "Награда пока недоступна"}), 400
 
-        # Рассчитываем прибыль за 4 часа 
-        profit_per_second = total_generation
-        period_profit = profit_per_second * 14400
-        reward = int(period_profit * 0.05)  # 5% от прибыли за 4 часа
+        profit_per_hour = total_generation
+        period_profit = profit_per_hour * 4
+        reward = int(period_profit * 0.05)
         
-        # Обновляем баланс и время последнего получения награды
         new_balance = balance + reward
         cursor.execute("""
             UPDATE user_progress 
@@ -995,7 +940,7 @@ def claim_login_reward():
         
         connection.commit()
         
-        print(f"User {user_id} claimed login reward: {reward} coins. New balance: {new_balance}")
+        print(f"Пользователь {user_id} получил награду за вход: {reward} монет. Новый баланс: {new_balance}")
         
         return jsonify({
             "status": "success",
@@ -1016,30 +961,32 @@ def spin_wheel():
     prize_index = data.get('prize_index')
     
     if not user_id:
-        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
 
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        # Начало транзакции и блокировка
         connection.start_transaction()
-        cursor.execute("SELECT balance, total_generation FROM user_progress WHERE user_id = %s FOR UPDATE", (user_id,))
+        cursor.execute("SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s FOR UPDATE", (user_id,))
         result = cursor.fetchone()
         
         if not result:
             connection.rollback()
-            return jsonify({"status": "error", "message": "User not found"}), 404
+            return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
             
-        balance, total_generation = result
+        balance, total_generation, last_updated = result
+        total_generation = total_generation or 0
         spin_cost = 100
         
-        if balance < spin_cost:
+        new_balance = calculate_balance(balance, last_updated or datetime.now(), total_generation)
+        
+        if new_balance < spin_cost:
             connection.rollback()
             return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
 
-        new_balance = balance - spin_cost
-        cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", (new_balance, user_id))
+        new_balance -= spin_cost
+        cursor.execute("UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s", (new_balance, datetime.now(), user_id))
 
         prizes = [
             "x3 токенов", 
@@ -1057,7 +1004,6 @@ def spin_wheel():
         total_generation_update = 0
 
         if prize in ["Drinking Water Dispenser", "Humanoid robot"]:
-            # Получаем актуальную генерацию из market_items
             cursor.execute("SELECT generation_per_hour FROM market_items WHERE name = %s", (prize,))
             generation_result = cursor.fetchone()
             if not generation_result:
@@ -1066,16 +1012,14 @@ def spin_wheel():
                 
             generation_per_hour = generation_result[0]
 
-            # Проверка наличия в инвентаре
             cursor.execute("SELECT COUNT(*) FROM inventory WHERE user_id = %s AND item_name = %s", (user_id, prize))
             item_exists = cursor.fetchone()[0] > 0
             
             if item_exists:
                 new_balance += spin_cost
-                cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", (new_balance, user_id))
+                cursor.execute("UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s", (new_balance, datetime.now(), user_id))
                 refund = True
             else:
-                # Добавляем предмет
                 cursor.execute("""
                     INSERT INTO inventory (user_id, item_name, generation_per_hour)
                     VALUES (%s, %s, %s)
@@ -1083,7 +1027,6 @@ def spin_wheel():
                 total_generation_update = generation_per_hour
 
         else:
-            # Обработка токенов
             if prize in ["1000 токенов", "2000 токенов", "10000 токенов", "100000 токенов"]:
                 prize_amount = int(prize.split()[0].replace('x', ''))
                 new_balance += prize_amount
@@ -1091,9 +1034,8 @@ def spin_wheel():
                 multiplier = int(prize[1])
                 new_balance = new_balance * multiplier
             
-            cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", (new_balance, user_id))
+            cursor.execute("UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s", (new_balance, datetime.now(), user_id))
 
-        # Обновляем total_generation если был выигран предмет
         if total_generation_update > 0:
             cursor.execute("""
                 UPDATE user_progress 
@@ -1118,18 +1060,16 @@ def spin_wheel():
         cursor.close()
         connection.close()
 
-
 @app.route('/get_referral_link', methods=['GET'])
 def get_referral_link():
     user_id = request.args.get('user_id')
     if not user_id:
-        return jsonify({"status": "error", "message": "User ID is missing"}), 400
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
     
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
         
-        # Проверяем, есть ли неиспользованный реферальный код
         cursor.execute("""
             SELECT referral_code 
             FROM referrals 
@@ -1141,7 +1081,6 @@ def get_referral_link():
         if result:
             referral_code = result[0]
         else:
-            # Генерируем новый код
             import uuid
             referral_code = str(uuid.uuid4())[:8]
             cursor.execute("""
@@ -1166,7 +1105,6 @@ def play_game():
     bet = data.get('bet')
     selected_cell = data.get('selected_cell')
 
-    # Валидация данных
     if not user_id:
         return jsonify({"status": "error", "message": "Не указан пользователь"}), 400
         
@@ -1180,12 +1118,10 @@ def play_game():
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        # Начало транзакции
         connection.start_transaction()
 
-        # Блокировка строки для атомарного обновления
         cursor.execute("""
-            SELECT balance 
+            SELECT balance, total_generation, last_updated 
             FROM user_progress 
             WHERE user_id = %s 
             FOR UPDATE
@@ -1196,25 +1132,25 @@ def play_game():
             connection.rollback()
             return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
 
-        balance = result[0]
+        balance, total_generation, last_updated = result
+        total_generation = total_generation or 0
+
+        balance = calculate_balance(balance, last_updated or datetime.now(), total_generation)
 
         if balance < bet:
             connection.rollback()
             return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
 
-        # Логика игры
         winning_cell = random.randint(0, 7)
         is_win = selected_cell == winning_cell
         new_balance = balance + (bet if is_win else -bet)
 
-        # Обновление баланса
         cursor.execute("""
             UPDATE user_progress 
-            SET balance = %s 
+            SET balance = %s, last_updated = %s 
             WHERE user_id = %s
-        """, (new_balance, user_id))
+        """, (new_balance, datetime.now(), user_id))
 
-        # Фиксация транзакции
         connection.commit()
 
         return jsonify({
@@ -1226,16 +1162,17 @@ def play_game():
 
     except mysql.connector.Error as err:
         connection.rollback()
-        app.logger.error(f"Database error: {err}")
+        app.logger.error(f"Ошибка базы данных: {err}")
         return jsonify({"status": "error", "message": "Ошибка базы данных"}), 500
     except Exception as e:
         connection.rollback()
-        app.logger.error(f"Game error: {e}")
+        app.logger.error(f"Ошибка игры: {e}")
         return jsonify({"status": "error", "message": "Внутренняя ошибка сервера"}), 500
     finally:
         if 'cursor' in locals():
             cursor.close()
         if 'connection' in locals() and connection.is_connected():
             connection.close()
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
