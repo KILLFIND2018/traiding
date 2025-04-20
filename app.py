@@ -257,7 +257,7 @@ def buy_item():
         cursor.execute("""
             INSERT INTO inventory (user_id, item_name, generation_per_hour) 
             VALUES (%s, %s, %s)
-        """, (user_id, item_name, item_generation))
+        """, (user_id, item_name, int(item_generation)))
 
         connection.commit()
         return jsonify({
@@ -844,7 +844,7 @@ def use_referral():
         cursor.execute("""
             INSERT INTO inventory (user_id, item_name, generation_per_hour)
             VALUES (%s, %s, %s)
-        """, (referrer_id, "Macbook", 50))
+        """, (referrer_id, "Macbook", 150))
         
         connection.commit()
         return jsonify({"status": "success", "message": "Referral used successfully"}), 200
@@ -1054,9 +1054,19 @@ def spin_wheel():
         
         prize = prizes[prize_index]
         refund = False
-        total_generation_update = 0  # Для накопления изменений total_generation
+        total_generation_update = 0
 
         if prize in ["Drinking Water Dispenser", "Humanoid robot"]:
+            # Получаем актуальную генерацию из market_items
+            cursor.execute("SELECT generation_per_hour FROM market_items WHERE name = %s", (prize,))
+            generation_result = cursor.fetchone()
+            if not generation_result:
+                connection.rollback()
+                return jsonify({"status": "error", "message": "Предмет не найден в магазине"}), 404
+                
+            generation_per_hour = generation_result[0]
+
+            # Проверка наличия в инвентаре
             cursor.execute("SELECT COUNT(*) FROM inventory WHERE user_id = %s AND item_name = %s", (user_id, prize))
             item_exists = cursor.fetchone()[0] > 0
             
@@ -1065,15 +1075,17 @@ def spin_wheel():
                 cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", (new_balance, user_id))
                 refund = True
             else:
-                generation_per_hour = 10 if prize == "Drinking Water Dispenser" else 20
+                # Добавляем предмет
                 cursor.execute("""
                     INSERT INTO inventory (user_id, item_name, generation_per_hour)
                     VALUES (%s, %s, %s)
                 """, (user_id, prize, generation_per_hour))
-                total_generation_update = generation_per_hour  # Фиксируем добавление генерации
+                total_generation_update = generation_per_hour
+
         else:
+            # Обработка токенов
             if prize in ["1000 токенов", "2000 токенов", "10000 токенов", "100000 токенов"]:
-                prize_amount = int(prize.split()[0])
+                prize_amount = int(prize.split()[0].replace('x', ''))
                 new_balance += prize_amount
             elif prize.startswith("x"):
                 multiplier = int(prize[1])
@@ -1081,7 +1093,7 @@ def spin_wheel():
             
             cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", (new_balance, user_id))
 
-        # Обновляем total_generation, если был выигран предмет
+        # Обновляем total_generation если был выигран предмет
         if total_generation_update > 0:
             cursor.execute("""
                 UPDATE user_progress 

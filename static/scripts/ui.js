@@ -113,8 +113,7 @@ function setupBuyButtons(userId) {
                     user_id: userId,
                     item_name: itemName,
                     item_cost: itemCost,
-                    item_generation: parseInt(row.querySelector('td:nth-child(3)').textContent, 10)
-                })
+                    item_generation: parseInt(row.querySelector('td:nth-child(3)').textContent.replace(/\D/g, ''), 10)                })
             });
 
             const data = await response.json();
