@@ -203,7 +203,7 @@ def buy_item():
         if cursor.fetchone()[0] > 0:
             return jsonify({
                 "status": "error", 
-                "message": f"⚠️ {item_name} уже есть в вашем инвентаре!"
+                "message": f"⚠️ {item_name} already in your inventory!"
             }), 400
 
         # Получаем прогресс пользователя
@@ -223,7 +223,7 @@ def buy_item():
         if new_balance < item_cost:
             return jsonify({
                 "status": "error", 
-                "message": "Недостаточно средств!"
+                "message": "Insufficient funds!"
             }), 400
 
         # Обновляем баланс и генерацию
@@ -460,7 +460,7 @@ def place_bid():
         cursor.execute("SELECT balance FROM user_progress WHERE user_id = %s", (user_id,))
         balance = cursor.fetchone()[0]
         if balance < bid_amount:
-            return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
+            return jsonify({"status": "error", "message": "Insufficient funds"}), 400
 
         cursor.execute("""
             UPDATE auction_lots 
@@ -630,7 +630,7 @@ def place_bitcoin_bet():
         )
 
         if current_balance < bet_amount:
-            return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
+            return jsonify({"status": "error", "message": "Insufficient funds"}), 400
 
         try:
             response = requests.get(
@@ -760,7 +760,7 @@ def use_referral():
     referral_code = data.get('referral_code')
     
     if not all([user_id, referral_code]):
-        return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
+        return jsonify({"status": "error", "message": "Required fields are missing"}), 400
     
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
@@ -779,7 +779,7 @@ def use_referral():
             
         cursor.execute("SELECT COUNT(*) FROM referrals WHERE used_by = %s", (user_id,))
         if cursor.fetchone()[0] > 0:
-            return jsonify({"status": "error", "message": "Вы уже использовали реферальный код"}), 400
+            return jsonify({"status": "error", "message": "You have already used the referral code"}), 400
             
         cursor.execute("""
             UPDATE referrals 
@@ -983,20 +983,20 @@ def spin_wheel():
         
         if new_balance < spin_cost:
             connection.rollback()
-            return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
+            return jsonify({"status": "error", "message": "Insufficient funds"}), 400
 
         new_balance -= spin_cost
         cursor.execute("UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s", (new_balance, datetime.now(), user_id))
 
         prizes = [
-            "x3 токенов", 
-            "1000 токенов", 
+            "x3 tokens", 
+            "1000 tokens", 
             "Drinking Water Dispenser", 
-            "10000 токенов", 
-            "100000 токенов", 
-            "2000 токенов", 
+            "10000 tokens", 
+            "100000 tokens", 
+            "2000 tokens", 
             "Humanoid robot", 
-            "x2 токенов"
+            "x2 tokens"
         ]
         
         prize = prizes[prize_index]
@@ -1139,7 +1139,7 @@ def play_game():
 
         if balance < bet:
             connection.rollback()
-            return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
+            return jsonify({"status": "error", "message": "Insufficient funds"}), 400
 
         winning_cell = random.randint(0, 7)
         is_win = selected_cell == winning_cell

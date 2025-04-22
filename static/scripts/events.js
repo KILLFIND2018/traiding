@@ -20,11 +20,11 @@ document.getElementById('buyButton').addEventListener('click', () => {
         tg.ready();
     }
     tg.showPopup({
-        title: 'Купить монеты за Telegram Stars',
-        message: 'Купить 100 монет за 10 Telegram Stars?',
+        title: 'Buy tokens for Telegram Stars',
+        message: 'Buy 100 tokens for 10 Telegram Stars?',
         buttons: [
-            { id: 'buy', type: 'default', text: 'Купить' },
-            { type: 'cancel', text: 'Отмена' }
+            { id: 'buy', type: 'default', text: 'Buy' },
+            { type: 'cancel', text: 'Cancel' }
         ]
     }, (buttonId) => {
         if (buttonId === 'buy') {
@@ -42,14 +42,14 @@ document.getElementById('buyButton').addEventListener('click', () => {
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        tg.showAlert('Покупка успешна! Добавлено 100 монет.');
+                        tg.showAlert('Purchase successful! 100 tokens added.');
                         document.getElementById('currency-amount').textContent = data.new_balance;
                     } else {
-                        tg.showAlert('Ошибка покупки: ' + (data.message || 'Неизвестная ошибка'));
+                        tg.showAlert('Purchase Error: ' + (data.message || 'Unknown error'));
                     }
                 })
                 .catch(error => {
-                    tg.showAlert('Ошибка при покупке: ' + error.message);
+                    tg.showAlert('Purchase Error: ' + error.message);
                 });
         }
     });
@@ -60,16 +60,16 @@ document.getElementById('invite-friend').addEventListener('click', async () => {
     const data = await response.json();
     if (data.status === "success") {
         const referralLink = data.referral_link;
-        const shareText = `Присоединяйся ко мне в Crypto Tycoon Simulator! Используй эту ссылку: ${referralLink}`;
+        const shareText = `Join me in Crypto Tycoon Simulator! Use this link: ${referralLink}`;
         const shareUrl = `https://t.me/share/url?text=${encodeURIComponent(shareText)}`;
         if (Telegram.WebApp && Telegram.WebApp.openLink) {
             Telegram.WebApp.openLink(shareUrl);
         } else {
             console.error('Telegram WebApp is not available');
-            alert('Функция шаринга недоступна. Убедитесь, что вы используете приложение в Telegram.');
+            alert('Sharing feature is not available. Make sure you are using the app in Telegram.');
         }
     } else {
-        alert('Ошибка при получении ссылки');
+        alert('Error getting link');
     }
 });
 

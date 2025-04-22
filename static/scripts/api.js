@@ -43,7 +43,7 @@ async function checkNewRewards(userId) {
     if (data.status === "success" && data.rewards.length > 0) {
         data.rewards.forEach(reward => {
             const itemImage = `/static/img-market/${reward.item_name.replace(' ', '_').toLowerCase()}.png`;
-            showNotificationPopup(reward.item_name, itemImage, `Вы получили ${reward.item_name} за приглашение друга!`);
+            showNotificationPopup(reward.item_name, itemImage, `You received ${reward.item_name} for inviting a friend!`);
             if (reward.item_name === "Macbook" && !models["Macbook"]) {
                 macbook();
                 models["Macbook"] = true;
@@ -71,17 +71,17 @@ async function loadLots() {
             row.insertCell(1).textContent = lot.item_name;
             row.insertCell(2).textContent = lot.description;
             row.insertCell(3).textContent = lot.start_price;
-            row.insertCell(4).textContent = lot.current_bid || 'Нет ставок';
+            row.insertCell(4).textContent = lot.current_bid || 'No bets';
             row.insertCell(5).textContent = lot.seller_username || 'Anonymous';
             const actionCell = row.insertCell(6);
             const bidButton = document.createElement('button');
-            bidButton.textContent = 'Сделать ставку';
+            bidButton.textContent = 'Place a bet';
             bidButton.classList.add('bid-button', 'auctions-table');
             bidButton.onclick = () => placeBid(lot.lot_id);
             actionCell.appendChild(bidButton);
             if (String(lot.seller_id) === userId) {
                 const completeButton = document.createElement('button');
-                completeButton.textContent = 'Завершить';
+                completeButton.textContent = 'Close lot';
                 completeButton.classList.add('complete-button', 'auctions-table');
                 completeButton.onclick = () => completeLot(lot.lot_id);
                 actionCell.appendChild(completeButton);
@@ -126,7 +126,7 @@ async function loadUserItems(userId) {
     const data = await response.json();
     if (data.status === "success") {
         const select = document.getElementById('item-select');
-        select.innerHTML = '<option value="">Выберите предмет</option>';
+        select.innerHTML = '<option value="">Select Item</option>';
         data.items.forEach(item => {
             const option = document.createElement('option');
             option.value = item.item_name;
@@ -137,7 +137,7 @@ async function loadUserItems(userId) {
 }
 
 async function placeBid(lotId) {
-    const bidAmount = prompt('Введите сумму ставки:');
+    const bidAmount = prompt('Place bet:');
     if (bidAmount && !isNaN(bidAmount)) {
         const response = await fetch('/place_bid', {
             method: 'POST',
@@ -235,15 +235,15 @@ async function initBitcoinWidget(userId) {
             betDownButton.disabled = true;
             betAmountInput.disabled = true;
         } else {
-            betTimer.textContent = "Ставка доступна!";
+            betTimer.textContent = "Rate available!";
             betUpButton.disabled = false;
             betDownButton.disabled = false;
             betAmountInput.disabled = false;
             if (data.won !== undefined) {
                 if (data.won) {
-                    showNotificationPopup("Вы выиграли!", "/static/bitcoin.png", `Ваш приз: ${data.prize} монет`);
+                    showNotificationPopup("You win!", "/static/bitcoin.png", `Your prize: ${data.prize} token`);
                 } else {
-                    showNotificationPopup("Вы проиграли", "/static/bitcoin.png", "Попробуйте еще раз!");
+                    showNotificationPopup("You lose", "/static/bitcoin.png", "Try again!");
                 }
                 document.getElementById('currency-amount').textContent = Number(data.balance).toLocaleString('ru-RU');
             }
@@ -268,7 +268,7 @@ async function initBitcoinWidget(userId) {
                 alert(data.message);
             }
         } else {
-            alert("Введите корректную сумму ставки!");
+            alert("Please enter the correct bet amount!");
         }
     });
 
@@ -288,7 +288,7 @@ async function initBitcoinWidget(userId) {
                 alert(data.message);
             }
         } else {
-            alert("Введите корректную сумму ставки!");
+            alert("Please enter the correct bet amount!");
         }
     });
 }
@@ -301,7 +301,7 @@ async function checkLoginReward(userId) {
     timerElement.classList.remove('available');
 
     if (data.status === "available") {
-        rewardStatus.textContent = "Доступна! Кликните для получения";
+        rewardStatus.textContent = "Available! Click to get!";
         timerElement.classList.add('available');
         timerElement.onclick = () => claimLoginReward(userId);
     } else if (data.status === "pending") {
@@ -311,10 +311,10 @@ async function checkLoginReward(userId) {
         const minutes = Math.floor((remaining % 3600) / 60);
         const seconds = Math.floor(remaining % 60);
         // Форматируем время в HH:MM:SS
-        rewardStatus.textContent = `Доступна через ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        rewardStatus.textContent = `Available in ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         timerElement.onclick = null;
     } else {
-        rewardStatus.textContent = "Ошибка проверки";
+        rewardStatus.textContent = "Error check";
     }
 }
 
@@ -326,12 +326,12 @@ async function claimLoginReward(userId) {
     });
     const data = await response.json();
     if (data.status === "success") {
-        console.log(`Получена награда за вход: ${data.reward} монет. Новый баланс: ${data.new_balance}`);
+        console.log(`Login reward received: ${data.reward} tokens. New balance: ${data.new_balance}`);
         document.getElementById('currency-amount').textContent = data.new_balance;
-        showNotificationPopup("Награда за вход", "/static/bitcoin.png", `Вы получили ${data.reward} монет!`);
+        showNotificationPopup("Login Reward", "/static/bitcoin.png", `You have received ${data.reward} tokens!`);
         await checkLoginReward(userId);
     } else {
-        console.error('Ошибка получения награды:', data.message);
-        alert('Ошибка получения награды: ' + data.message);
+        console.error('Error receiving reward:', data.message);
+        alert('Error receiving reward:' + data.message);
     }
 }

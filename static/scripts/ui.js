@@ -17,7 +17,7 @@ async function loadInventory(userId) {
             newRow.dataset.generation = item.generation_per_hour;
             newRow.insertCell(0).textContent = item.item_name;
             newRow.insertCell(1).textContent = formatNumber(item.generation_per_hour);
-            newRow.insertCell(2).textContent = 'активен';
+            newRow.insertCell(2).textContent = 'Active';
             updateTotalGeneration(item.item_name);
         });
 
@@ -28,7 +28,7 @@ async function loadInventory(userId) {
                 const itemImage = `/static/img-market/${itemName.replace(/ /g, '_').toLowerCase()}.png`;
 
                 document.getElementById('item-popup-name').textContent = itemName;
-                document.getElementById('item-popup-profit').textContent = generation.toLocaleString('ru-RU') + ' монет';
+                document.getElementById('item-popup-profit').textContent = generation.toLocaleString('ru-RU') + ' tokens';
                 document.getElementById('item-popup-image').src = itemImage;
 
                 document.getElementById('item-info-popup').classList.add('show');
@@ -119,9 +119,9 @@ function setupBuyButtons(userId) {
             const data = await response.json();
             if (data.status === "success") {
                 document.getElementById('currency-amount').textContent = Number(data.balance).toLocaleString('ru-RU');
-                showNotificationPopup(itemName, itemImage, 'Успешно добавлено в инвентарь!');
+                showNotificationPopup(itemName, itemImage, 'Successfully added to inventory!');
             } else {
-                showNotificationPopup("Ошибка", itemImage, data.message || 'Произошла ошибка!', true);
+                showNotificationPopup("Error", itemImage, data.message || 'An error occurred!', true);
             }
         });
     });
@@ -182,7 +182,7 @@ function hideAllSections() {
     document.getElementById('donate').style.display = 'none';
 }
 
-const prizes = ["x3 токенов", "1000 токенов", "Drinking Water Dispenser", "10000 токенов", "100000 токенов", "2000 токенов", "Humanoid robot", "x2 токенов"];
+const prizes = ["x3 tokens", "1000 tokens", "Drinking Water Dispenser", "10000 tokens", "100000 tokens", "2000 tokens", "Humanoid robot", "x2 tokens"];
 const probabilities = [16, 16, 2, 16, 16, 16, 2, 16];
 
 function getRandomIndex() {
@@ -200,7 +200,7 @@ async function startSpin() {
     if (isSpinning) return;
     const userId = new URLSearchParams(window.location.search).get('user_id');
     if (!userId) {
-        alert("Не удалось определить пользователя");
+        alert("Unable to determine user");
         return;
     }
     isSpinning = true;
@@ -226,10 +226,10 @@ async function startSpin() {
         setTimeout(() => {
             if (data.status === "success") {
                 let prizeType, prizeValue, prizeImage;
-                if (data.prize.includes("токенов")) {
+                if (data.prize.includes("tokens")) {
                     prizeType = "token";
-                    const match = data.prize.match(/(x?\d+)\s*токенов/);
-                    prizeValue = match ? match[1] : "Неизвестно";
+                    const match = data.prize.match(/(x?\d+)\s*tokens/);
+                    prizeValue = match ? match[1] : "Unknown";
                     prizeImage = "/static/bitcoin.png";
                 } else {
                     prizeType = "item";
@@ -238,24 +238,24 @@ async function startSpin() {
                 }
 
                 if (data.refund) {
-                    message = `Предмет "${data.prize}" уже есть в вашем инвентаре. Стоимость вращения (100 монет) возвращена. Ваш баланс: ${data.new_balance}`;
+                    message = `The item "${data.prize}" is already in your inventory. The cost of the spin (100 coins) has been refunded. Your balance is: ${data.new_balance}`;
                 }
                 document.getElementById('currency-amount').textContent = data.new_balance;
                 if (prizeType === "token") {
                     const displayValue = data.prize.includes("x") ? `${prizeValue}` : prizeValue;
                     showNotificationPopup(
-                        `${displayValue} токенов`,
+                        `${displayValue} tokens`,
                         "/static/bitcoin.png",
-                        'Вы выиграли токены!'
+                        'You win tokens!'
                     );
                 } else if (prizeType === "item") {
-                    showNotificationPopup(prizeValue, prizeImage, 'Вы выиграли предмет!');
+                    showNotificationPopup(prizeValue, prizeImage, 'You win item!');
                 }
                 if ((data.prize === "Drinking Water Dispenser" || data.prize === "Humanoid robot") && !data.refund) {
                     loadInventory(userId);
                 }
             } else {
-                alert(`Ошибка: ${data.message}`);
+                alert(`Error: ${data.message}`);
                 wheel.style.transition = 'none';
                 wheel.style.transform = `rotate(${0}deg)`;
             }
@@ -263,7 +263,7 @@ async function startSpin() {
         }, 4050);
     } catch (error) {
         console.error('Ошибка при вращении колеса:', error);
-        alert('Произошла ошибка при соединении с сервером');
+        alert('There was an error connecting to the server');
         wheel.style.transition = 'none';
         wheel.style.transform = `rotate(${0}deg)`;
         isSpinning = false;
@@ -289,7 +289,7 @@ document.querySelectorAll('.game-cell').forEach(cell => {
 
 async function startGame() {
     if (!selectedCell) {
-        alert('Выберите блок!');
+        alert('Select block!');
         return;
     }
 
@@ -304,7 +304,7 @@ async function startGame() {
     const selectedCellIndex = parseInt(selectedCell.dataset.index);
 
     if (!betAmount || betAmount < 1) {
-        alert('Введите корректную ставку!');
+        alert('Please enter a valid bid!');
         return;
     }
 
@@ -318,7 +318,7 @@ async function startGame() {
             body: JSON.stringify({ user_id: userId, bet: betAmount, selected_cell: selectedCellIndex })
         });
 
-        if (!response.ok) throw new Error(`Ошибка: ${response.statusText}`);
+        if (!response.ok) throw new Error(`Error: ${response.statusText}`);
 
         const data = await response.json();
         if (data.status === "error") {
@@ -343,16 +343,16 @@ async function startGame() {
 
         if (data.result === "win") {
             showNotificationPopup(
-                "Победа!",
+                "Win!",
                 "/static/bitcoin.png",
-                `+${betAmount * 2} монет`,
+                `+ ${betAmount * 2} tokens`,
                 false
             );
         } else {
             showNotificationPopup(
-                "Проигрыш",
+                "Lose!",
                 "/static/bitcoin.png",
-                `-${betAmount} монет`,
+                `- ${betAmount} tokens`,
                 true
             );
         }
@@ -360,7 +360,7 @@ async function startGame() {
         document.getElementById('currency-amount').textContent = data.new_balance;
 
     } catch (error) {
-        alert(error.message || 'Ошибка соединения');
+        alert(error.message || 'Error connecting');
     } finally {
         setTimeout(() => {
             document.querySelectorAll('.game-cell').forEach(c => {

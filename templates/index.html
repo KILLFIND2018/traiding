@@ -26,11 +26,11 @@
     </div>
     <video id="background-video" autoplay loop muted playsinline>
         <source src="/static/video.mp4" type="video/mp4">
-        Ваш браузер не поддерживает видео.
+        Your browser does not support video.
     </video>
     <audio id="background-music" autoplay loop>
         <source src="/static/audio/audio.mp3" type="audio/mpeg">
-        Ваш браузер не поддерживает элемент audio.
+        Your browser does not support the audio element.
     </audio>
     <div class="container">
         <div class="header">
@@ -45,54 +45,54 @@
             </div>
             <div class="widgets-container" id="widgets">
                 <div class="bitcoin-widget">
-                    <div id="bitcoin-price">Текущая цена BTC: <span id="btc-price">Загрузка...</span> $</div>
+                    <div id="bitcoin-price">Current BTC price:<span id="btc-price">Loading...</span> $</div>
                     <div id="bitcoin-graph"></div>
                     <div class="bet-container">
                         <button id="bet-up" disabled><img class="btn-bet" src="/static/img_whell/up.png" alt=""></button>
                         <button id="bet-down" disabled><img class="btn-bet" src="/static/img_whell/down.png" alt=""></button>
-                        <input type="number" id="bet-amount" placeholder="Сумма ставки" min="1" disabled>
+                        <input type="number" id="bet-amount" placeholder="Your bet" disabled>
                     </div>
-                    <p id="bet-status">Следующая ставка доступна через: <span id="bet-timer">00:00:00</span></p>
+                    <p id="bet-status">Next bet available in:<span id="bet-timer">00:00:00</span></p>
                 </div>
                 <div class="reward-timer">
-                    <p>Награда за вход: <span id="reward-status">Проверка...</span></p>
+                    <p>Login Reward:<span id="reward-status">Checking...</span></p>
                 </div>
                 <button class="nav-main-button left" id="to-main"><img src="/static/img_whell/arrow/left.png" class="ctrl"></button>
             </div>
             <div class="auction" id="auction">
                 <div class="auction-container">
-                    <h1 class="sub-auction-header">Аукцион</h1>
+                    <h1 class="sub-auction-header">Auction</h1>
                     <div class="chat-container">
                         <div class="chat-messages" id="chat-messages"></div>
                         <div class="chat-input">
-                            <input class="chat-input" type="text" id="chat-input" placeholder="Сообщение...">
-                            <button class="sender" onclick="sendChatMessage()">Отправить</button>
+                            <input class="chat-input" type="text" id="chat-input" placeholder="Message...">
+                            <button class="sender" onclick="sendChatMessage()">Send</button>
                         </div>
                     </div>
                     <div class="auction-lots">
-                        <h2>Текущие лоты</h2>
+                        <h2>Current lots</h2>
                         <table class="lots-table">
                             <thead>
                                 <tr>
-                                    <th>ID лота</th>
-                                    <th>Предмет</th>
-                                    <th>Описание</th>
-                                    <th>Стартовая цена</th>
-                                    <th>Текущая ставка</th>
-                                    <th>Продавец</th>
-                                    <th>Действие</th>
+                                    <th>ID lot</th>
+                                    <th>Item</th>
+                                    <th>Description</th>
+                                    <th>Starting amount</th>
+                                    <th>Current rate</th>
+                                    <th>Seller</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="lots-table-body"></tbody>
                         </table>
                     </div>
                     <div class="create-lot">
-                        <h2>Создать лот</h2>
+                        <h2>Create lot</h2>
                         <form id="create-lot-form">
                             <select id="item-select" name="item_name"></select>
-                            <input type="text" name="description" placeholder="Описание лота" required>
-                            <input type="number" name="start_price" placeholder="Стартовая цена" required min="1">
-                            <button class="auctions" type="submit">Выставить лот</button>
+                            <input type="text" name="description" placeholder="Description lot" required>
+                            <input type="number" name="start_price" placeholder="Starting amount">
+                            <button class="auctions" type="submit">Put up for lot</button>
                         </form>
                     </div>
                 </div>
@@ -102,9 +102,9 @@
                     <table class="rating-table">
                         <thead>
                             <tr>
-                                <th>Позиция</th>
-                                <th>Пользователь</th>
-                                <th>Баланс</th>
+                                <th>Position</th>
+                                <th>User</th>
+                                <th>Balance</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -115,24 +115,24 @@
                 <div class="inventory-container">
                     <table class="inventory-table">
                         <tr>
-                            <th>Предмет</th>
-                            <th>Генерация в час</th>
-                            <th>Статус</th>
+                            <th>Item</th>
+                            <th>Generation per hour</th>
+                            <th>Status</th>
                         </tr>
                     </table>
                 </div>
             </div>
             <div class="mart" id="mart">
                 <div class="mart-container">
-                    <h1 class="sub-auction-header">Магазин</h1>
+                    <h1 class="sub-auction-header">Shop</h1>
                     <div class="market">
                         <table class="market-table">
                             <thead>
                                 <tr>
-                                    <th>Изображение</th>
-                                    <th>Предмет</th>
-                                    <th>Генерация в час</th>
-                                    <th>Стоимость</th>
+                                    <th>Icon</th>
+                                    <th>Item</th>
+                                    <th>Generation per hour</th>
+                                    <th>Price</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -151,7 +151,7 @@
                     </button>
                     <br>
                     <div class="game-block">
-                        <h3>Угадай блок</h3>
+                        <h3>Guess the block</h3>
                         <div class="grid-game">
                             <div class="game-cell" data-index="0"><img src="/static/img_whell/diamond.png" alt=""></div>
                             <div class="game-cell" data-index="1"><img src="/static/img_whell/diamond.png" alt=""></div>
@@ -163,8 +163,8 @@
                             <div class="game-cell" data-index="7"><img src="/static/img_whell/diamond.png" alt=""></div>
                         </div>
                         <div class="game-controls">
-                            <input type="number" id="game-bet" placeholder="Ставка" min="1">
-                            <button class="game-btn" onclick="startGame()">Играть!</button>
+                            <input type="number" id="game-bet" placeholder="Your bet">
+                            <button class="game-btn" onclick="startGame()">Game!</button>
                         </div>
                     </div>
                     <button class="nav-button left" id="to-mart"><img src="/static/img_whell/arrow/left.png" class="ctrl"></button>
@@ -172,9 +172,9 @@
             </div>
             <div class="donate" id="donate">
                 <div class="donate-container">
-                    <button class="buy-stars" id="buyButton">Купить Stars</button>
+                    <button class="buy-stars" id="buyButton">Buy Stars</button>
                     <button id="invite-friend">
-                        <img src="/static/referal.png" alt="Пригласить друга">
+                        <img src="/static/referal.png" alt="referal friend">
                     </button>
                 </div>
             </div>
@@ -194,7 +194,7 @@
             <div class="purchase-popup" id="purchase-popup">
                 <img id="popup-item-image" src="" alt="Item">
                 <h2 id="popup-item-name"></h2>
-                <p id="popup-message">Успешно добавлено в инвентарь!</p>
+                <p id="popup-message">Successfully added to inventory!</p>
             </div>
             <div class="item-info-popup" id="item-info-popup">
                 <div class="popup-content">
@@ -202,7 +202,7 @@
                     <img id="item-popup-image" src="" alt="Item Image">
                     <h2 id="item-popup-name"></h2>
                     <div class="profit-info">
-                        <span>Прибыль в час:</span>
+                        <span>Profit per hour:</span>
                         <span id="item-popup-profit"></span>
                     </div>
                 </div>
