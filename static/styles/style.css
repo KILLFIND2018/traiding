@@ -1189,8 +1189,80 @@ td {
     margin-top: 10px;
     min-height: 20px;
 }
+/*показ рекламы*/
+.watch-ad {
+    margin: 10px 0;
+    padding: 10px 20px;
+    background-color: #7FFFD4;
+    color: #000000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
 
+.watch-ad:hover {
+    background-color: #75d8b7;
+}
+/*уведомление согласия просмотра*/
+.popup-ads {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #f1c40f;
+    border-radius: 15px;
+    padding: 20px;
+    z-index: 1000;
+    text-align: center;
+    color: #fff;
+    width: 80%;
+    max-width: 600px;
+}
 
+.popup-ads video {
+    width: 100%;
+    height: auto;
+}
+
+.popup-ads button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #7FFFD4;
+    color: #000000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.ad-notification {
+    position: fixed;
+    bottom: 35%;
+    right: 20%;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 1001;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ad-notification button {
+    padding: 5px 10px;
+    background-color: #7FFFD4;
+    color: #000000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
 
 @media screen and (max-width: 768px),
 screen and (max-width: 1024px) {

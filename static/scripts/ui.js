@@ -97,6 +97,53 @@ function showNotificationPopup(title, image, message, isError = false) {
     }
 }
 
+function showAdPopup(reward) {
+    const popup = document.getElementById('popup-ads');
+    const video = document.getElementById('ad-video');
+    const closeButton = document.getElementById('close-ad');
+
+    // Скрываем кнопку "Закрыть" при открытии попапа
+    closeButton.style.display = 'none';
+    
+    popup.style.display = 'block';
+    video.play();
+
+    // Показываем кнопку "Закрыть" и начисляем награду после окончания видео
+    video.onended = async () => {
+        closeButton.style.display = 'block';
+        await rewardUser(reward);
+    };
+
+    // Обработчик для кнопки "Закрыть"
+    closeButton.addEventListener('click', () => {
+        popup.style.display = 'none';
+        video.pause();
+        video.currentTime = 0;
+        // Скрываем кнопку "Закрыть" для следующего открытия
+        closeButton.style.display = 'none';
+    });
+}
+
+function showAdNotification() {
+    const notification = document.createElement('div');
+    notification.className = 'ad-notification';
+    notification.innerHTML = `
+        <p>Watch the ad and get 500 tokens!</p>
+        <button id="watch-ad-notification">Watch!</button>
+        <button id="close-ad-notification">Close!</button>
+    `;
+    document.body.appendChild(notification);
+
+    document.getElementById('watch-ad-notification').addEventListener('click', () => {
+        showAdPopup(500);
+        notification.remove();
+    });
+
+    document.getElementById('close-ad-notification').addEventListener('click', () => {
+        notification.remove();
+    });
+}
+
 function setupBuyButtons(userId) {
     document.querySelectorAll('.buy-button').forEach(button => {
         button.addEventListener('click', async function () {

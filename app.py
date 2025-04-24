@@ -1173,6 +1173,37 @@ def play_game():
             cursor.close()
         if 'connection' in locals() and connection.is_connected():
             connection.close()
+@app.route('/reward_user', methods=['POST'])
+def reward_user():
+    data = request.json
+    user_id = data.get('user_id')
+    amount = data.get('amount')
 
+    if not all([user_id, amount]):
+        return jsonify({"status": "error", "message": "Required fields are missing"}), 400
+
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+
+        cursor.execute("SELECT balance FROM user_progress WHERE user_id = %s", (user_id,))
+        result = cursor.fetchone()
+
+        if not result:
+            return jsonify({"status": "error", "message": "User not found"}), 404
+
+        balance = result[0]
+        new_balance = balance + amount
+
+        cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", (new_balance, user_id))
+        connection.commit()
+
+        return jsonify({"status": "success", "new_balance": new_balance}), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

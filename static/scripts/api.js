@@ -335,3 +335,19 @@ async function claimLoginReward(userId) {
         alert('Error receiving reward:' + data.message);
     }
 }
+
+async function rewardUser(amount) {
+    const userId = new URLSearchParams(window.location.search).get('user_id');
+    const response = await fetch('/reward_user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, amount })
+    });
+    const data = await response.json();
+    if (data.status === 'success') {
+        document.getElementById('currency-amount').textContent = data.new_balance;
+        showNotificationPopup('Reward', '/static/bitcoin.png', `You have received ${amount} tokens!`);
+    } else {
+        alert('Reward calculation error: ' + data.message);
+    }
+}

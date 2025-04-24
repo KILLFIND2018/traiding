@@ -123,3 +123,13 @@ if (!localStorage.getItem('swipeHintShown')) {
     setTimeout(() => hint.remove(), 3000);
     localStorage.setItem('swipeHintShown', 'true');
 }
+
+setInterval(() => {
+    if (Math.random() < 0.1) { // 10% шанс каждые 10 секунд
+        const activeSections = ['main','auction', 'widgets', 'rating', 'inventory', 'mart', 'donate'];
+        const currentSection = document.querySelector('.content > div:not([style*="display: none"])');
+        if (currentSection && activeSections.includes(currentSection.id)) {
+            showAdNotification();
+        }
+    }
+}, 10000);

@@ -274,3 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toMartButton.classList.remove('highlight');
     });
 });
+
+document.getElementById('watchAdButton').addEventListener('click', () => {
+    showAdPopup(1000);
+});
