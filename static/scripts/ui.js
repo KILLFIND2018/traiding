@@ -1,7 +1,8 @@
+/*отступы в числах*/
 function formatNumber(num) {
     return Number(num).toLocaleString('ru-RU');
 }
-
+/*Загрузка инвентаря и его механика отображения в таблице*/
 async function loadInventory(userId) {
     const response = await fetch(`/get_inventory?user_id=${userId}`);
     const data = await response.json();
@@ -36,7 +37,7 @@ async function loadInventory(userId) {
         });
     }
 }
-
+/*Показ уведомлений*/
 function showNotificationPopup(title, image, message, isError = false) {
     const popup = document.getElementById('purchase-popup');
     popup.classList.toggle('error', isError);
@@ -96,7 +97,7 @@ function showNotificationPopup(title, image, message, isError = false) {
         }, 100);
     }
 }
-
+/*окно просмотра рекламы*/
 function showAdPopup(reward) {
     const popup = document.getElementById('popup-ads');
     const video = document.getElementById('ad-video');
@@ -123,7 +124,7 @@ function showAdPopup(reward) {
         closeButton.style.display = 'none';
     });
 }
-
+/*уведомление которое дает выбор на просмотр рекламы за 500 токенов*/
 function showAdNotification() {
     const notification = document.createElement('div');
     notification.className = 'ad-notification';
@@ -143,7 +144,7 @@ function showAdNotification() {
         notification.remove();
     });
 }
-
+/*добавление кнопок купить в магазине и его механика*/
 function setupBuyButtons(userId) {
     document.querySelectorAll('.buy-button').forEach(button => {
         button.addEventListener('click', async function () {
@@ -173,7 +174,7 @@ function setupBuyButtons(userId) {
         });
     });
 }
-
+/*загрузка магазина и его механика отображения*/
 async function loadMarket() {
     const response = await fetch('/get_market');
     const data = await response.json();
@@ -199,7 +200,7 @@ async function loadMarket() {
         setupBuyButtons(userId);
     }
 }
-
+/*загрузка рейтинга и его механика отображения*/
 async function loadRating() {
     try {
         const response = await fetch(`/get_rating`);
@@ -218,7 +219,7 @@ async function loadRating() {
         console.error('Ошибка при загрузке рейтинга:', error);
     }
 }
-
+/*слушатель кнопок меню*/
 function hideAllSections() {
     document.querySelector('.main').style.display = 'none';
     document.querySelector('.widgets-container').style.display = 'none';
@@ -228,10 +229,10 @@ function hideAllSections() {
     document.getElementById('mart').style.display = 'none';
     document.getElementById('donate').style.display = 'none';
 }
-
+/*призы колеса */
 const prizes = ["x3 tokens", "1000 tokens", "Drinking Water Dispenser", "10000 tokens", "100000 tokens", "2000 tokens", "Humanoid robot", "x2 tokens"];
 const probabilities = [16, 16, 2, 16, 16, 16, 2, 16];
-
+/*рандом по шансам колеса */
 function getRandomIndex() {
     const total = probabilities.reduce((sum, prob) => sum + prob, 0);
     let random = Math.random() * total;
@@ -241,7 +242,7 @@ function getRandomIndex() {
     }
     return probabilities.length - 1;
 }
-
+/*механика колеса*/
 let isSpinning = false;
 async function startSpin() {
     if (isSpinning) return;
@@ -316,7 +317,7 @@ async function startSpin() {
         isSpinning = false;
     }
 }
-
+/*механика угадай блок и его стилизация*/
 let selectedCell = null;
 let isGameActive = false;
 const CELL_COLORS = [

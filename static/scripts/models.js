@@ -1,17 +1,18 @@
+/*Создание сцены*/
 const mainElement = document.getElementById('main');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(70, mainElement.clientWidth / mainElement.clientHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(mainElement.clientWidth, mainElement.clientHeight);
 mainElement.appendChild(renderer.domElement);
-
+/*Освещение*/
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambientLight);
 const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(5, 5, 5);
 scene.add(directionalLight);
 const loader = new THREE.GLTFLoader();
-
+/*остановка генерации в зависимоти поведения пользователя*/
 camera.position.set(-5, 7, 10.5);
 camera.lookAt(0, 0, 0);
 
@@ -20,13 +21,13 @@ function animate() {
     renderer.render(scene, camera);
 }
 animate();
-
+/*создание моделей каркасы*/
 let models = {};
 let model;
 let olderPCModel, speakerModel, serverModel, CafetalgModel, PanasonicModel, ScifiSciderRobotModel, TheGlobeModel,
     DrinkingWaterDispenserModel, HumanoidRobotModel, ComputerWithTerminalModel, ConditionerModel, FridgeModel,
     PS5Model, TVModel, CoolerModel, ShowcaseModel, PrinterModel, RadioModel, MacbookModel;
-
+/*обновление баланса в зависимости от предмета*/
 function updateTotalGeneration(itemName) {
     const items = {
         "Older PC": olderPC,
@@ -54,7 +55,7 @@ function updateTotalGeneration(itemName) {
         models[itemName] = true;
     }
 }
-
+/*модель офиса как основа*/
 loader.load('/static/models/Office.glb', function (gltf) {
     model = gltf.scene;
     model.scale.set(0.95, 0.95, 0.95);
@@ -65,7 +66,7 @@ loader.load('/static/models/Office.glb', function (gltf) {
 }, undefined, function (error) {
     console.error('Ошибка загрузки модели офиса:', error);
 });
-
+/*модели и их параметры в сетке внутри офиса, позиции, доступность и размер и генерация в сцене*/
 function olderPC() { if (!olderPCModel) loader.load('/static/models/RetroPC.glb', gltf => { olderPCModel = gltf.scene; olderPCModel.scale.set(0.014, 0.014, 0.014); olderPCModel.position.set(-2.7, 0.2, -2.5); scene.add(olderPCModel); }); }
 function speaker() { if (!speakerModel) loader.load('/static/models/Speaker.glb', gltf => { speakerModel = gltf.scene; speakerModel.scale.set(0.001, 0.001, 0.001); speakerModel.position.set(-1, 0.2, -2.8); scene.add(speakerModel); }); }
 function server() { if (!serverModel) loader.load('/static/models/ServerV2+console.glb', gltf => { serverModel = gltf.scene; serverModel.scale.set(0.2, 0.2, 0.2); serverModel.position.set(0.2, 0.2, -2.8); scene.add(serverModel); }); }

@@ -1,21 +1,21 @@
 const urlParams = new URLSearchParams(window.location.search);
 const userId = urlParams.get('user_id');
-
+/*Старт приложения*/
 async function startApp(userId) {
     if (!userId) {
         console.error("User ID отсутствует в URL.");
         document.getElementById('loader').classList.add('hidden');
         return;
     }
-
+    /*Загрузка приложения*/
     const loader = document.getElementById('loader');
     loader.classList.remove('hidden');
-
+    /*Старт генерации*/
     const initialBalance = await startGeneration(userId);
     if (initialBalance !== null) {
         document.getElementById('currency-amount').textContent = Number(initialBalance).toLocaleString('ru-RU');
     }
-
+    /*Обновление баланса*/
     const balanceInterval = setInterval(async () => {
         try {
             const response = await fetch(`/get_balance?user_id=${userId}`);
@@ -28,7 +28,7 @@ async function startApp(userId) {
             console.error('Ошибка при обновлении баланса:', error);
         }
     }, 5000);  // Обновление каждые 5 секунд
-
+    /*обновление рейтинга*/
     const ratingInterval = setInterval(() => {
         loadRating();
     }, 30000);
@@ -53,7 +53,7 @@ async function startApp(userId) {
     const inventoryCheckInterval = setInterval(async () => {
         await loadInventory(userId);
     }, 10000);
-
+/*операции очищения функций при зависимости состояния пользователя в приложении*/
     Telegram.WebApp.onEvent('web_app_close', async () => {
         console.log('Web App закрыт через Telegram');
         clearInterval(balanceInterval);
@@ -110,7 +110,7 @@ async function startApp(userId) {
 }
 
 if (userId) startApp(userId);
-
+/*подсказка-свайпенр в маркете*/
 if (!localStorage.getItem('swipeHintShown')) {
     const hint = document.createElement('div');
     hint.textContent = '← Свайпайте → чтобы увидеть больше';
@@ -123,7 +123,7 @@ if (!localStorage.getItem('swipeHintShown')) {
     setTimeout(() => hint.remove(), 3000);
     localStorage.setItem('swipeHintShown', 'true');
 }
-
+/*Появление уведомления про просмотр рекламы 500 токенов*/
 setInterval(() => {
     if (Math.random() < 0.1) { // 10% шанс каждые 10 секунд
         const activeSections = ['main','auction', 'widgets', 'rating', 'inventory', 'mart', 'donate'];

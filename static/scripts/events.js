@@ -1,3 +1,4 @@
+/*сцена офиса и его моделей*/
 window.addEventListener('resize', () => {
     const mainElement = document.getElementById('main');
     const width = mainElement.clientWidth;
@@ -7,13 +8,13 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     chart.resize();
 });
-
+/*музыка*/
 document.addEventListener('click', function () {
     var music = document.getElementById('background-music');
     music.volume = 0.1;
     music.play();
 });
-
+/*покупка Stars*/
 document.getElementById('buyButton').addEventListener('click', () => {
     const tg = window.Telegram.WebApp;
     if (!tg.ready) {
@@ -54,7 +55,7 @@ document.getElementById('buyButton').addEventListener('click', () => {
         }
     });
 });
-
+/*Реферал*/
 document.getElementById('invite-friend').addEventListener('click', async () => {
     const response = await fetch(`/get_referral_link?user_id=${userId}`);
     const data = await response.json();
@@ -72,7 +73,7 @@ document.getElementById('invite-friend').addEventListener('click', async () => {
         alert('Error getting link');
     }
 });
-
+/*создание лота*/
 document.getElementById('create-lot-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -98,7 +99,7 @@ document.getElementById('create-lot-form').addEventListener('submit', async (e) 
 });
 
 document.querySelector('.button.auction').addEventListener('click', () => loadAuction(userId));
-
+/*Операции со стилями с кнопками навигации в #mart и #main */
 document.addEventListener('DOMContentLoaded', () => {
     const martContainer = document.querySelector('.mart-container');
     const wheelContainer = document.querySelector('.wheel-container');
@@ -163,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mainContainer.style.zIndex = '2';
     });
 });
-
+/*Меню*/
 document.querySelector('.button.auction').addEventListener('click', function () {
     hideAllSections();
     document.getElementById('auction').style.display = 'block';
@@ -237,7 +238,7 @@ marketWrapper.addEventListener('touchmove', (e) => {
 marketWrapper.addEventListener('touchend', () => {
     marketWrapper.classList.remove('scrollable');
 });
-
+/*Закрытие и открытие уведомления о предмете в инвентаре*/
 document.querySelector('.close-btn').addEventListener('click', () => {
     document.getElementById('item-info-popup').classList.remove('show');
 });
@@ -247,7 +248,7 @@ document.getElementById('item-info-popup').addEventListener('click', (e) => {
         document.getElementById('item-info-popup').classList.remove('show');
     }
 });
-
+/*свечение кнопок навигации*/
 document.addEventListener('DOMContentLoaded', () => {
     const toWidgetsButton = document.getElementById('to-widgets');
     const toMainButton = document.getElementById('to-main');
@@ -274,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toMartButton.classList.remove('highlight');
     });
 });
-
+/*Кнопка после просмотра рекламы*/
 document.getElementById('watchAdButton').addEventListener('click', () => {
     showAdPopup(1000);
 });

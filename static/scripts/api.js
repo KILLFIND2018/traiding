@@ -1,3 +1,4 @@
+/*остановка генерации в зависимоти поведения пользователя*/
 async function stopGeneration(userId) {
     try {
         const response = await fetch('/stop', {
@@ -15,7 +16,7 @@ async function stopGeneration(userId) {
         console.error(`Ошибка при отправке запроса на остановку для user_id ${userId}: ${error}`);
     }
 }
-
+/*запуск генерации в зависимоти поведения пользователя*/
 async function startGeneration(userId) {
     try {
         const response = await fetch('/start', {
@@ -36,7 +37,7 @@ async function startGeneration(userId) {
         return null;
     }
 }
-
+/*награда за приглашение друга */
 async function checkNewRewards(userId) {
     const response = await fetch(`/get_new_rewards?user_id=${userId}`);
     const data = await response.json();
@@ -58,7 +59,7 @@ async function loadAuction(userId) {
     await loadChat();
     await loadUserItems(userId);
 }
-
+/*получение и загрузка лота*/
 async function loadLots() {
     const response = await fetch('/get_auction_lots');
     const data = await response.json();
@@ -91,7 +92,7 @@ async function loadLots() {
         console.error('Ошибка загрузки лотов:', data.message);
     }
 }
-
+/*получение и закгрузка чата в аукционе*/
 async function loadChat() {
     const response = await fetch('/get_chat');
     const data = await response.json();
@@ -106,7 +107,7 @@ async function loadChat() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 }
-
+/*отправка сообщения пользователя*/
 async function sendChatMessage() {
     const input = document.getElementById('chat-input');
     const message = input.value.trim();
@@ -120,7 +121,7 @@ async function sendChatMessage() {
         await loadChat();
     }
 }
-
+/*загрузка предмета в аукцион пользователя*/
 async function loadUserItems(userId) {
     const response = await fetch(`/get_inventory?user_id=${userId}`);
     const data = await response.json();
@@ -135,7 +136,7 @@ async function loadUserItems(userId) {
         });
     }
 }
-
+/*установка цены лота другого пользователя*/
 async function placeBid(lotId) {
     const bidAmount = prompt('Place bet:');
     if (bidAmount && !isNaN(bidAmount)) {
@@ -152,7 +153,7 @@ async function placeBid(lotId) {
         }
     }
 }
-
+/*завершение лота*/
 async function completeLot(lotId) {
     const response = await fetch('/complete_lot', {
         method: 'POST',
@@ -167,7 +168,7 @@ async function completeLot(lotId) {
         alert(data.message);
     }
 }
-
+/*инцианализация биткоин-виджет*/
 async function initBitcoinWidget(userId) {
     async function updatePrice() {
         const response = await fetch('/get_bitcoin_price');
@@ -216,7 +217,7 @@ async function initBitcoinWidget(userId) {
     }
     updateGraph();
     setInterval(updateGraph, 60000);
-
+    /*ставка и таймер кулдауна*/ 
     const betUpButton = document.getElementById('bet-up');
     const betDownButton = document.getElementById('bet-down');
     const betAmountInput = document.getElementById('bet-amount');
@@ -251,7 +252,7 @@ async function initBitcoinWidget(userId) {
     }
     checkBetStatus();
     setInterval(checkBetStatus, 1000);
-
+    /*указание ставки*/
     betUpButton.addEventListener('click', async () => {
         const amount = parseInt(betAmountInput.value);
         if (amount > 0) {
@@ -292,7 +293,7 @@ async function initBitcoinWidget(userId) {
         }
     });
 }
-
+/*проверка, статус доступа к награде за вход пользователя*/
 async function checkLoginReward(userId) {
     const response = await fetch(`/get_login_reward_status?user_id=${userId}`);
     const data = await response.json();
@@ -317,7 +318,7 @@ async function checkLoginReward(userId) {
         rewardStatus.textContent = "Error check";
     }
 }
-
+/*получение награды за вход пользователя*/
 async function claimLoginReward(userId) {
     const response = await fetch('/claim_login_reward', {
         method: 'POST',
@@ -335,7 +336,7 @@ async function claimLoginReward(userId) {
         alert('Error receiving reward:' + data.message);
     }
 }
-
+/*награда за просмотр рекламы пользователем*/
 async function rewardUser(amount) {
     const userId = new URLSearchParams(window.location.search).get('user_id');
     const response = await fetch('/reward_user', {
