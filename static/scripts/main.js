@@ -107,6 +107,8 @@ async function startApp(userId) {
 
     await new Promise(resolve => setTimeout(resolve, 10000));
     loader.classList.add('hidden');
+    // Start the tutorial after the loader is hidden
+    startTutorial();
 }
 
 if (userId) startApp(userId);
@@ -124,6 +126,7 @@ if (!localStorage.getItem('swipeHintShown')) {
     localStorage.setItem('swipeHintShown', 'true');
 }
 /*Появление уведомления про просмотр рекламы 500 токенов*/
+
 setInterval(() => {
     if (Math.random() < 0.1) { // 10% шанс каждые 10 секунд
         const activeSections = ['main','auction', 'widgets', 'rating', 'inventory', 'mart', 'donate'];

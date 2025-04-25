@@ -1264,6 +1264,63 @@ td {
     cursor: pointer;
 }
 
+
+/* Tutorial Styles */
+.tutorial-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+}
+
+.tutorial-highlight {
+    position: absolute;
+    border: 2px solid #f1c40f;
+    box-shadow: 0 0 10px #f1c40f;
+    z-index: 1001;
+    pointer-events: none;
+}
+
+.tutorial-tooltip {
+    position: absolute;
+    background: rgba(44, 62, 80, 0.9);
+    color: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    z-index: 1002;
+    max-width: 300px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.tutorial-tooltip.center {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.tutorial-tooltip p {
+    margin: 0 0 10px 0;
+}
+
+.tutorial-next {
+    padding: 8px 16px;
+    background-color: #7FFFD4;
+    color: #000000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.tutorial-next:hover {
+    background-color: #75d8b7;
+}
+
 @media screen and (max-width: 768px),
 screen and (max-width: 1024px) {
     .container {
