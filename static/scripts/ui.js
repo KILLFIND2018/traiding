@@ -16,12 +16,25 @@ async function loadInventory(userId) {
             newRow.classList.add('inventory-item');
             newRow.dataset.itemName = item.item_name;
             newRow.dataset.generation = item.generation_per_hour;
-            newRow.insertCell(0).textContent = item.item_name;
-            newRow.insertCell(1).textContent = formatNumber(item.generation_per_hour);
-            newRow.insertCell(2).textContent = 'Active';
+
+            // Ячейка для иконки
+            const imgCell = newRow.insertCell(0);
+            const img = document.createElement('img');
+            const imageName = item.item_name.replace(/ /g, '_').toLowerCase() + '.png';
+            img.src = `/static/img-market/${imageName}`;
+            img.alt = item.item_name;
+            img.style.width = '50px'; // Устанавливаем размер как в магазине
+            imgCell.appendChild(img);
+
+            // Ячейки для названия, генерации и статуса
+            newRow.insertCell(1).textContent = item.item_name;
+            newRow.insertCell(2).textContent = formatNumber(item.generation_per_hour);
+            newRow.insertCell(3).textContent = 'Active';
+
             updateTotalGeneration(item.item_name);
         });
 
+        // Слушатели событий для всплывающего окна
         document.querySelectorAll('.inventory-item').forEach(row => {
             row.addEventListener('click', () => {
                 const itemName = row.dataset.itemName;

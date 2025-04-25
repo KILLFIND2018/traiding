@@ -186,7 +186,7 @@ let currentSection = 'main';
 
 function startTutorial() {
     if (localStorage.getItem('tutorialCompleted')) {
-        //return; раскомментировать после тестов
+        //return; /*раскомментировать после тестов*/
     }
 
     showTutorialStep();
