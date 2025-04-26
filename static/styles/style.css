@@ -5,11 +5,14 @@ body {
     max-width: 100%;
 }
 
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
-    height: 100%; /* Фиксируем высоту на 100% экрана */
-    overflow: hidden; /* Убираем любую прокрутку */
+    height: 100%;
+    /* Фиксируем высоту на 100% экрана */
+    overflow: hidden;
+    /* Убираем любую прокрутку */
 }
 
 body {
@@ -106,24 +109,35 @@ body {
     left: calc(50% - 4px);
 }
 
-.spinner-dot:nth-child(2) { transform: rotate(45deg); }
-.spinner-dot:nth-child(3) { transform: rotate(90deg); }
-.spinner-dot:nth-child(4) { transform: rotate(135deg); }
+.spinner-dot:nth-child(2) {
+    transform: rotate(45deg);
+}
+
+.spinner-dot:nth-child(3) {
+    transform: rotate(90deg);
+}
+
+.spinner-dot:nth-child(4) {
+    transform: rotate(135deg);
+}
 
 @keyframes spinPulse {
-    0% { 
+    0% {
         transform: rotate(0deg) scale(1);
         opacity: 0.8;
     }
-    50% { 
+
+    50% {
         transform: rotate(180deg) scale(1.1);
         opacity: 1;
     }
-    100% { 
+
+    100% {
         transform: rotate(360deg) scale(1);
         opacity: 0.8;
     }
 }
+
 /* Прогрессивная анимация текста */
 .loader p {
     font-weight: bolder;
@@ -139,9 +153,20 @@ body {
 }
 
 @keyframes dots {
-    0%, 20% { content: '.'; }
-    40% { content: '..'; }
-    60%, 100% { content: '...'; }
+
+    0%,
+    20% {
+        content: '.';
+    }
+
+    40% {
+        content: '..';
+    }
+
+    60%,
+    100% {
+        content: '...';
+    }
 }
 
 /* Текст под спиннером */
@@ -486,15 +511,17 @@ select {
 
 /* Обертка для таблицы */
 .market {
-    width: 100%; /* Наследовать ширину от mart-container */
+    width: 100%;
+    /* Наследовать ширину от mart-container */
     position: relative;
     overflow-x: auto;
-    scrollbar-width: thin; /* Для Firefox */
-    scrollbar-color: #7FFFD4 rgba(44, 62, 80, 0.3); /* Цвет полосы прокрутки */
+    scrollbar-width: thin;
+    /* Для Firefox */
+    scrollbar-color: #7FFFD4 rgba(44, 62, 80, 0.3);
+    /* Цвет полосы прокрутки */
 }
 
-* Стилизация скроллбара для Chrome/Safari */
-.market::-webkit-scrollbar {
+* Стилизация скроллбара для Chrome/Safari */ .market::-webkit-scrollbar {
     height: 8px;
     background: rgba(44, 62, 80, 0.3);
 }
@@ -527,10 +554,14 @@ select {
 
 /* Стили для таблицы */
 .market-table {
-    width: 100%; /* Занимает всю ширину обертки */
-    min-width: 100vw; /* Минимальная ширина равна ширине экрана */
-    table-layout: auto; /* Автоматическое распределение ширины колонок */
-    border-collapse: collapse; /* Убрать двойные границы */
+    width: 100%;
+    /* Занимает всю ширину обертки */
+    min-width: 100vw;
+    /* Минимальная ширина равна ширине экрана */
+    table-layout: auto;
+    /* Автоматическое распределение ширины колонок */
+    border-collapse: collapse;
+    /* Убрать двойные границы */
     overflow-x: auto;
     border-radius: 5px;
     /* Таблица занимает всю ширину контейнера */
@@ -543,8 +574,10 @@ select {
 /* Стили для заголовков и ячеек таблицы */
 .market-table th,
 .market-table td {
-    white-space: nowrap; /* Запретить перенос текста */
-    padding: 10px 15px; /* Увеличить отступы для читаемости */
+    white-space: nowrap;
+    /* Запретить перенос текста */
+    padding: 10px 15px;
+    /* Увеличить отступы для читаемости */
     text-align: center;
     /* Выравнивание текста по центру */
 }
@@ -571,7 +604,7 @@ select {
     background-color: rgba(44, 62, 80, 0.1);
 }
 
-.rating-container{
+.rating-container {
     width: 100vw;
     left: 0;
     transform: translate(0, -25%);
@@ -640,8 +673,10 @@ select {
     justify-content: center;
     gap: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-    font-family: 'Arial', sans-serif; /* Используем шрифт с моноширинными цифрами */
-    font-variant-numeric: tabular-nums; /* Выравнивание чисел по ширине */
+    font-family: 'Arial', sans-serif;
+    /* Используем шрифт с моноширинными цифрами */
+    font-variant-numeric: tabular-nums;
+    /* Выравнивание чисел по ширине */
 }
 
 .currency-display img {
@@ -735,11 +770,12 @@ td {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    
+
 }
 
-#bet-up, #bet-down {
-        
+#bet-up,
+#bet-down {
+
     width: 60px;
     height: auto;
 }
@@ -857,7 +893,8 @@ td {
     z-index: 2;
     background: linear-gradient(to bottom, rgba(44, 62, 80, 0.1) 0%, rgba(44, 62, 80, 0.1) 90%, rgba(44, 62, 80, 0.5) 100%);
 }
-    /* Устанавливаем выше контента, но ниже уведомлений */
+
+/* Устанавливаем выше контента, но ниже уведомлений */
 
 
 /* Колесо */
@@ -963,7 +1000,8 @@ td {
 .sender,
 .auctions,
 .auctions-table,
-.buy-stars, .game-btn {
+.buy-stars,
+.game-btn {
     padding: 10px 20px;
     background-color: #7FFFD4;
     color: #000000;
@@ -976,8 +1014,10 @@ td {
 }
 
 .spin-btn {
-    width: 120px; /* Фиксированная ширина */
-    height: 40px; /* Фиксированная высота */
+    width: 120px;
+    /* Фиксированная ширина */
+    height: 40px;
+    /* Фиксированная высота */
     padding: 5px;
     display: flex;
     justify-content: center;
@@ -988,10 +1028,13 @@ td {
 
 .spin-btn img {
     width: 25px !important;
-    height: 25px !important; /* Добавляем фиксированную высоту */
-    object-fit: contain; /* Гарантирует правильное масштабирование */
+    height: 25px !important;
+    /* Добавляем фиксированную высоту */
+    object-fit: contain;
+    /* Гарантирует правильное масштабирование */
     padding-left: 5px;
-    flex-shrink: 0; /* Запрещаем уменьшение размера */
+    flex-shrink: 0;
+    /* Запрещаем уменьшение размера */
 }
 
 
@@ -1005,15 +1048,40 @@ td {
 
 
 
-/* Стили для кнопки to-widgets */
-.nav-main-button.right#to-widgets, .nav-button.right#to-wheel {
+
+
+.nav-button.right#to-widgets:hover,
+.nav-button.right#to-wheel:hover {
+    box-shadow: 0 0 20px rgba(127, 255, 212, 0.8);
+    /* Усиленное свечение при наведении */
+    transform: translateY(-50%) scale(1.1);
+    /* Легкое увеличение при наведении */
+    animation: none;
+    /* Отключаем пульсацию при наведении */
+}
+
+.nav-button.right#to-widgets .ctrl,
+.nav-button.right#to-wheel .ctrl {
+    width: 40px;
+    /* Уменьшаем размер стрелки */
+    height: auto;
+    animation: nudge 1.5s infinite ease-in-out;
+    /* Легкое движение стрелки */
+}
+
+.nav-button.right#to-widgets,
+.nav-button.right#to-wheel {
     background-color: #7FFFD4;
-    border-radius: 50%; /* Делаем кнопку круглой для большей привлекательности */
-    width: 60px; /* Увеличиваем размер */
+    border-radius: 50%;
+    /* Делаем кнопку круглой для большей привлекательности */
+    width: 60px;
+    /* Увеличиваем размер */
     height: 60px;
-    box-shadow: 0 0 10px rgba(127, 255, 212, 0.5); /* Легкое свечение */
+    box-shadow: 0 0 10px rgba(127, 255, 212, 0.5);
+    /* Легкое свечение */
     transition: all 0.3s ease;
-    animation: pulse 2s infinite ease-in-out; /* Пульсация */
+    animation: pulse 2s infinite ease-in-out;
+    /* Пульсация */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1024,26 +1092,19 @@ td {
     z-index: 15;
 }
 
-.nav-main-button.right#to-widgets:hover , .nav-button.right#to-wheel:hover {
-    box-shadow: 0 0 20px rgba(127, 255, 212, 0.8); /* Усиленное свечение при наведении */
-    transform: translateY(-50%) scale(1.1); /* Легкое увеличение при наведении */
-    animation: none; /* Отключаем пульсацию при наведении */
-}
-
-.nav-main-button.right#to-widgets .ctrl, .nav-button.right#to-wheel .ctrl {
-    width: 40px; /* Уменьшаем размер стрелки */
-    height: auto;
-    animation: nudge 1.5s infinite ease-in-out; /* Легкое движение стрелки */
-}
-
-.nav-main-button.left#to-main , .nav-button.left#to-mart{
+.nav-button.left#to-main,
+.nav-button.left#to-mart {
     background-color: #7FFFD4;
-    border-radius: 50%; /* Делаем кнопку круглой для большей привлекательности */
-    width: 60px; /* Увеличиваем размер */
+    border-radius: 50%;
+    /* Делаем кнопку круглой для большей привлекательности */
+    width: 60px;
+    /* Увеличиваем размер */
     height: 60px;
-    box-shadow: 0 0 10px rgba(127, 255, 212, 0.5); /* Легкое свечение */
+    box-shadow: 0 0 10px rgba(127, 255, 212, 0.5);
+    /* Легкое свечение */
     transition: all 0.3s ease;
-    animation: pulse 2s infinite ease-in-out; /* Пульсация */
+    animation: pulse 2s infinite ease-in-out;
+    /* Пульсация */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1054,16 +1115,23 @@ td {
     z-index: 15;
 }
 
-.nav-main-button.left#to-main:hover , .nav-button.left#to-mart:hover{
-    box-shadow: 0 0 20px rgba(127, 255, 212, 0.8); /* Усиленное свечение при наведении */
-    transform: translateY(-50%) scale(1.1); /* Легкое увеличение при наведении */
-    animation: none; /* Отключаем пульсацию при наведении */
+.nav-button.left#to-main:hover,
+.nav-button.left#to-mart:hover {
+    box-shadow: 0 0 20px rgba(127, 255, 212, 0.8);
+    /* Усиленное свечение при наведении */
+    transform: translateY(-50%) scale(1.1);
+    /* Легкое увеличение при наведении */
+    animation: none;
+    /* Отключаем пульсацию при наведении */
 }
 
-.nav-main-button.left#to-main .ctrl , .nav-button.left#to-mart .ctrl{
-    width: 40px; /* Уменьшаем размер стрелки */
+.nav-button.left#to-main .ctrl,
+.nav-button.left#to-mart .ctrl {
+    width: 40px;
+    /* Уменьшаем размер стрелки */
     height: auto;
-    animation: nudge 1.5s infinite ease-in-out; /* Легкое движение стрелки */
+    animation: nudge 1.5s infinite ease-in-out;
+    /* Легкое движение стрелки */
 }
 
 
@@ -1074,10 +1142,12 @@ td {
         box-shadow: 0 0 10px rgba(127, 255, 212, 0.5), 0 0 20px rgba(127, 255, 212, 0.3);
         transform: translateY(-50%) scale(1);
     }
+
     50% {
         box-shadow: 0 0 15px rgba(127, 255, 212, 0.7), 0 0 30px rgba(127, 255, 212, 0.5);
         transform: translateY(-50%) scale(1.05);
     }
+
     100% {
         box-shadow: 0 0 10px rgba(127, 255, 212, 0.5), 0 0 20px rgba(127, 255, 212, 0.3);
         transform: translateY(-50%) scale(1);
@@ -1089,21 +1159,26 @@ td {
     0% {
         transform: translateX(0);
     }
+
     50% {
-        transform: translateX(5px); /* Стрелка слегка сдвигается вправо */
+        transform: translateX(5px);
+        /* Стрелка слегка сдвигается вправо */
     }
+
     100% {
         transform: translateX(0);
     }
 }
 
 /* Дополнительно: эффект нажатия */
-.nav-main-button.right#to-widgets:active, 
-.nav-main-button.left#to-main:active,
-.nav-button.right#to-wheel:active, 
+.nav-button.right#to-widgets:active,
+.nav-button.left#to-main:active,
+.nav-button.right#to-wheel:active,
 .nav-button.left#to-mart:active {
-    transform: translateY(-50%) scale(0.95); /* Легкое сжатие при нажатии */
-    box-shadow: 0 0 5px rgba(127, 255, 212, 0.3); /* Уменьшение свечения */
+    transform: translateY(-50%) scale(0.95);
+    /* Легкое сжатие при нажатии */
+    box-shadow: 0 0 5px rgba(127, 255, 212, 0.3);
+    /* Уменьшение свечения */
 }
 
 .main,
@@ -1114,8 +1189,10 @@ td {
 .wheel-container,
 .widgets-container,
 .donate-container {
-    max-height: 60vh; /* Настройте высоту по вашему усмотрению */
-    overflow-y: auto; /* Включаем прокрутку внутри секции */
+    max-height: 60vh;
+    /* Настройте высоту по вашему усмотрению */
+    overflow-y: auto;
+    /* Включаем прокрутку внутри секции */
 }
 
 .widgets-container {
@@ -1148,14 +1225,46 @@ td {
     justify-content: center;
     transition: all 0.3s;
 }
-.game-cell:nth-child(1) { background-color: #FF6B6B; border-color: #FF6B6B; }
-.game-cell:nth-child(2) { background-color: #4ECDC4; border-color: #4ECDC4; }
-.game-cell:nth-child(3) { background-color: #45B7D1; border-color: #45B7D1; }
-.game-cell:nth-child(4) { background-color: #96CEB4; border-color: #96CEB4; }
-.game-cell:nth-child(5) { background-color: #FFEEAD; border-color: #FFEEAD; }
-.game-cell:nth-child(6) { background-color: #FF9F76; border-color: #FF9F76; }
-.game-cell:nth-child(7) { background-color: #D4A5A5; border-color: #D4A5A5; }
-.game-cell:nth-child(8) { background-color: #A283C4; border-color: #A283C4; }
+
+.game-cell:nth-child(1) {
+    background-color: #FF6B6B;
+    border-color: #FF6B6B;
+}
+
+.game-cell:nth-child(2) {
+    background-color: #4ECDC4;
+    border-color: #4ECDC4;
+}
+
+.game-cell:nth-child(3) {
+    background-color: #45B7D1;
+    border-color: #45B7D1;
+}
+
+.game-cell:nth-child(4) {
+    background-color: #96CEB4;
+    border-color: #96CEB4;
+}
+
+.game-cell:nth-child(5) {
+    background-color: #FFEEAD;
+    border-color: #FFEEAD;
+}
+
+.game-cell:nth-child(6) {
+    background-color: #FF9F76;
+    border-color: #FF9F76;
+}
+
+.game-cell:nth-child(7) {
+    background-color: #D4A5A5;
+    border-color: #D4A5A5;
+}
+
+.game-cell:nth-child(8) {
+    background-color: #A283C4;
+    border-color: #A283C4;
+}
 
 .game-cell.selected {
     border-color: #f1c40f;
@@ -1189,6 +1298,7 @@ td {
     margin-top: 10px;
     min-height: 20px;
 }
+
 /*показ рекламы*/
 .watch-ad {
     margin: 10px 0;
@@ -1206,6 +1316,7 @@ td {
 .watch-ad:hover {
     background-color: #75d8b7;
 }
+
 /*уведомление согласия просмотра*/
 .popup-ads {
     display: none;
@@ -1344,9 +1455,10 @@ screen and (max-width: 1024px) {
         min-width: 100px;
         /* Уменьшенная ширина колонок */
     }
-    
-    #bet-up, #bet-down {
-        
+
+    #bet-up,
+    #bet-down {
+
         width: 60px;
         height: auto;
     }
@@ -1371,6 +1483,7 @@ screen and (max-width: 1024px) {
         height: 38px;
         font-size: 14px;
     }
+
     .spin-btn img {
         width: 22px !important;
         height: 22px !important;
@@ -1390,7 +1503,7 @@ screen and (max-width: 1024px) {
         padding: 4px 8px;
         font-size: 14px;
     }
-    
+
     .spin-btn img {
         width: 24px !important;
         height: 24px !important;
@@ -1412,8 +1525,19 @@ button {
 }
 
 @keyframes swipe-hint {
-    0% { transform: translateX(0); }
-    30% { transform: translateX(-20px); }
-    60% { transform: translateX(20px); }
-    100% { transform: translateX(0); }
+    0% {
+        transform: translateX(0);
+    }
+
+    30% {
+        transform: translateX(-20px);
+    }
+
+    60% {
+        transform: translateX(20px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
 }

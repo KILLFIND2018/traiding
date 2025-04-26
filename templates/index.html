@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Crypto Tycoon Simulator</title>
@@ -14,6 +15,7 @@
     <link rel="stylesheet" href="/static/styles/popup.css">
     <link rel="stylesheet" href="/static/styles/style.css">
 </head>
+
 <body>
     <div class="loader" id="loader">
         <div class="spinner">
@@ -35,6 +37,12 @@
         Your browser does not support the audio element.
     </audio>
     <div class="container">
+        <button class="nav-button right" id="to-widgets"><img src="/static/img_whell/arrow/right.png"
+                class="ctrl"></button>
+        <button class="nav-button left" id="to-main"><img src="/static/img_whell/arrow/left.png" class="ctrl"></button>
+        <button class="nav-button right" id="to-wheel"><img src="/static/img_whell/arrow/right.png"
+                class="ctrl"></button>
+        <button class="nav-button left" id="to-mart"><img src="/static/img_whell/arrow/left.png" class="ctrl"></button>
         <div class="header">
             <h1>Crypto Tycoon Simulator</h1>
             <div class="currency-display" id="currency-display">
@@ -43,15 +51,16 @@
         </div>
         <div class="content">
             <div class="main" id="main">
-                <button class="nav-main-button right" id="to-widgets"><img src="/static/img_whell/arrow/right.png" class="ctrl"></button>
             </div>
             <div class="widgets-container" id="widgets">
                 <div class="bitcoin-widget">
                     <div id="bitcoin-price">Current BTC price:<span id="btc-price">Loading...</span> $</div>
                     <div id="bitcoin-graph"></div>
                     <div class="bet-container">
-                        <button id="bet-up" disabled><img class="btn-bet" src="/static/img_whell/up.png" alt=""></button>
-                        <button id="bet-down" disabled><img class="btn-bet" src="/static/img_whell/down.png" alt=""></button>
+                        <button id="bet-up" disabled><img class="btn-bet" src="/static/img_whell/up.png"
+                                alt=""></button>
+                        <button id="bet-down" disabled><img class="btn-bet" src="/static/img_whell/down.png"
+                                alt=""></button>
                         <input type="number" id="bet-amount" placeholder="Your bet" disabled>
                     </div>
                     <p id="bet-status">Result and next bet available in:<span id="bet-timer">00:00:00</span></p>
@@ -59,7 +68,6 @@
                 <div class="reward-timer">
                     <p>Login Reward:<span id="reward-status">Checking...</span></p>
                 </div>
-                <button class="nav-main-button left" id="to-main"><img src="/static/img_whell/arrow/left.png" class="ctrl"></button>
             </div>
             <div class="auction" id="auction">
                 <div class="auction-container">
@@ -141,7 +149,6 @@
                             <tbody></tbody>
                         </table>
                     </div>
-                    <button class="nav-button right" id="to-wheel"><img src="/static/img_whell/arrow/right.png" class="ctrl"></button>
                 </div>
                 <div class="wheel-container">
                     <img src="/static/img_whell/whell.png" id="wheel" class="wheel">
@@ -170,24 +177,25 @@
                             <button class="game-btn" onclick="startGame()">Game!</button>
                         </div>
                     </div>
-                    <button class="nav-button left" id="to-mart"><img src="/static/img_whell/arrow/left.png" class="ctrl"></button>
                 </div>
             </div>
             <div class="donate" id="donate">
                 <div class="donate-container">
                     <button class="buy-stars" id="buyButton">Buy tokens for Stars</button>
                     <button class="watch-ad" id="watchAdButton">Watch ads for 1000 tokens</button>
-                    <button class = "invite-friend" id="invite-friend">
+                    <button class="invite-friend" id="invite-friend">
                         <img src="/static/referal.png" alt="referal friend">
                     </button>
                 </div>
             </div>
             <div class="game-menu">
-                <button class="button auction" type="button" id="auctionButton"><img src="/static/auction.png" alt="auction"></button>
+                <button class="button auction" type="button" id="auctionButton"><img src="/static/auction.png"
+                        alt="auction"></button>
                 <div class="separator"></div>
                 <button class="button rating" type="button"><img src="/static/rating.png" alt="rating"></button>
                 <div class="separator"></div>
-                <button class="button inventory" type="button"><img src="/static/inventory.png" alt="inventory"></button>
+                <button class="button inventory" type="button"><img src="/static/inventory.png"
+                        alt="inventory"></button>
                 <div class="separator"></div>
                 <button class="button mart" type="button"><img src="/static/mart.png" alt="mart"></button>
                 <div class="separator"></div>
@@ -221,10 +229,12 @@
         </div>
     </div>
     <script src="/static/scripts/models.js"></script>
-    <script src="/static/scripts/events.js"></script>
+    <script src="/static/scripts/events.js?v=1"></script>
     <script src="/static/scripts/api.js"></script>
     <script src="/static/scripts/ui.js"></script>
     <script src="/static/scripts/tutorial.js?v=3"></script>
     <script src="/static/scripts/main.js?v=2"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93584ab68b7612f5',t:'MTc0NTUyNTkyNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+    <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'93584ab68b7612f5',t:'MTc0NTUyNTkyNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
+</body>
+
 </html>

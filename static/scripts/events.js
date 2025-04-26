@@ -110,6 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const toWidgetsButton = document.getElementById('to-widgets');
     const toMainButton = document.getElementById('to-main');
 
+    toWidgetsButton.style.display = 'block';
+    toMainButton.style.display = 'none';
+    toWheelButton.style.display = 'none';
+    toMartButton.style.display = 'none';
+
     martContainer.style.display = 'block';
     martContainer.style.opacity = '1';
     martContainer.style.zIndex = '2';
@@ -132,6 +137,8 @@ document.addEventListener('DOMContentLoaded', () => {
         wheelContainer.style.display = 'flex';
         wheelContainer.style.opacity = '1';
         wheelContainer.style.zIndex = '2';
+        toWheelButton.style.display = 'none';
+        toMartButton.style.display = 'block';
     });
 
     toMartButton.addEventListener('click', (event) => {
@@ -142,6 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
         martContainer.style.display = 'block';
         martContainer.style.opacity = '1';
         martContainer.style.zIndex = '2';
+        toWheelButton.style.display = 'block';
+        toMartButton.style.display = 'none';
     });
 
     toWidgetsButton.addEventListener('click', (event) => {
@@ -152,6 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
         widgetsContainer.style.display = 'block';
         widgetsContainer.style.opacity = '1';
         widgetsContainer.style.zIndex = '2';
+        toWidgetsButton.style.display = 'none';
+        toMainButton.style.display = 'block';
     });
 
     toMainButton.addEventListener('click', (event) => {
@@ -162,66 +173,96 @@ document.addEventListener('DOMContentLoaded', () => {
         mainContainer.style.display = 'block';
         mainContainer.style.opacity = '1';
         mainContainer.style.zIndex = '2';
+        toWidgetsButton.style.display = 'block';
+        toMainButton.style.display = 'none';
+    });
+
+    document.querySelector('.button.auction').addEventListener('click', function () {
+        hideAllSections();
+        document.getElementById('auction').style.display = 'block';
+        document.querySelector('.button.return').style.display = 'flex';
+        document.querySelector('.separator-hidden').style.display = 'block';
+        toWheelButton.style.display = 'none';
+        toMartButton.style.display = 'none';
+        toWidgetsButton.style.display = 'none';
+        toMainButton.style.display = 'none';
+    });
+
+    document.querySelector('.button.rating').addEventListener('click', function () {
+        hideAllSections();
+        document.getElementById('rating').style.display = 'block';
+        document.querySelector('.button.return').style.display = 'flex';
+        document.querySelector('.separator-hidden').style.display = 'block';
+        toWheelButton.style.display = 'none';
+        toMartButton.style.display = 'none';
+        toWidgetsButton.style.display = 'none';
+        toMainButton.style.display = 'none';
+    });
+
+    document.querySelector('.button.inventory').addEventListener('click', function () {
+        hideAllSections();
+        document.getElementById('inventory').style.display = 'block';
+        document.querySelector('.button.return').style.display = 'flex';
+        document.querySelector('.separator-hidden').style.display = 'block';
+        toWheelButton.style.display = 'none';
+        toMartButton.style.display = 'none';
+        toWidgetsButton.style.display = 'none';
+        toMainButton.style.display = 'none';
+    });
+
+
+
+    document.querySelector('.button.donate').addEventListener('click', function () {
+        hideAllSections();
+        document.getElementById('donate').style.display = 'block';
+        document.querySelector('.button.return').style.display = 'flex';
+        document.querySelector('.separator-hidden').style.display = 'block';
+        toWheelButton.style.display = 'none';
+        toMartButton.style.display = 'none';
+        toWidgetsButton.style.display = 'none';
+        toMainButton.style.display = 'none';
+    });
+    document.querySelector('.button.mart').addEventListener('click', function () {
+        hideAllSections();
+        document.getElementById('mart').style.display = 'block';
+        document.querySelector('.button.return').style.display = 'flex';
+        document.querySelector('.separator-hidden').style.display = 'block';
+        const martContainer = document.querySelector('.mart-container');
+        const wheelContainer = document.querySelector('.wheel-container');
+        martContainer.style.display = 'block';
+        martContainer.style.opacity = '1';
+        martContainer.style.zIndex = '2';
+        wheelContainer.style.display = 'none';
+        wheelContainer.style.opacity = '0';
+        wheelContainer.style.zIndex = '1';
+        toWheelButton.style.display = 'block';
+        toMartButton.style.display = 'none';
+        toWidgetsButton.style.display = 'none';
+        toMainButton.style.display = 'none';
+    });
+    document.querySelector('.button.return').addEventListener('click', function () {
+        hideAllSections();
+        document.querySelector('.button.return').style.display = 'none';
+        document.getElementById('main').style.display = 'block';
+        document.querySelector('.separator-hidden').style.display = 'none';
+        const mainContainer = document.querySelector('.main');
+        const widgetsContainer = document.querySelector('.widgets-container');
+        mainContainer.style.display = 'block';
+        mainContainer.style.opacity = '1';
+        mainContainer.style.zIndex = '2';
+        widgetsContainer.style.display = 'none';
+        widgetsContainer.style.opacity = '0';
+        widgetsContainer.style.zIndex = '1';
+        toWidgetsButton.style.display = 'block';
+        toMainButton.style.display = 'none';
+        toWheelButton.style.display = 'none';
+        toMartButton.style.display = 'none';
     });
 });
 /*Меню*/
-document.querySelector('.button.auction').addEventListener('click', function () {
-    hideAllSections();
-    document.getElementById('auction').style.display = 'block';
-    document.querySelector('.button.return').style.display = 'flex';
-    document.querySelector('.separator-hidden').style.display = 'block';
-});
 
-document.querySelector('.button.rating').addEventListener('click', function () {
-    hideAllSections();
-    document.getElementById('rating').style.display = 'block';
-    document.querySelector('.button.return').style.display = 'flex';
-    document.querySelector('.separator-hidden').style.display = 'block';
-});
 
-document.querySelector('.button.inventory').addEventListener('click', function () {
-    hideAllSections();
-    document.getElementById('inventory').style.display = 'block';
-    document.querySelector('.button.return').style.display = 'flex';
-    document.querySelector('.separator-hidden').style.display = 'block';
-});
 
-document.querySelector('.button.mart').addEventListener('click', function () {
-    hideAllSections();
-    document.getElementById('mart').style.display = 'block';
-    document.querySelector('.button.return').style.display = 'flex';
-    document.querySelector('.separator-hidden').style.display = 'block';
-    const martContainer = document.querySelector('.mart-container');
-    const wheelContainer = document.querySelector('.wheel-container');
-    martContainer.style.display = 'block';
-    martContainer.style.opacity = '1';
-    martContainer.style.zIndex = '2';
-    wheelContainer.style.display = 'none';
-    wheelContainer.style.opacity = '0';
-    wheelContainer.style.zIndex = '1';
-});
-
-document.querySelector('.button.donate').addEventListener('click', function () {
-    hideAllSections();
-    document.getElementById('donate').style.display = 'block';
-    document.querySelector('.button.return').style.display = 'flex';
-    document.querySelector('.separator-hidden').style.display = 'block';
-});
-
-document.querySelector('.button.return').addEventListener('click', function () {
-    hideAllSections();
-    document.querySelector('.button.return').style.display = 'none';
-    document.getElementById('main').style.display = 'block';
-    document.querySelector('.separator-hidden').style.display = 'none';
-    const mainContainer = document.querySelector('.main');
-    const widgetsContainer = document.querySelector('.widgets-container');
-    mainContainer.style.display = 'block';
-    mainContainer.style.opacity = '1';
-    mainContainer.style.zIndex = '2';
-    widgetsContainer.style.display = 'none';
-    widgetsContainer.style.opacity = '0';
-    widgetsContainer.style.zIndex = '1';
-});
 
 const marketWrapper = document.querySelector('.market');
 marketWrapper.addEventListener('touchstart', (e) => {
