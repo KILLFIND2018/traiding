@@ -9,7 +9,7 @@ const tutorialSteps = [
     {
         section: 'main',
         element: '#main',
-        message: 'Welcome to Crypto Tycoon Simulator! This is your balance. You’ll use tokens to buy items and play games.',
+        message: 'Here you see a room with your bonus items, after each purchase you will see them here.',
         position: 'top'
     },
     /*Меню*/
@@ -28,7 +28,7 @@ const tutorialSteps = [
     {
         section: 'main',
         element: '.button.inventory',
-        message: 'Click here to view your inventory. This is where your items will be stored.',
+        message: 'Click here to view your inventory. This is where your items will be stored. You can also see some information about the item by clicking on the corresponding line.',
         position: 'top'
     },
     {
@@ -40,7 +40,7 @@ const tutorialSteps = [
     {
         section: 'main',
         element: '.button.donate',
-        message: 'Need more tokens? Click here to buy tokens or watch ads for rewards.',
+        message: 'Need more tokens? Click here to buy tokens, watch ads for rewards or invite your friend.',
         position: 'top'
     },
     // Widgets Container Section
@@ -52,20 +52,20 @@ const tutorialSteps = [
     },
     {
         section: 'widgets-container',
+        element: '#bet-amount',
+        message: 'Enter the amount you want to bet here.',
+        position: 'top'
+    },
+    {
+        section: 'widgets-container',
         element: '#bet-up',
-        message: 'Click here to bet that the Bitcoin price will go up.',
+        message: 'Click here to bet that the Bitcoin price will go up. You will see the result at the end of the timer, yes, it is very exciting.',
         position: 'top'
     },
     {
         section: 'widgets-container',
         element: '#bet-down',
-        message: 'Click here to bet that the Bitcoin price will go down.',
-        position: 'top'
-    },
-    {
-        section: 'widgets-container',
-        element: '#bet-amount',
-        message: 'Enter the amount you want to bet here.',
+        message: 'Click here to bet that the Bitcoin price will go down. You will see the result at the end of the timer, yes, it is very exciting.',
         position: 'top'
     },
     {
@@ -103,7 +103,7 @@ const tutorialSteps = [
     {
         section: 'wheel',
         element: '.spin-btn',
-        message: 'This is the wheel! Spin it for a chance to win tokens or items.',
+        message: 'Click on the button and dive into the chance of your luck!',
         position: 'top'
     },
     //Игра угадай блок
@@ -116,7 +116,7 @@ const tutorialSteps = [
     {
         section: 'wheel',
         element: '.game-controls',
-        message: 'Play the guessing game by selecting a block and placing a bet.',
+        message: 'Specify the bet and press the button and test your fortune and intuition!',
         position: 'top'
     },
     {
@@ -141,7 +141,7 @@ const tutorialSteps = [
     {
         section: 'auction',
         element: '.create-lot',
-        message: 'create-lot-form.',
+        message: 'Select an item from your inventory, enter a starting bid and description. Then you will see your lot and you can decide whether to close the lot or sell it for more!',
         position: 'top'
     },
     
@@ -164,19 +164,19 @@ const tutorialSteps = [
     {
         section: 'donate',
         element: '.buy-stars',
-        message: '.buy-stars',
+        message: 'Buy tokens for Telegram Stars.',
         position: 'top'
     },
     {
         section: 'donate',
         element: '.watch-ad',
-        message: '.watch-ad',
+        message: 'Watch the video and get a bonus in the form of tokens.',
         position: 'top'
     },
     {
         section: 'donate',
         element: '.invite-friend',
-        message: 'invite-friends',
+        message: 'Invite a friend to the game and you will receive a MacBook as a gift in your inventory.',
         position: 'top'
     }
 ];
@@ -185,10 +185,11 @@ let currentStep = 0;
 let currentSection = 'main';
 
 function startTutorial() {
+    /*
     if (localStorage.getItem('tutorialCompleted')) {
-        //return; /*раскомментировать после тестов*/
+        return;
     }
-
+*/
     showTutorialStep();
 }
 
