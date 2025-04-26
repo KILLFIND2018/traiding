@@ -144,8 +144,6 @@ const tutorialSteps = [
         message: 'Select an item from your inventory, enter a starting bid and description. Then you will see your lot and you can decide whether to close the lot or sell it for more!',
         position: 'top'
     },
-    
-
     // Rating Section
     {
         section: 'rating',
@@ -185,12 +183,21 @@ let currentStep = 0;
 let currentSection = 'main';
 
 function startTutorial() {
-    /*
-    if (localStorage.getItem('tutorialCompleted')) {
-        return;
+    // Проверяем, доступен ли Telegram WebApp и DeviceStorage
+    const isTelegramEnv = window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.DeviceStorage?.get === 'function';
+    
+    if (isTelegramEnv) {
+        window.Telegram.WebApp.DeviceStorage.get('tutorialCompleted', (error, value) => {
+            if (!value) {
+                showTutorialStep();
+            }
+        });
+    } else {
+        // Fallback на localStorage для браузера или если DeviceStorage недоступен
+        if (!localStorage.getItem('tutorialCompleted')) {
+            showTutorialStep();
+        }
     }
-*/
-    showTutorialStep();
 }
 
 function showTutorialStep() {
@@ -281,7 +288,6 @@ function showTutorialStepContent(step) {
             showTutorialStep();
         });
     }, 600); // Регулирование задержки, чтобы она соответствовала длительности анимации прокрутки
-
 }
 
 function positionTooltip(tooltip, rect, position) {
@@ -344,24 +350,35 @@ function switchSection(section) {
 }
 
 function endTutorial() {
-    localStorage.setItem('tutorialCompleted', 'true');
-    const overlay = document.createElement('div');
-    overlay.className = 'tutorial-overlay';
-    document.body.appendChild(overlay);
+    const isTelegramEnv = window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.DeviceStorage?.set === 'function';
+    
+    const finalizeTutorial = () => {
+        localStorage.setItem('tutorialCompleted', 'true'); // Для совместимости
+        const overlay = document.createElement('div');
+        overlay.className = 'tutorial-overlay';
+        document.body.appendChild(overlay);
 
-    const finalMessage = document.createElement('div');
-    finalMessage.className = 'tutorial-tooltip center';
-    finalMessage.innerHTML = `
-        <p>That’s it! You’re ready to play Crypto Tycoon Simulator. Have fun!</p>
-        <button class="tutorial-next">Start Playing</button>
-    `;
-    document.body.appendChild(finalMessage);
+        const finalMessage = document.createElement('div');
+        finalMessage.className = 'tutorial-tooltip center';
+        finalMessage.innerHTML = `
+            <p>That’s it! You’re ready to play Crypto Tycoon Simulator. Have fun!</p>
+            <button class="tutorial-next">Start Playing</button>
+        `;
+        document.body.appendChild(finalMessage);
 
-    const nextButton = finalMessage.querySelector('.tutorial-next');
-    nextButton.addEventListener('click', () => {
-        overlay.remove();
-        finalMessage.remove();
-        // Вернуться в основной раздел после окончания обучения
-        switchSection('main');
-    });
+        const nextButton = finalMessage.querySelector('.tutorial-next');
+        nextButton.addEventListener('click', () => {
+            overlay.remove();
+            finalMessage.remove();
+            switchSection('main');
+        });
+    };
+
+    if (isTelegramEnv) {
+        window.Telegram.WebApp.DeviceStorage.set('tutorialCompleted', 'true', () => {
+            finalizeTutorial();
+        });
+    } else {
+        finalizeTutorial();
+    }
 }

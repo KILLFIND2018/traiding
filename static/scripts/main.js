@@ -53,7 +53,7 @@ async function startApp(userId) {
     const inventoryCheckInterval = setInterval(async () => {
         await loadInventory(userId);
     }, 10000);
-/*операции очищения функций при зависимости состояния пользователя в приложении*/
+    /*операции очищения функций при зависимости состояния пользователя в приложении*/
     Telegram.WebApp.onEvent('web_app_close', async () => {
         console.log('Web App закрыт через Telegram');
         clearInterval(balanceInterval);
@@ -111,8 +111,39 @@ async function startApp(userId) {
     startTutorial();
 }
 
+/*Появление уведомления про просмотр рекламы 500 токенов только после завершения туториала*/
+setInterval(() => {
+    if (Math.random() < 0.1) { // 10% шанс каждые 10 секунд
+        const isTelegramEnv = window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.DeviceStorage?.get === 'function';
+        if (isTelegramEnv) {
+            window.Telegram.WebApp.DeviceStorage.get('tutorialCompleted', (error, value) => {
+                const isTutorialCompleted = value || localStorage.getItem('tutorialCompleted');
+                if (isTutorialCompleted) {
+                    console.log('Showing ad notification');
+                    const activeSections = ['main', 'auction', 'widgets', 'rating', 'inventory', 'mart', 'donate'];
+                    const currentSection = document.querySelector('.content > div:not([style*="display: none"])');
+                    if (currentSection && activeSections.includes(currentSection.id)) {
+                        showAdNotification();
+                    }
+                }
+            });
+        } else {
+            // Fallback на localStorage для браузера
+            const isTutorialCompleted = localStorage.getItem('tutorialCompleted');
+            if (isTutorialCompleted) {
+                console.log('Showing ad notification (localStorage)');
+                const activeSections = ['main', 'auction', 'widgets', 'rating', 'inventory', 'mart', 'donate'];
+                const currentSection = document.querySelector('.content > div:not([style*="display: none"])');
+                if (currentSection && activeSections.includes(currentSection.id)) {
+                    showAdNotification();
+                }
+            }
+        }
+    }
+}, 10000);
+
 if (userId) startApp(userId);
-/*подсказка-свайпенр в маркете*/
+/*подсказка-свайпнер в маркете*/
 if (!localStorage.getItem('swipeHintShown')) {
     const hint = document.createElement('div');
     hint.textContent = '← Свайпайте → чтобы увидеть больше';
@@ -125,14 +156,3 @@ if (!localStorage.getItem('swipeHintShown')) {
     setTimeout(() => hint.remove(), 3000);
     localStorage.setItem('swipeHintShown', 'true');
 }
-/*Появление уведомления про просмотр рекламы 500 токенов*/
-
-setInterval(() => {
-    if (Math.random() < 0.1) { // 10% шанс каждые 10 секунд
-        const activeSections = ['main','auction', 'widgets', 'rating', 'inventory', 'mart', 'donate'];
-        const currentSection = document.querySelector('.content > div:not([style*="display: none"])');
-        if (currentSection && activeSections.includes(currentSection.id)) {
-            showAdNotification();
-        }
-    }
-}, 10000);
