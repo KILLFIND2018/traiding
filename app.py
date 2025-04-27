@@ -1089,7 +1089,7 @@ def get_referral_link():
             """, (user_id, referral_code, datetime.now()))
             connection.commit()
         
-        referral_link = f"https://t.me/CTSimulatorBot?start={referral_code}"
+        referral_link = f"https://t.me/tycoonsimulatorbot?start={referral_code}"
         return jsonify({"status": "success", "referral_link": referral_link}), 200
         
     except mysql.connector.Error as err:
