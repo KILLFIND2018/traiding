@@ -21,7 +21,7 @@ user_heartbeats = {}
 def calculate_balance(current_balance, last_updated, total_generation):
     now = datetime.now()
     seconds_elapsed = (now - last_updated).total_seconds()
-    hours_elapsed = seconds_elapsed / 3600  # Конвертируем секунды в часы
+    hours_elapsed = max(0, seconds_elapsed / 3600)  # Конвертируем секунды в часы
     
     # Рассчитываем новый баланс на основе почасовой генерации
     new_balance = current_balance + (total_generation * hours_elapsed)
@@ -54,13 +54,19 @@ def generation_loop(user_id):
             total_generation = total_generation or 0  # Почасовая ставка
             last_updated = last_updated or datetime.now()
 
+            # Проверка на будущее время
+            now = datetime.now()
+            if last_updated > now:
+                print(f"Внимание: last_updated ({last_updated}) для user_id {user_id} находится в будущем. Устанавливаем last_updated на текущее время.")
+                last_updated = now
+
             new_balance = calculate_balance(balance, last_updated, total_generation)
 
             cursor.execute("""
                 UPDATE user_progress 
                 SET balance = %s, last_updated = %s 
                 WHERE user_id = %s
-            """, (new_balance, datetime.now(), user_id))
+            """, (new_balance, now, user_id))
             connection.commit()
             print(f"Генерация для user_id {user_id}: баланс = {new_balance}, генерация = {total_generation} (в час)")
 
@@ -1027,7 +1033,7 @@ def spin_wheel():
                 total_generation_update = generation_per_hour
 
         else:
-            if prize in ["1000 токенов", "2000 токенов", "10000 токенов", "100000 токенов"]:
+            if prize in ["1000 tokens", "2000 tokens", "10000 tokens", "100000 tokens"]:
                 prize_amount = int(prize.split()[0].replace('x', ''))
                 new_balance += prize_amount
             elif prize.startswith("x"):
