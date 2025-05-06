@@ -244,7 +244,7 @@ function hideAllSections() {
 }
 /*призы колеса */
 const prizes = ["x3 tokens", "1000 tokens", "Drinking Water Dispenser", "10000 tokens", "100000 tokens", "2000 tokens", "Humanoid robot", "x2 tokens"];
-const probabilities = [16, 16, 2, 16, 16, 16, 2, 16];
+const probabilities = [5, 28, 2, 20, 10, 28, 2, 5];
 /*рандом по шансам колеса */
 function getRandomIndex() {
     const total = probabilities.reduce((sum, prob) => sum + prob, 0);
