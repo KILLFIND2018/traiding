@@ -960,14 +960,38 @@ def claim_login_reward():
         cursor.close()
         connection.close()
 
+# Модифицированные призы
+PRIZES = [
+    "x3 tokens", 
+    "1000 tokens", 
+    "Drinking Water Dispenser", 
+    "10000 tokens", 
+    "100000 tokens", 
+    "2000 tokens", 
+    "Humanoid robot", 
+    "x2 tokens"
+]
+
+# Призы в TON для прокрутки за TON
+TON_PRIZES = {
+    "1000 tokens": 1,
+    "10000 tokens": 2,
+    "100000 tokens": 0.01,
+    "x3 tokens": 3,
+    "x2 tokens": 4,
+    "Drinking Water Dispenser": 5,
+    "Humanoid robot": 6,
+    "2000 tokens": 7
+}
+
 @app.route('/spin_wheel', methods=['POST'])
 def spin_wheel():
     data = request.json
     user_id = data.get('user_id')
     prize_index = data.get('prize_index')
     
-    if not user_id:
-        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
+    if not user_id or prize_index is None:
+        return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
 
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
@@ -989,23 +1013,12 @@ def spin_wheel():
         
         if new_balance < spin_cost:
             connection.rollback()
-            return jsonify({"status": "error", "message": "Insufficient funds"}), 400
+            return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
 
         new_balance -= spin_cost
         cursor.execute("UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s", (new_balance, datetime.now(), user_id))
 
-        prizes = [
-            "x3 tokens", 
-            "1000 tokens", 
-            "Drinking Water Dispenser", 
-            "10000 tokens", 
-            "100000 tokens", 
-            "2000 tokens", 
-            "Humanoid robot", 
-            "x2 tokens"
-        ]
-        
-        prize = prizes[prize_index]
+        prize = PRIZES[prize_index]
         refund = False
         total_generation_update = 0
 
@@ -1026,7 +1039,7 @@ def spin_wheel():
                 cursor.execute("UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s", (new_balance, datetime.now(), user_id))
                 refund = True
             else:
-                cursor.execute("""
+                cursor.execute(""" 
                     INSERT INTO inventory (user_id, item_name, generation_per_hour)
                     VALUES (%s, %s, %s)
                 """, (user_id, prize, generation_per_hour))
@@ -1043,7 +1056,7 @@ def spin_wheel():
             cursor.execute("UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s", (new_balance, datetime.now(), user_id))
 
         if total_generation_update > 0:
-            cursor.execute("""
+            cursor.execute(""" 
                 UPDATE user_progress 
                 SET total_generation = total_generation + %s 
                 WHERE user_id = %s
@@ -1065,6 +1078,120 @@ def spin_wheel():
     finally:
         cursor.close()
         connection.close()
+
+@app.route('/spin_wheel_ton', methods=['POST'])
+def spin_wheel_ton():
+    data = request.json
+    user_id = data.get('user_id')
+    prize_index = data.get('prize_index')
+    transaction_id = data.get('transaction_id')
+
+    if not all([user_id, prize_index is not None, transaction_id]):
+        return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
+
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+
+        # Начало транзакции сразу после создания соединения
+        connection.start_transaction()
+
+        # Проверка уникальности transaction_id
+        cursor.execute("SELECT COUNT(*) FROM ton_transactions WHERE transaction_id = %s", (transaction_id,))
+        if cursor.fetchone()[0] > 0:
+            connection.rollback()
+            return jsonify({"status": "error", "message": "Транзакция уже использована"}), 400
+
+        # Проверка времени последней прокрутки
+        cursor.execute("SELECT MAX(created_at) FROM ton_transactions WHERE user_id = %s AND status = 'completed'", (user_id,))
+        last_spin = cursor.fetchone()[0]
+        if last_spin and (datetime.now() - last_spin).total_seconds() < 3600:
+            connection.rollback()
+            remaining = 3600 - (datetime.now() - last_spin).total_seconds()
+            return jsonify({"status": "error", "message": f"Прокрутка доступна раз в час. Осталось: {int(remaining)} секунд"}), 400
+
+        # Запись транзакции
+        cursor.execute(
+            "INSERT INTO ton_transactions (user_id, transaction_id, amount_ton, status, created_at) VALUES (%s, %s, %s, %s, %s)",
+            (user_id, transaction_id, 0.01, 'completed', datetime.now())
+        )
+
+        # Получение данных пользователя
+        cursor.execute("SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s FOR UPDATE", (user_id,))
+        result = cursor.fetchone()
+        if not result:
+            connection.rollback()
+            return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
+
+        balance, total_generation, last_updated = result
+        total_generation = total_generation or 0
+        new_balance = calculate_balance(balance, last_updated or datetime.now(), total_generation)
+
+        # Обработка приза
+        prize = PRIZES[prize_index]
+        refund = False
+        total_generation_update = 0
+        ton_prize = TON_PRIZES.get(prize, 0)
+
+        if prize in ["Drinking Water Dispenser", "Humanoid robot"]:
+            cursor.execute("SELECT COUNT(*) FROM inventory WHERE user_id = %s AND item_name = %s", (user_id, prize))
+            if cursor.fetchone()[0] > 0:
+                refund = True
+            else:
+                cursor.execute("SELECT generation_per_hour FROM market_items WHERE name = %s", (prize,))
+                generation_per_hour = cursor.fetchone()[0]
+                cursor.execute(
+                    "INSERT INTO inventory (user_id, item_name, generation_per_hour) VALUES (%s, %s, %s)",
+                    (user_id, prize, generation_per_hour)
+                )
+                total_generation_update = generation_per_hour
+        elif "tokens" in prize:
+            prize_amount = int(prize.split()[0])
+            new_balance += prize_amount
+        elif prize.startswith("x"):
+            new_balance *= int(prize[1])
+
+        # Обновление данных пользователя
+        if total_generation_update > 0:
+            cursor.execute(
+                "UPDATE user_progress SET balance = %s, total_generation = total_generation + %s, last_updated = %s WHERE user_id = %s",
+                (new_balance, total_generation_update, datetime.now(), user_id)
+            )
+        else:
+            cursor.execute(
+                "UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s",
+                (new_balance, datetime.now(), user_id)
+            )
+
+        # Запись TON-приза
+        if ton_prize > 0:
+            cursor.execute(
+                "INSERT INTO ton_rewards (user_id, amount_ton, prize, created_at) VALUES (%s, %s, %s, %s)",
+                (user_id, ton_prize, prize, datetime.now())
+            )
+
+        # Фиксация изменений
+        connection.commit()
+
+        return jsonify({
+            "status": "success",
+            "prize": prize,
+            "new_balance": int(new_balance),
+            "refund": refund,
+            "ton_prize": ton_prize
+        }), 200
+
+    except mysql.connector.Error as err:
+        if 'connection' in locals():
+            connection.rollback()
+        app.logger.error(f"Ошибка базы данных: {err}")
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals():
+            connection.close()
+
 
 @app.route('/get_referral_link', methods=['GET'])
 def get_referral_link():

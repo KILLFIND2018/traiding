@@ -118,7 +118,7 @@ function showAdPopup(reward) {
 
     // Скрываем кнопку "Закрыть" при открытии попапа
     closeButton.style.display = 'none';
-    
+
     popup.style.display = 'block';
     video.play();
 
@@ -174,7 +174,8 @@ function setupBuyButtons(userId) {
                     user_id: userId,
                     item_name: itemName,
                     item_cost: itemCost,
-                    item_generation: parseInt(row.querySelector('td:nth-child(3)').textContent.replace(/\D/g, ''), 10)                })
+                    item_generation: parseInt(row.querySelector('td:nth-child(3)').textContent.replace(/\D/g, ''), 10)
+                })
             });
 
             const data = await response.json();
@@ -259,78 +260,96 @@ function getRandomIndex() {
 }
 /*механика колеса*/
 let isSpinning = false;
-async function startSpin() {
+
+async function startSpin(spinType) {
     if (isSpinning) return;
     const userId = new URLSearchParams(window.location.search).get('user_id');
     if (!userId) {
-        alert("Unable to determine user");
+        showNotificationPopup("Ошибка", "/static/ton_icon.png", "Не удалось определить пользователя", true);
         return;
     }
+    
     isSpinning = true;
     const wheel = document.getElementById('wheel');
-    const sectors = prizes.length;
-    const sectorAngle = 360 / sectors;
     const targetIndex = getRandomIndex();
-    const extraRotations = 5;
-    const finalAngle = (extraRotations * 360) + (targetIndex * sectorAngle) + (sectorAngle / 2);
+    const finalAngle = (5 * 360) + (targetIndex * 45) + 22.5;
+
     wheel.style.transition = 'none';
-    wheel.style.transform = `rotate(${0}deg)`;
+    wheel.style.transform = `rotate(0deg)`;
+    
     setTimeout(() => {
         wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
-        wheel.style.transform = `rotate(${-finalAngle}deg)`;
+        wheel.style.transform = `rotate(-${finalAngle}deg)`;
     }, 10);
+
     try {
-        const response = await fetch('/spin_wheel', {
+        const endpoint = spinType === 'ton' ? '/spin_wheel_ton' : '/spin_wheel';
+        const body = { 
+            user_id: userId, 
+            prize_index: targetIndex,
+            ...(spinType === 'ton' && { transaction_id: await simulateTonTransaction(userId) })
+        };
+
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, prize_index: targetIndex })
+            body: JSON.stringify(body)
         });
+
         const data = await response.json();
+        
         setTimeout(() => {
             if (data.status === "success") {
-                let prizeType, prizeValue, prizeImage;
-                if (data.prize.includes("tokens")) {
-                    prizeType = "token";
-                    const match = data.prize.match(/(x?\d+)\s*tokens/);
-                    prizeValue = match ? match[1] : "Unknown";
-                    prizeImage = "/static/bitcoin.png";
-                } else {
-                    prizeType = "item";
-                    prizeValue = data.prize;
-                    prizeImage = `/static/img-market/${data.prize.replace(/ /g, '_').toLowerCase()}.png`;
+                let message = `Вы выиграли ${data.prize}!`;
+                let prizeImage = "/static/bitcoin.png";
+
+                // Обработка TON-призов
+                if (spinType === 'ton' && data.ton_prize > 0) {
+                    message += ` + ${data.ton_prize} TON`;
+                    prizeImage = "/static/img_whell/ton_symbol.png";
                 }
 
-                if (data.refund) {
-                    message = `The item "${data.prize}" is already in your inventory. The cost of the spin (100 coins) has been refunded. Your balance is: ${data.new_balance}`;
-                }
+                // Обновление интерфейса
                 document.getElementById('currency-amount').textContent = data.new_balance;
-                if (prizeType === "token") {
-                    const displayValue = data.prize.includes("x") ? `${prizeValue}` : prizeValue;
-                    showNotificationPopup(
-                        `${displayValue} tokens`,
-                        "/static/bitcoin.png",
-                        'You win tokens!'
-                    );
-                } else if (prizeType === "item") {
-                    showNotificationPopup(prizeValue, prizeImage, 'You win item!');
-                }
-                if ((data.prize === "Drinking Water Dispenser" || data.prize === "Humanoid robot") && !data.refund) {
-                    loadInventory(userId);
+                showNotificationPopup(data.prize, prizeImage, message);
+
+                // Обновление кнопки TON
+                if (spinType === 'ton') {
+                    checkTonSpinAvailability(userId);
                 }
             } else {
-                alert(`Error: ${data.message}`);
-                wheel.style.transition = 'none';
-                wheel.style.transform = `rotate(${0}deg)`;
+                showNotificationPopup("Ошибка", "/static/ton_icon.png", data.message, true);
             }
             isSpinning = false;
         }, 4050);
+
     } catch (error) {
-        console.error('Ошибка при вращении колеса:', error);
-        alert('There was an error connecting to the server');
-        wheel.style.transition = 'none';
-        wheel.style.transform = `rotate(${0}deg)`;
+        console.error('Ошибка:', error);
+        showNotificationPopup("Ошибка", "/static/ton_icon.png", "Ошибка подключения", true);
         isSpinning = false;
     }
+}
+
+// Тестовая функция для симуляции TON-транзакции
+async function simulateTonTransaction(userId) {
+    const tg = window.Telegram.WebApp;
+    return new Promise((resolve, reject) => {
+        tg.showPopup({
+            title: 'Подтверждение транзакции',
+            message: 'Совершить тестовую транзакцию 0.01 TON?',
+            buttons: [
+                { id: 'confirm', type: 'default', text: 'Подтвердить' },
+                { type: 'cancel', text: 'Отмена' }
+            ]
+        }, (buttonId) => {
+            if (buttonId === 'confirm') {
+                const transactionId = `TEST_${userId}_${Date.now()}`;
+                resolve(transactionId);
+            } else {
+                reject(new Error('Транзакция отменена'));
+            }
+        });
+    });
 }
 /*механика угадай блок и его стилизация*/
 let selectedCell = null;
@@ -434,4 +453,28 @@ async function startGame() {
             betInput.value = '';
         }, 3000);
     }
+}
+
+// Добавить в конец ui.js
+async function checkTonSpinAvailability(userId) {
+    const response = await fetch(`/spin_wheel_ton`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId })
+    });
+    const data = await response.json();
+    const tonButton = document.querySelector('.ton-spin');
+    if (data.remaining) {
+        tonButton.querySelector('span').textContent = `Wait ${formatTime(data.remaining)}`;
+        tonButton.disabled = true;
+    } else {
+        tonButton.querySelector('span').textContent = '0.01 TON';
+        tonButton.disabled = false;
+    }
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
