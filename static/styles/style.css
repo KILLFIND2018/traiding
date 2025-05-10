@@ -1,3 +1,4 @@
+ @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
 html,
 body {
     overflow-x: hidden;
@@ -245,6 +246,13 @@ body {
     justify-content: space-between;
     z-index: 1;
 }
+
+.header h1 {
+        font-family: 'Orbitron', sans-serif; /* Космический шрифт */
+        color: #00ffcc; /* Яркий бирюзовый цвет для контраста с фоном */
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Тень для читаемости */
+        text-align: center;
+    }
 
 .header,
 .sub-header {

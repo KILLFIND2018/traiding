@@ -197,9 +197,32 @@ async function initBitcoinWidget(userId) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#fff' // Updated font color for legend
+                    }
+                }
+                
+            },
             scales: {
-                x: { display: false },
-                y: { beginAtZero: false }
+                x: { 
+                    display: false,
+                    ticks: {
+                        color: '#fff' // Updated font color for x-axis ticks
+                    }
+                },
+                y: { 
+                    beginAtZero: false,
+                    ticks: {
+                        color: '#fff' // Updated font color for y-axis ticks
+                    },
+                    title: {
+                        display: true,
+                        text: 'Price (USD)',
+                        color: '#fff' // Updated font color for y-axis title
+                    }
+                }
             }
         }
     });
@@ -231,12 +254,12 @@ async function initBitcoinWidget(userId) {
             const hours = Math.floor(remaining / 3600);
             const minutes = Math.floor((remaining % 3600) / 60);
             const seconds = Math.floor(remaining % 60);
-            betTimer.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            betTimer.textContent = ` ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             betUpButton.disabled = true;
             betDownButton.disabled = true;
             betAmountInput.disabled = true;
         } else {
-            betTimer.textContent = "Rate available!";
+            betTimer.textContent = " Rate available!";
             betUpButton.disabled = false;
             betDownButton.disabled = false;
             betAmountInput.disabled = false;
