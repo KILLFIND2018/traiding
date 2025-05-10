@@ -76,7 +76,7 @@ const tutorialSteps = [
     },
     {
         section: 'widgets-container',
-        element: '.nav-main-button.left#to-main',
+        element: '.nav-button.left#to-main',
         message: 'Click here to return to the main screen.',
         position: 'right'
     },
@@ -221,73 +221,108 @@ function showTutorialStep() {
     }
 }
 
-function showTutorialStepContent(step) {
-    const targetElement = document.querySelector(step.element);
+async function showTutorialStepContent(step) {
+    // Проверка видимости целевого элемента
+    const elementIsVisible = (element) => {
+        const rect = element.getBoundingClientRect();
+        return !!(rect.top < window.innerHeight && rect.bottom > 0 && 
+                rect.left < window.innerWidth && rect.right > 0);
+    };
 
-    if (!targetElement) {
+    let targetElement;
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    // Ожидание появления элемента с таймаутом
+    while (attempts < maxAttempts) {
+        targetElement = document.querySelector(step.element);
+        if (targetElement && elementIsVisible(targetElement)) break;
+        
+        await new Promise(resolve => setTimeout(resolve, 300));
+        attempts++;
+    }
+
+    if (!targetElement || attempts >= maxAttempts) {
+        console.warn(`Element ${step.element} not found, skipping step`);
         currentStep++;
-        showTutorialStep();
-        return;
+        return showTutorialStep();
     }
 
-    // Прокрутите до целевого элемента, чтобы убедиться, что он виден.
-    const scrollableContainer = targetElement.closest('.widgets-container, .auction-container, .mart-container, .wheel-container, .rating-container, .inventory-container, .donate-container');
-    if (scrollableContainer) {
-        // Если элемент находится внутри прокручиваемого контейнера, прокрутите контейнер.
-        const elementRect = targetElement.getBoundingClientRect();
-        const containerRect = scrollableContainer.getBoundingClientRect();
-        const offsetTop = elementRect.top - containerRect.top + scrollableContainer.scrollTop - (containerRect.height - elementRect.height) / 2;
-        scrollableContainer.scrollTo({
-            top: offsetTop,
-            behavior: 'smooth'
-        });
+    // Прокрутка с оптимизацией для мобильных устройств
+    const scrollOptions = {
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest'
+    };
+
+    // Для мобильных - полифилл smooth scroll
+    if ('scrollBehavior' in document.documentElement.style) {
+        targetElement.scrollIntoView(scrollOptions);
     } else {
-        // В противном случае прокрутите окно.
-        targetElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-        });
+        const offset = targetElement.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: offset });
     }
 
-    // Дождитесь окончания прокрутки, прежде чем показывать подсказку.
-    setTimeout(() => {
-        // Создать наложение
-        const overlay = document.createElement('div');
-        overlay.className = 'tutorial-overlay';
-        document.body.appendChild(overlay);
+    // Ожидание завершения прокрутки
+    await new Promise(resolve => setTimeout(resolve, 800));
 
-        // Создать подсказку
-        const tooltip = document.createElement('div');
-        tooltip.className = `tutorial-tooltip ${step.position}`;
-        tooltip.innerHTML = `
-            <p>${step.message}</p>
-            <button class="tutorial-next">Next</button>
-        `;
-        document.body.appendChild(tooltip);
+    // Создание элементов интерфейса
+    const overlay = document.createElement('div');
+    overlay.className = 'tutorial-overlay';
+    overlay.style.willChange = 'opacity'; // Оптимизация анимации
+    
+    const highlight = document.createElement('div');
+    highlight.className = 'tutorial-highlight';
+    highlight.style.willChange = 'transform'; // Оптимизация анимации
 
-        // Выделение целевого элемента
-        const rect = targetElement.getBoundingClientRect();
-        const highlight = document.createElement('div');
-        highlight.className = 'tutorial-highlight';
-        highlight.style.width = `${rect.width}px`;
-        highlight.style.height = `${rect.height}px`;
-        highlight.style.top = `${rect.top + window.scrollY}px`;
-        highlight.style.left = `${rect.left + window.scrollX}px`;
-        document.body.appendChild(highlight);
+    // Рассчет позиции с учетом скролла
+    const rect = targetElement.getBoundingClientRect();
+    highlight.style.cssText = `
+        width: ${rect.width}px;
+        height: ${rect.height}px;
+        top: ${rect.top + window.scrollY}px;
+        left: ${rect.left + window.scrollX}px;
+    `;
 
-        // Расположите подсказку
-        positionTooltip(tooltip, rect, step.position);
+    // Создание тултипа
+    const tooltip = document.createElement('div');
+    tooltip.className = `tutorial-tooltip ${step.position}`;
+    tooltip.innerHTML = `
+        <p>${step.message}</p>
+        <button class="tutorial-next">Next</button>
+    `;
+    tooltip.style.willChange = 'transform'; // Оптимизация анимации
 
-        // Добавление прослушивателя событий для следующей кнопки
-        const nextButton = tooltip.querySelector('.tutorial-next');
-        nextButton.addEventListener('click', () => {
-            overlay.remove();
-            tooltip.remove();
-            highlight.remove();
-            currentStep++;
-            showTutorialStep();
-        });
-    }, 600); // Регулирование задержки, чтобы она соответствовала длительности анимации прокрутки
+    // Добавление элементов в DOM
+    document.body.append(overlay, highlight, tooltip);
+    positionTooltip(tooltip, rect, step.position);
+
+    // Обработчик следующего шага
+    const nextHandler = async () => {
+        overlay.remove();
+        highlight.remove();
+        tooltip.remove();
+        currentStep++;
+        
+        // Задержка для завершения анимаций
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Проверка видимости перед следующим шагом
+        const nextStepElement = document.querySelector(tutorialSteps[currentStep]?.element);
+        if (nextStepElement && !elementIsVisible(nextStepElement)) {
+            await switchSection(tutorialSteps[currentStep].section);
+        }
+        
+        showTutorialStep();
+    };
+
+    // Назначение обработчиков
+    tooltip.querySelector('.tutorial-next').addEventListener('click', nextHandler);
+    overlay.addEventListener('click', nextHandler);
+
+    // Автоматический переход при бездействии (30 сек)
+    const timeout = setTimeout(nextHandler, 30000);
+    tooltip.addEventListener('click', () => clearTimeout(timeout));
 }
 
 function positionTooltip(tooltip, rect, position) {
@@ -347,6 +382,10 @@ function switchSection(section) {
     if (sectionMap[section]) {
         sectionMap[section]();
     }
+    return new Promise(resolve => {
+        sectionMap[section]();
+        setTimeout(resolve, 700); // Ждем завершения анимации
+    });
 }
 
 function endTutorial() {

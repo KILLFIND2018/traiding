@@ -25,6 +25,13 @@ body {
     position: relative;
 }
 
+#background-video::-webkit-media-controls {
+    display: none !important;
+    visibility: hidden;
+    opacity: 0;
+}
+
+
 /* Видео на заднем плане */
 #background-video {
     position: absolute;
@@ -34,7 +41,10 @@ body {
     height: 100%;
     object-fit: cover;
     z-index: -1;
-    /* Видео позади всего контента */
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: none;
+    
 }
 
 /* Стили для контейнера загрузки */
@@ -1431,6 +1441,15 @@ td {
 
 .tutorial-next:hover {
     background-color: #75d8b7;
+}
+
+.tutorial-highlight, .tutorial-tooltip {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease;
+}
+
+.tutorial-overlay {
+    transition: opacity 0.3s ease;
 }
 
 @media screen and (max-width: 768px),

@@ -10,6 +10,7 @@ async function startApp(userId) {
     /*Загрузка приложения*/
     const loader = document.getElementById('loader');
     loader.classList.remove('hidden');
+    
     /*Старт генерации*/
     const initialBalance = await startGeneration(userId);
     if (initialBalance !== null) {

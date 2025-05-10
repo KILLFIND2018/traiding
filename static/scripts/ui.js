@@ -241,6 +241,8 @@ function hideAllSections() {
     document.getElementById('inventory').style.display = 'none';
     document.getElementById('mart').style.display = 'none';
     document.getElementById('donate').style.display = 'none';
+
+    document.querySelector('.game-menu').style.display = 'flex';
 }
 /*призы колеса */
 const prizes = ["x3 tokens", "1000 tokens", "Drinking Water Dispenser", "10000 tokens", "100000 tokens", "2000 tokens", "Humanoid robot", "x2 tokens"];
