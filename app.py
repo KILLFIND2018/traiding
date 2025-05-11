@@ -974,14 +974,14 @@ PRIZES = [
 
 # Призы в TON для прокрутки за TON
 TON_PRIZES = {
-    "1000 tokens": 1,
-    "10000 tokens": 2,
-    "100000 tokens": 0.01,
-    "x3 tokens": 3,
-    "x2 tokens": 4,
-    "Drinking Water Dispenser": 5,
-    "Humanoid robot": 6,
-    "2000 tokens": 7
+    "1000 tokens": 0,
+    "10000 tokens": 0.01,
+    "100000 tokens": 0.02,
+    "x3 tokens": 0.03,
+    "x2 tokens": 0.03,
+    "Drinking Water Dispenser": 0.05,
+    "Humanoid robot": 0.05,
+    "2000 tokens": 0
 }
 
 @app.route('/spin_wheel', methods=['POST'])

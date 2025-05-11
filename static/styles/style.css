@@ -1076,7 +1076,11 @@ td {
     cursor: not-allowed;
 }
 
-
+.spin-btn.token-spin,
+.spin-btn.ton-spin
+ {
+    margin: 10px;
+}
 
 .auctions-table {
     margin: 5px;
