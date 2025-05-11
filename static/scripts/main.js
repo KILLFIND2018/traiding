@@ -47,6 +47,7 @@ async function startApp(userId) {
     await checkLoginReward(userId);
     await checkTonSpinAvailability(userId);
     await checkSpinAvailability(userId);
+    await updateSpinCost(userId);
     const rewardCheckInterval = setInterval(() => checkLoginReward(userId), 1000);
     const tonSpinCheckInterval = setInterval(() => checkTonSpinAvailability(userId), 1000);
     const spinCheckInterval = setInterval(() => checkSpinAvailability(userId), 1000);

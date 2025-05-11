@@ -312,6 +312,7 @@ async function startSpin(spinType) {
                 // Обновление интерфейса
                 document.getElementById('currency-amount').textContent = data.new_balance;
                 showNotificationPopup(data.prize, prizeImage, message);
+                updateSpinCost(userId); // Обновляем цену после прокрутки
 
                 // Обновление кнопки TON
                 if (spinType === 'ton') {
@@ -462,7 +463,7 @@ async function checkSpinAvailability(userId) {
         const response = await fetch(`/check_spin_status?user_id=${userId}`);
         const data = await response.json();
         if (data.status === "available") {
-            spinButtonSpan.textContent = "100";
+            await updateSpinCost(userId); // Обновляем цену при доступности
             spinButton.disabled = false;
             spinButton.classList.add('available');
         } else if (data.status === "pending") {
@@ -514,6 +515,22 @@ async function checkTonSpinAvailability(userId) {
         tonButtonSpan.textContent = "Ошибка";
         tonButton.disabled = true;
         tonButton.classList.remove('available');
+    }
+}
+
+async function updateSpinCost(userId) {
+    try {
+        const response = await fetch(`/get_spin_cost?user_id=${userId}`);
+        const data = await response.json();
+        if (data.status === "success") {
+            const spinButton = document.querySelector('.token-spin');
+            const spinButtonSpan = spinButton.querySelector('span');
+            spinButtonSpan.textContent = formatNumber(data.spin_cost);
+        } else {
+            console.error('Ошибка получения цены прокрутки:', data.message);
+        }
+    } catch (error) {
+        console.error('Ошибка при запросе цены прокрутки:', error);
     }
 }
 

@@ -1002,12 +1002,15 @@ def spin_wheel():
             return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
         balance, total_generation, last_updated = result
         total_generation = total_generation or 0
-        spin_cost = 100
-        new_balance = calculate_balance(balance, last_updated or datetime.now(), total_generation)
-        if new_balance < spin_cost:
+        current_balance = calculate_balance(balance, last_updated or datetime.now(), total_generation)
+        
+        # Вычисление динамической цены прокрутки: 10% от баланса, но не менее 1000
+        spin_cost = max(int(current_balance * 0.1), 1000)
+        
+        if current_balance < spin_cost:
             connection.rollback()
             return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
-        new_balance -= spin_cost
+        new_balance = current_balance - spin_cost
         cursor.execute("UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s", (new_balance, datetime.now(), user_id))
         # Записываем спин в spin_transactions
         transaction_id = f"SPIN_{user_id}_{int(datetime.now().timestamp())}"
@@ -1057,7 +1060,8 @@ def spin_wheel():
             "prize": prize,
             "prize_index": prize_index,
             "new_balance": int(new_balance),
-            "refund": refund
+            "refund": refund,
+            "spin_cost": spin_cost  # Возвращаем цену прокрутки
         }), 200
     except mysql.connector.Error as err:
         connection.rollback()
@@ -1389,6 +1393,29 @@ def reward_user():
 
         return jsonify({"status": "success", "new_balance": new_balance}), 200
 
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@app.route('/get_spin_cost', methods=['GET'])
+def get_spin_cost():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+        cursor.execute("SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s", (user_id,))
+        result = cursor.fetchone()
+        if not result:
+            return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
+        balance, total_generation, last_updated = result
+        total_generation = total_generation or 0
+        current_balance = calculate_balance(balance, last_updated or datetime.now(), total_generation)
+        spin_cost = max(int(current_balance * 0.1), 500)
+        return jsonify({"status": "success", "spin_cost": spin_cost}), 200
     except mysql.connector.Error as err:
         return jsonify({"status": "error", "message": str(err)}), 500
     finally:
