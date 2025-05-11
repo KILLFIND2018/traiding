@@ -989,51 +989,44 @@ def spin_wheel():
     data = request.json
     user_id = data.get('user_id')
     prize_index = data.get('prize_index')
-    
     if not user_id or prize_index is None:
         return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
-
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
-
         connection.start_transaction()
         cursor.execute("SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s FOR UPDATE", (user_id,))
         result = cursor.fetchone()
-        
         if not result:
             connection.rollback()
             return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
-            
         balance, total_generation, last_updated = result
         total_generation = total_generation or 0
         spin_cost = 100
-        
         new_balance = calculate_balance(balance, last_updated or datetime.now(), total_generation)
-        
         if new_balance < spin_cost:
             connection.rollback()
             return jsonify({"status": "error", "message": "Недостаточно средств"}), 400
-
         new_balance -= spin_cost
         cursor.execute("UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s", (new_balance, datetime.now(), user_id))
-
+        # Записываем спин в spin_transactions
+        transaction_id = f"SPIN_{user_id}_{int(datetime.now().timestamp())}"
+        cursor.execute(
+            "INSERT INTO spin_transactions (user_id, transaction_id, amount_tokens, status, created_at) VALUES (%s, %s, %s, %s, %s)",
+            (user_id, transaction_id, spin_cost, 'completed', datetime.now())
+        )
         prize = PRIZES[prize_index]
         refund = False
         total_generation_update = 0
-
         if prize in ["Drinking Water Dispenser", "Humanoid robot"]:
             cursor.execute("SELECT generation_per_hour FROM market_items WHERE name = %s", (prize,))
             generation_result = cursor.fetchone()
             if not generation_result:
                 connection.rollback()
                 return jsonify({"status": "error", "message": "Предмет не найден в магазине"}), 404
-                
             generation_per_hour = generation_result[0]
-
             cursor.execute("SELECT COUNT(*) FROM inventory WHERE user_id = %s AND item_name = %s", (user_id, prize))
             item_exists = cursor.fetchone()[0] > 0
-            
             if item_exists:
                 new_balance += spin_cost
                 cursor.execute("UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s", (new_balance, datetime.now(), user_id))
@@ -1044,7 +1037,6 @@ def spin_wheel():
                     VALUES (%s, %s, %s)
                 """, (user_id, prize, generation_per_hour))
                 total_generation_update = generation_per_hour
-
         else:
             if prize in ["1000 tokens", "2000 tokens", "10000 tokens", "100000 tokens"]:
                 prize_amount = int(prize.split()[0].replace('x', ''))
@@ -1052,18 +1044,14 @@ def spin_wheel():
             elif prize.startswith("x"):
                 multiplier = int(prize[1])
                 new_balance = new_balance * multiplier
-            
             cursor.execute("UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s", (new_balance, datetime.now(), user_id))
-
         if total_generation_update > 0:
             cursor.execute(""" 
                 UPDATE user_progress 
                 SET total_generation = total_generation + %s 
                 WHERE user_id = %s
             """, (total_generation_update, user_id))
-
         connection.commit()
-        
         return jsonify({
             "status": "success",
             "prize": prize,
@@ -1071,7 +1059,6 @@ def spin_wheel():
             "new_balance": int(new_balance),
             "refund": refund
         }), 200
-
     except mysql.connector.Error as err:
         connection.rollback()
         return jsonify({"status": "error", "message": str(err)}), 500
@@ -1231,6 +1218,75 @@ def get_referral_link():
         cursor.close()
         connection.close()
 
+@app.route('/check_ton_spin_status', methods=['GET'])
+def check_ton_spin_status():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+        cursor.execute("SELECT MAX(created_at) FROM ton_transactions WHERE user_id = %s AND status = 'completed'", (user_id,))
+        last_spin = cursor.fetchone()[0]
+        current_time = datetime.now()
+        spin_interval = 3600  # 1 час
+        if not last_spin:
+            return jsonify({
+                "status": "available",
+                "remaining": 0
+            }), 200
+        time_since_last_spin = (current_time - last_spin).total_seconds()
+        if time_since_last_spin >= spin_interval:
+            return jsonify({
+                "status": "available",
+                "remaining": 0
+            }), 200
+        else:
+            remaining = spin_interval - time_since_last_spin
+            return jsonify({
+                "status": "pending",
+                "remaining": int(remaining)
+            }), 200
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@app.route('/check_spin_status', methods=['GET'])
+def check_spin_status():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"status": "error", "message": "User ID отсутствует"}), 400
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+        cursor.execute("SELECT MAX(created_at) FROM spin_transactions WHERE user_id = %s AND status = 'completed'", (user_id,))
+        last_spin = cursor.fetchone()[0]
+        current_time = datetime.now()
+        spin_interval = 3600  # 1 час
+        if not last_spin:
+            return jsonify({
+                "status": "available",
+                "remaining": 0
+            }), 200
+        time_since_last_spin = (current_time - last_spin).total_seconds()
+        if time_since_last_spin >= spin_interval:
+            return jsonify({
+                "status": "available",
+                "remaining": 0
+            }), 200
+        else:
+            remaining = spin_interval - time_since_last_spin
+            return jsonify({
+                "status": "pending",
+                "remaining": int(remaining)
+            }), 200
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
 @app.route('/play_game', methods=['POST'])
 def play_game():
     data = request.json

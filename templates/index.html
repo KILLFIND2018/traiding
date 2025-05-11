@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <link rel="stylesheet" href="/static/styles/popup.css">
-    <link rel="stylesheet" href="/static/styles/style.css?v=4">
+    <link rel="stylesheet" href="/static/styles/style.css?v=9">
 </head>
 
 <body>
@@ -153,15 +153,14 @@
                 <div class="wheel-container">
                     <img src="/static/img_whell/whell.png" id="wheel" class="wheel">
                     <div class="arrow"></div>
-                    <button class="spin-btn" onclick="startSpin('tokens')">
-                        <span>100</span>
+                    <button class="spin-btn token-spin" onclick="startSpin('tokens')">
+                        <span class="timer"></span>
                         <div class="coin-wrapper">
                             <img src="/static/bitcoin.png" alt="balance">
                         </div>
                     </button>
                     <button class="spin-btn ton-spin" onclick="startSpin('ton')">
                         <span class="timer"></span>
-                        <span>0.01 TON</span>
                         <div class="coin-wrapper">
                             <img src="/static/img_whell/ton_symbol.png" alt="TON"> <!-- Иконка TON (нужно добавить в static) -->
                         </div>
@@ -238,9 +237,9 @@
     <script src="/static/scripts/models.js"></script>
     <script src="/static/scripts/events.js?v=1"></script>
     <script src="/static/scripts/api.js?v=1"></script>
-    <script src="/static/scripts/ui.js?v=8"></script>
-    <script src="/static/scripts/tutorial.js?v=5"></script>
-    <script src="/static/scripts/main.js?v=2"></script>
+    <script src="/static/scripts/ui.js?v=10"></script>
+    <script src="/static/scripts/tutorial.js?v=10"></script>
+    <script src="/static/scripts/main.js?v=11"></script>
     <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'93584ab68b7612f5',t:'MTc0NTUyNTkyNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
 </body>
 

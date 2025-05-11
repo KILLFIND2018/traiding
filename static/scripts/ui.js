@@ -455,21 +455,65 @@ async function startGame() {
     }
 }
 
-// Добавить в конец ui.js
+async function checkSpinAvailability(userId) {
+    const spinButton = document.querySelector('.token-spin');
+    const spinButtonSpan = spinButton.querySelector('span');
+    try {
+        const response = await fetch(`/check_spin_status?user_id=${userId}`);
+        const data = await response.json();
+        if (data.status === "available") {
+            spinButtonSpan.textContent = "100";
+            spinButton.disabled = false;
+            spinButton.classList.add('available');
+        } else if (data.status === "pending") {
+            const remaining = data.remaining;
+            const hours = Math.floor(remaining / 3600);
+            const minutes = Math.floor((remaining % 3600) / 60);
+            const seconds = Math.floor(remaining % 60);
+            spinButtonSpan.textContent = `Осталось ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            spinButton.disabled = true;
+            spinButton.classList.remove('available');
+        } else {
+            spinButtonSpan.textContent = "Ошибка";
+            spinButton.disabled = true;
+            spinButton.classList.remove('available');
+        }
+    } catch (error) {
+        console.error('Ошибка проверки спина:', error);
+        spinButtonSpan.textContent = "Ошибка";
+        spinButton.disabled = true;
+        spinButton.classList.remove('available');
+    }
+}
+
 async function checkTonSpinAvailability(userId) {
-    const response = await fetch(`/spin_wheel_ton`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId })
-    });
-    const data = await response.json();
     const tonButton = document.querySelector('.ton-spin');
-    if (data.remaining) {
-        tonButton.querySelector('span').textContent = `Wait ${formatTime(data.remaining)}`;
+    const tonButtonSpan = tonButton.querySelector('span');
+    try {
+        const response = await fetch(`/check_ton_spin_status?user_id=${userId}`);
+        const data = await response.json();
+        if (data.status === "available") {
+            tonButtonSpan.textContent = "0.01";
+            tonButton.disabled = false;
+            tonButton.classList.add('available');
+        } else if (data.status === "pending") {
+            const remaining = data.remaining;
+            const hours = Math.floor(remaining / 3600);
+            const minutes = Math.floor((remaining % 3600) / 60);
+            const seconds = Math.floor(remaining % 60);
+            tonButtonSpan.textContent = `Осталось ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            tonButton.disabled = true;
+            tonButton.classList.remove('available');
+        } else {
+            tonButtonSpan.textContent = "Ошибка";
+            tonButton.disabled = true;
+            tonButton.classList.remove('available');
+        }
+    } catch (error) {
+        console.error('Ошибка проверки TON спина:', error);
+        tonButtonSpan.textContent = "Ошибка";
         tonButton.disabled = true;
-    } else {
-        tonButton.querySelector('span').textContent = '0.01 TON';
-        tonButton.disabled = false;
+        tonButton.classList.remove('available');
     }
 }
 

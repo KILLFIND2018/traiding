@@ -1056,7 +1056,25 @@ td {
     /* Запрещаем уменьшение размера */
 }
 
-
+.spin-btn.token-spin:disabled,
+.spin-btn.ton-spin:disabled
+ {
+    margin: 10px;
+    /* Скрываем избыток градиента */
+    background: linear-gradient(45deg,
+            #7b10108f,
+            /* Красный */
+            #ff4d4d8f,
+            /* Светло-красный */
+            #7b10108f);
+    background-size: 400% 400%;
+    /* Увеличиваем размер градиента для анимации */
+    animation: gradient-pulse 3s ease infinite;
+    /* Анимация для запрета */
+    transition: all 0.3s ease;
+    transition: background 0.5s ease;
+    cursor: not-allowed;
+}
 
 
 
@@ -1318,37 +1336,7 @@ td {
     min-height: 20px;
 }
 
-.ton-spin {
-    background: linear-gradient(90deg, #00c4ff, #007bff);
-    color: #fff;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 25px;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: transform 0.2s, background 0.3s;
-}
 
-.ton-spin:hover {
-    transform: scale(1.05);
-    background: linear-gradient(90deg, #00e4ff, #009bff);
-}
-
-.ton-spin .coin-wrapper img {
-    width: 20px;
-    height: 20px;
-    margin-left: 5px;
-}
-
-.ton-spin:disabled {
-    background-color: #cccccc !important;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
 
 /*показ рекламы*/
 .watch-ad {
