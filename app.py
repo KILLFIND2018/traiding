@@ -976,11 +976,11 @@ PRIZES = [
 TON_PRIZES = {
     "1000 tokens": 0,
     "10000 tokens": 0.01,
-    "100000 tokens": 0.02,
+    "100000 tokens": 0.5,
     "x3 tokens": 0.03,
     "x2 tokens": 0.03,
-    "Drinking Water Dispenser": 0.05,
-    "Humanoid robot": 0.05,
+    "Drinking Water Dispenser": 1,
+    "Humanoid robot": 0.8,
     "2000 tokens": 0
 }
 
