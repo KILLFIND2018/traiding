@@ -22,7 +22,7 @@ document.getElementById('buyButton').addEventListener('click', () => {
     }
     tg.showPopup({
         title: 'Buy tokens for Telegram Stars',
-        message: 'Buy 100 tokens for 10 Telegram Stars?',
+        message: 'Buy 750 000 tokens for 1 000 Telegram Stars?',
         buttons: [
             { id: 'buy', type: 'default', text: 'Buy' },
             { type: 'cancel', text: 'Cancel' }
@@ -32,8 +32,8 @@ document.getElementById('buyButton').addEventListener('click', () => {
             const purchaseData = {
                 type: 'purchase_stars',
                 user_id: urlParams.get('user_id'),
-                amount: 100,
-                stars_cost: 10
+                amount: 750000,
+                stars_cost: 1000
             };
             fetch('/buy_with_stars', {
                 method: 'POST',
@@ -43,7 +43,7 @@ document.getElementById('buyButton').addEventListener('click', () => {
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        tg.showAlert('Purchase successful! 100 tokens added.');
+                        tg.showAlert('Purchase successful! 750 000 tokens added.');
                         document.getElementById('currency-amount').textContent = data.new_balance;
                     } else {
                         tg.showAlert('Purchase Error: ' + (data.message || 'Unknown error'));
