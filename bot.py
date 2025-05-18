@@ -6,13 +6,13 @@ import os
 from config import TOKEN, WEB_APP_URL, MYSQL_CONFIG
 
 # ID администратора (замени на свой Telegram ID)
-ADMIN_USER_ID = "8170805217" 
+ADMIN_USER_ID = "8170805217"
 
 async def start(update, context):
     user = update.message.from_user
     user_id = str(user.id)
     username = user.username
-    first_name = user.first_name or "Player"  # Фallback, если имя отсутствует
+    first_name = user.first_name or "Player"
     last_name = user.last_name
     referral_code = context.args[0] if context.args else None
 
@@ -20,7 +20,6 @@ async def start(update, context):
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        # Проверяем, существует ли пользователь
         cursor.execute("SELECT * FROM user_progress WHERE user_id = %s", (user_id,))
         user_exists = cursor.fetchone()
 
@@ -36,7 +35,6 @@ async def start(update, context):
                 VALUES (%s, 'Older PC', 6)
             """, (user_id,))
 
-            # Обработка реферала
             if referral_code:
                 cursor.execute("""
                     SELECT user_id 
@@ -78,7 +76,6 @@ async def start(update, context):
         cursor.close()
         connection.close()
 
-    # Отправка изображения
     script_dir = os.path.dirname(os.path.abspath(__file__))
     image_path = os.path.join(script_dir, "static", "start_image.png")
     try:
@@ -87,7 +84,6 @@ async def start(update, context):
     except Exception as e:
         print(f"Ошибка изображения: {e}")
 
-    # Отправка текста и клавиатуры
     web_app_url = WEB_APP_URL.format(user_id=user_id)
     keyboard = [
         [InlineKeyboardButton("Tycoon Simulator", web_app={'url': web_app_url})],
@@ -117,14 +113,18 @@ async def handle_callback(update, context):
     query = update.callback_query
     await query.answer()
 
+    # Клавиатура с кнопкой "Назад"
+    back_button = [[InlineKeyboardButton("Back to Menu", callback_data='back_to_menu')]]
+    back_markup = InlineKeyboardMarkup(back_button)
+
     if query.data == 'buy_coins':
-        prices = [LabeledPrice("1000 Stars", 1000 * 100)]  # Установлена цена в 1000 Stars
+        prices = [LabeledPrice("1000 Stars", 1000 * 100)]
         await context.bot.send_invoice(
             chat_id=query.message.chat_id,
             title="Buy 750,000 Tokens",
             description="Purchase 750,000 tokens for 1000 Telegram Stars",
             payload=f"buy_coins_{query.from_user.id}",
-            provider_token="",  # Оставляем пустым, так как провайдер не настроен
+            provider_token="",
             currency="XTR",
             prices=prices,
             start_parameter="buy-tokens"
@@ -140,16 +140,47 @@ async def handle_callback(update, context):
             "- Sector 6 (10%): 2x tokens + 0.07 TON\n"
             "- Sector 7 (5%): Humanoid Robot + 0.9 TON\n"
             "- Sector 8 (5%): 10,000 tokens + Bonus Chance\n\n"
-            "For real TON, try the premium Roulette layer—spend TON for a chance to win up to 1.2 TON. With persistence, we’ll convert your balance to TON after the 90-day season. Stay tuned for frequent contests and events with amazing prizes!"
+            "For real TON, try the premium Roulette layer—spend TON for a chance to win up to 1.2 TON. With persistence, we’ll convert your balance to TON after the 90-day season. Stay tuned for frequent contests and events with amazing prizes!",
+            reply_markup=back_markup
         )
     elif query.data == 'support':
-        await query.edit_message_text("Need help? Contact us at @TycoonSim for assistance!")
+        await query.edit_message_text(
+            "Need help? Contact us at @TycoonSim for assistance!",
+            reply_markup=back_markup
+        )
     elif query.data == 'about_us':
         await query.edit_message_text(
-            "Hello, dear player! 👋 We’ve spent six months crafting Tycoon Simulator with a vision to expand based on your support. Follow our social media, stay active, and help us reach the Bybit NFT marketplace! Every item you buy is tied to your Telegram account, paving the way for future cryptocurrency sales. We wish you luck and promise frequent contests and events with amazing rewards!"
+            "Hello, dear player! 👋 We’ve spent six months crafting Tycoon Simulator with a vision to expand based on your support. Follow our social media, stay active, and help us reach the Bybit NFT marketplace! Every item you buy is tied to your Telegram account, paving the way for future cryptocurrency sales. We wish you luck and promise frequent contests and events with amazing rewards!",
+            reply_markup=back_markup
         )
     elif query.data == 'restart':
         await context.bot.send_message(chat_id=query.message.chat_id, text="/start")
+    elif query.data == 'back_to_menu':
+        user = query.from_user
+        first_name = user.first_name or "Player"
+        web_app_url = WEB_APP_URL.format(user_id=user.id)
+        keyboard = [
+            [InlineKeyboardButton("Tycoon Simulator", web_app={'url': web_app_url})],
+            [
+                InlineKeyboardButton("X", url="https://x.com/tycoonempiretg?s=21"),
+                InlineKeyboardButton("TikTok", url="https://www.tiktok.com/@size.kong?_t=ZN-8wGhFAZWYUQ&_r=1"),
+                InlineKeyboardButton("Website", url="https://www.tycoonsimulatortg.com"),
+                InlineKeyboardButton("Reddit", url="https://www.reddit.com/u/CryptoEmpireTycoon/s/TCYZmkSSwn"),
+            ],
+            [InlineKeyboardButton("How to Earn TON", callback_data='how_to_earn_ton')],
+            [InlineKeyboardButton("Support", callback_data='support')],
+            [InlineKeyboardButton("About Us", callback_data='about_us')],
+            [InlineKeyboardButton("Restart", callback_data='restart')],
+            [InlineKeyboardButton("Buy Coins with Stars", callback_data='buy_coins')],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        welcome_text = (
+            f"Welcome to Tycoon Simulator, {first_name}! 🎉\n"
+            "This exciting project is designed to help you earn in the TON ecosystem. Scale your empire by making purchases, playing in our simulator, and climbing the ranks on our leaderboard. Enjoy a dynamic in-game economy with multiple earning opportunities—both virtual currency and real TON!\n\n"
+            "Learn more about earning TON on our website or via the 'How to Earn TON' button. After completing the in-game tutorial, dive into the action and test your luck! We also feature an item marketplace, with plans to launch items as NFTs on a marketplace by the end of the season. At season’s end (90 days), your balance will convert to TON, and we’ll introduce the Tycoon token listing.\n\n"
+            "Get started now and build your legacy! 🚀"
+        )
+        await query.edit_message_text(welcome_text, reply_markup=reply_markup)
 
 async def precheckout_callback(update, context):
     query = update.pre_checkout_query
@@ -161,32 +192,35 @@ async def precheckout_callback(update, context):
 async def successful_payment(update, context):
     payment = update.message.successful_payment
     user_id = payment.invoice_payload.split("_")[2]
-    amount = 750000  # Начисляем 750,000 токенов пользователю за 1000 Stars
-    stars_amount = 1000  # Количество Stars, потраченных пользователем
+    amount = 750000
+    stars_amount = 1000
 
     try:
         connection = mysql.connector.connect(**MYSQL_CONFIG)
         cursor = connection.cursor()
 
-        # Начисляем токены пользователю
         cursor.execute("SELECT balance FROM user_progress WHERE user_id = %s", (user_id,))
         result = cursor.fetchone()
         if result:
             new_balance = result[0] + amount
             cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", (new_balance, user_id))
-            await update.message.reply_text(f"Success! You bought 750,000 tokens. New balance: {new_balance}")
+            # Клавиатура с кнопкой "Назад" после успешной оплаты
+            back_button = [[InlineKeyboardButton("Back to Menu", callback_data='back_to_menu')]]
+            back_markup = InlineKeyboardMarkup(back_button)
+            await update.message.reply_text(
+                f"Success! You bought 750,000 tokens. New balance: {new_balance}",
+                reply_markup=back_markup
+            )
         else:
             await update.message.reply_text("Error: User not found.")
             return
 
-        # Начисляем эквивалент Stars администратору (например, 1000 Stars = 1000 токенов)
         cursor.execute("SELECT balance FROM user_progress WHERE user_id = %s", (ADMIN_USER_ID,))
         admin_result = cursor.fetchone()
         if admin_result:
-            admin_new_balance = admin_result[0] + stars_amount  # Начисляем 1000 токенов за 1000 Stars
+            admin_new_balance = admin_result[0] + stars_amount
             cursor.execute("UPDATE user_progress SET balance = %s WHERE user_id = %s", (admin_new_balance, ADMIN_USER_ID))
         else:
-            # Если администратор еще не зарегистрирован в базе, создаем его запись
             cursor.execute("""
                 INSERT INTO user_progress 
                 (user_id, username, first_name, last_name, balance, total_generation, is_active, last_updated)
@@ -195,7 +229,6 @@ async def successful_payment(update, context):
 
         connection.commit()
 
-        # Отправляем уведомление администратору
         try:
             await context.bot.send_message(
                 chat_id=ADMIN_USER_ID,
