@@ -1,6 +1,7 @@
 const prizes = ["x3 tokens", "1000 tokens", "Drinking Water Dispenser", "10000 tokens", "100000 tokens", "2000 tokens", "Humanoid robot", "x2 tokens"];
 const probabilities = [5, 28, 2, 20, 10, 28, 2, 5];
-/*рандом по шансам колеса */
+
+/*рандом по шансам колеса*/
 function getRandomIndex() {
     const total = probabilities.reduce((sum, prob) => sum + prob, 0);
     let random = Math.random() * total;
@@ -10,25 +11,38 @@ function getRandomIndex() {
     }
     return probabilities.length - 1;
 }
-/*механика колеса*/
+
 let isSpinning = false;
 
 async function startSpin(spinType) {
     if (isSpinning) return;
+
     const userId = new URLSearchParams(window.location.search).get('user_id');
     if (!userId) {
         showNotificationPopup("Ошибка", "/static/ton_icon.png", "Не удалось определить пользователя", true);
         return;
     }
-    
+
     isSpinning = true;
     const wheel = document.getElementById('wheel');
+
+    let transactionId;
+    if (spinType === 'ton') {
+        try {
+            transactionId = await simulateTonTransaction(userId);
+        } catch (error) {
+            console.error('Транзакция TON отменена или ошибка:', error);
+            isSpinning = false;
+            return;
+        }
+    }
+
     const targetIndex = getRandomIndex();
     const finalAngle = (5 * 360) + (targetIndex * 45) + 22.5;
 
     wheel.style.transition = 'none';
     wheel.style.transform = `rotate(0deg)`;
-    
+
     setTimeout(() => {
         wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
         wheel.style.transform = `rotate(-${finalAngle}deg)`;
@@ -36,10 +50,10 @@ async function startSpin(spinType) {
 
     try {
         const endpoint = spinType === 'ton' ? '/spin_wheel_ton' : '/spin_wheel';
-        const body = { 
-            user_id: userId, 
+        const body = {
+            user_id: userId,
             prize_index: targetIndex,
-            ...(spinType === 'ton' && { transaction_id: await simulateTonTransaction(userId) })
+            ...(spinType === 'ton' && { transaction_id: transactionId })
         };
 
         const response = await fetch(endpoint, {
@@ -49,27 +63,21 @@ async function startSpin(spinType) {
         });
 
         const data = await response.json();
-        
+
         setTimeout(() => {
             if (data.status === "success") {
                 let message = `Вы выиграли ${data.prize}!`;
                 let prizeImage = "/static/bitcoin.png";
 
-                // Обработка TON-призов
                 if (spinType === 'ton' && data.ton_prize > 0) {
                     message += ` + ${data.ton_prize} TON`;
                     prizeImage = "/static/img_whell/ton_symbol.png";
                 }
 
-                // Обновление интерфейса
                 document.getElementById('currency-amount').textContent = data.new_balance;
                 showNotificationPopup(data.prize, prizeImage, message);
-                updateSpinCost(userId); // Обновляем цену после прокрутки
-
-                // Обновление кнопки TON
-                if (spinType === 'ton') {
-                    checkTonSpinAvailability(userId);
-                }
+                updateSpinCost(userId);
+                if (spinType === 'ton') checkTonSpinAvailability(userId);
             } else {
                 showNotificationPopup("Ошибка", "/static/ton_icon.png", data.message, true);
             }
@@ -112,7 +120,7 @@ async function checkSpinAvailability(userId) {
         const response = await fetch(`/check_spin_status?user_id=${userId}`);
         const data = await response.json();
         if (data.status === "available") {
-            await updateSpinCost(userId); // Обновляем цену при доступности
+            await updateSpinCost(userId);
             spinButton.disabled = false;
             spinButton.classList.add('available');
         } else if (data.status === "pending") {
@@ -171,14 +179,18 @@ async function updateSpinCost(userId) {
     try {
         const response = await fetch(`/get_spin_cost?user_id=${userId}`);
         const data = await response.json();
-        if (data.status === "success") {
-            const spinButton = document.querySelector('.token-spin');
-            const spinButtonSpan = spinButton.querySelector('span');
-            spinButtonSpan.textContent = formatNumber(data.spin_cost);
+        const spinButtonSpan = document.querySelector('.token-spin span');
+
+        if (data.status === "success" && typeof data.spin_cost === "number") {
+            spinButtonSpan.textContent = data.spin_cost.toLocaleString('ru-RU');
         } else {
-            console.error('Ошибка получения цены прокрутки:', data.message);
+            console.warn("Некорректный ответ от сервера:", data);
+            spinButtonSpan.textContent = "—";
         }
     } catch (error) {
-        console.error('Ошибка при запросе цены прокрутки:', error);
+        console.error('Ошибка получения стоимости спина:', error);
+        const spinButtonSpan = document.querySelector('.token-spin span');
+        spinButtonSpan.textContent = "Ошибка";
     }
 }
+
