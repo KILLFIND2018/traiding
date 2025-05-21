@@ -1,3 +1,4 @@
+let isSpinning = false;
 const prizes = ["x3 tokens", "1000 tokens", "Drinking Water Dispenser", "10000 tokens", "100000 tokens", "2000 tokens", "Humanoid robot", "x2 tokens"];
 const probabilities = [5, 28, 2, 20, 10, 28, 2, 5];
 
@@ -12,7 +13,7 @@ function getRandomIndex() {
     return probabilities.length - 1;
 }
 
-let isSpinning = false;
+
 
 async function startSpin(spinType) {
     if (isSpinning) return;
