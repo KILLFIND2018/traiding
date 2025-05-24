@@ -18,6 +18,43 @@ CORS(app, resources={r"/static/*": {"origins": "*"}})
 
 user_heartbeats = {}
 
+# Модифицированные призы
+PRIZES = [
+    "x3 tokens", 
+    "1000 tokens", 
+    "Drinking Water Dispenser", 
+    "10000 tokens", 
+    "100000 tokens", 
+    "2000 tokens", 
+    "Humanoid robot", 
+    "x2 tokens"
+]
+
+# Призы в TON для прокрутки за TON
+TON_PRIZES = {
+    "1000 tokens": 0,
+    "10000 tokens": 0.01,
+    "100000 tokens": 0.5,
+    "x3 tokens": 0.03,
+    "x2 tokens": 0.03,
+    "Drinking Water Dispenser": 1,
+    "Humanoid robot": 0.8,
+    "2000 tokens": 0
+}
+
+# Шансы (в тех же единицах, что и на клиенте)
+TON_PROBABILITIES = [5, 28, 2, 20, 10, 28, 2, 5]
+
+def get_ton_prize_index():
+    total = sum(TON_PROBABILITIES)
+    pick  = random.uniform(0, total)
+    cum   = 0
+    for i, p in enumerate(TON_PROBABILITIES):
+        cum += p
+        if pick <= cum:
+            return i
+    return len(TON_PROBABILITIES) - 1
+
 def calculate_balance(current_balance, last_updated, total_generation):
     now = datetime.now()
     seconds_elapsed = (now - last_updated).total_seconds()
@@ -78,6 +115,12 @@ def generation_loop(user_id):
                 cursor.close()
             if 'connection' in locals():
                 connection.close()
+
+def send_ton(to_address, amount_ton):
+    # Тут вы реализуете отправку — через Tonkeeper CLI, Toncenter, TonAPI, pytonlib и т.д.
+    # Пока возвращаем моковый hash
+    return f"MOCK_TX_HASH_{int(time.time())}"
+
 
 @app.route('/heartbeat', methods=['POST'])
 def heartbeat():
@@ -960,29 +1003,7 @@ def claim_login_reward():
         cursor.close()
         connection.close()
 
-# Модифицированные призы
-PRIZES = [
-    "x3 tokens", 
-    "1000 tokens", 
-    "Drinking Water Dispenser", 
-    "10000 tokens", 
-    "100000 tokens", 
-    "2000 tokens", 
-    "Humanoid robot", 
-    "x2 tokens"
-]
 
-# Призы в TON для прокрутки за TON
-TON_PRIZES = {
-    "1000 tokens": 0,
-    "10000 tokens": 0.01,
-    "100000 tokens": 0.5,
-    "x3 tokens": 0.03,
-    "x2 tokens": 0.03,
-    "Drinking Water Dispenser": 1,
-    "Humanoid robot": 0.8,
-    "2000 tokens": 0
-}
 
 @app.route('/spin_wheel', methods=['POST'])
 def spin_wheel():
@@ -1072,116 +1093,113 @@ def spin_wheel():
 
 @app.route('/spin_wheel_ton', methods=['POST'])
 def spin_wheel_ton():
-    data = request.json
-    user_id = data.get('user_id')
-    prize_index = data.get('prize_index')
-    transaction_id = data.get('transaction_id')
-
-    if not all([user_id, prize_index is not None, transaction_id]):
-        return jsonify({"status": "error", "message": "Отсутствуют обязательные поля"}), 400
+    data = request.json or {}
+    user_id       = data.get('user_id')
+    tx            = data.get('transaction_id')
+    if not user_id or not tx:
+        return jsonify(status="error", message="Отсутствуют обязательные поля"), 400
 
     try:
-        connection = mysql.connector.connect(**MYSQL_CONFIG)
-        cursor = connection.cursor()
+        conn   = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = conn.cursor()
+        conn.start_transaction()
 
-        # Начало транзакции сразу после создания соединения
-        connection.start_transaction()
-
-        # Проверка уникальности transaction_id
-        cursor.execute("SELECT COUNT(*) FROM ton_transactions WHERE transaction_id = %s", (transaction_id,))
-        if cursor.fetchone()[0] > 0:
-            connection.rollback()
-            return jsonify({"status": "error", "message": "Транзакция уже использована"}), 400
-
-        # Проверка времени последней прокрутки
-        cursor.execute("SELECT MAX(created_at) FROM ton_transactions WHERE user_id = %s AND status = 'completed'", (user_id,))
-        last_spin = cursor.fetchone()[0]
-        if last_spin and (datetime.now() - last_spin).total_seconds() < 3600:
-            connection.rollback()
-            remaining = 3600 - (datetime.now() - last_spin).total_seconds()
-            return jsonify({"status": "error", "message": f"Прокрутка доступна раз в час. Осталось: {int(remaining)} секунд"}), 400
-
-        # Запись транзакции
+        # Проверяем, что транзакция существует и ещё не обработана
         cursor.execute(
-            "INSERT INTO ton_transactions (user_id, transaction_id, amount_ton, status, created_at) VALUES (%s, %s, %s, %s, %s)",
-            (user_id, transaction_id, 0.01, 'completed', datetime.now())
+            "SELECT status FROM ton_transactions WHERE transaction_id = %s FOR UPDATE",
+            (tx,)
         )
+        row = cursor.fetchone()
+        if not row:
+            conn.rollback()
+            return jsonify(status="error", message="Транзакция не найдена"), 404
+        if row[0] != 'pending':
+            conn.rollback()
+            return jsonify(status="error", message="Транзакция уже обработана"), 400
 
-        # Получение данных пользователя
-        cursor.execute("SELECT balance, total_generation, last_updated FROM user_progress WHERE user_id = %s FOR UPDATE", (user_id,))
-        result = cursor.fetchone()
-        if not result:
-            connection.rollback()
-            return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
+        # Выбираем случайный сектор
+        prize_index = get_ton_prize_index()
+        prize       = PRIZES[prize_index]
+        ton_amount  = TON_PRIZES.get(prize, 0.0)
 
-        balance, total_generation, last_updated = result
-        total_generation = total_generation or 0
-        new_balance = calculate_balance(balance, last_updated or datetime.now(), total_generation)
+        # Обновляем запись в ton_transactions
+        cursor.execute("""
+            UPDATE ton_transactions
+               SET status       = 'completed',
+                   prize_index  = %s,
+                   prize        = %s,
+                   ton_prize    = %s,
+                   updated_at   = %s
+             WHERE transaction_id = %s
+        """, (prize_index, prize, ton_amount, datetime.now(), tx))
 
-        # Обработка приза
-        prize = PRIZES[prize_index]
-        refund = False
-        total_generation_update = 0
-        ton_prize = TON_PRIZES.get(prize, 0)
-
-        if prize in ["Drinking Water Dispenser", "Humanoid robot"]:
-            cursor.execute("SELECT COUNT(*) FROM inventory WHERE user_id = %s AND item_name = %s", (user_id, prize))
-            if cursor.fetchone()[0] > 0:
-                refund = True
-            else:
-                cursor.execute("SELECT generation_per_hour FROM market_items WHERE name = %s", (prize,))
-                generation_per_hour = cursor.fetchone()[0]
-                cursor.execute(
-                    "INSERT INTO inventory (user_id, item_name, generation_per_hour) VALUES (%s, %s, %s)",
-                    (user_id, prize, generation_per_hour)
-                )
-                total_generation_update = generation_per_hour
-        elif "tokens" in prize:
-            prize_amount = int(prize.split()[0])
-            new_balance += prize_amount
-        elif prize.startswith("x"):
-            new_balance *= int(prize[1])
-
-        # Обновление данных пользователя
-        if total_generation_update > 0:
-            cursor.execute(
-                "UPDATE user_progress SET balance = %s, total_generation = total_generation + %s, last_updated = %s WHERE user_id = %s",
-                (new_balance, total_generation_update, datetime.now(), user_id)
-            )
+        # Обновляем баланс пользователя, если приз — токены
+        new_balance = None
+        if prize.endswith("tokens"):
+            # извлекаем число перед " tokens"
+            amount = int(prize.split()[0].replace('x', ''))
+            cursor.execute("""
+                UPDATE user_progress
+                   SET balance = balance + %s,
+                       last_updated = %s
+                 WHERE user_id = %s
+            """, (amount, datetime.now(), user_id))
+            # достаём новый баланс
+            cursor.execute("SELECT balance FROM user_progress WHERE user_id = %s", (user_id,))
+            new_balance = cursor.fetchone()[0]
         else:
-            cursor.execute(
-                "UPDATE user_progress SET balance = %s, last_updated = %s WHERE user_id = %s",
-                (new_balance, datetime.now(), user_id)
-            )
+            # для TON-приза или предметов можно не трогать balance,
+            # но если нужно, здесь добавьте логику
+            cursor.execute("SELECT balance FROM user_progress WHERE user_id = %s", (user_id,))
+            new_balance = cursor.fetchone()[0]
 
-        # Запись TON-приза
-        if ton_prize > 0:
-            cursor.execute(
-                "INSERT INTO ton_rewards (user_id, amount_ton, prize, created_at) VALUES (%s, %s, %s, %s)",
-                (user_id, ton_prize, prize, datetime.now())
-            )
+        conn.commit()
 
-        # Фиксация изменений
-        connection.commit()
+        if ton_amount > 0:
+            cursor = conn.cursor()
+            cursor.execute("SELECT ton_address FROM user_wallets WHERE user_id = %s", (user_id,))
+            row = cursor.fetchone()
+            if row and row[0].startswith("EQ"):
+                payout_address = row[0]
+
+                # Проверка — не выплачено ли уже
+                cursor.execute("""
+                    SELECT payout_tx FROM ton_transactions WHERE transaction_id = %s
+                """, (tx,))
+                already_paid = cursor.fetchone()
+                if not already_paid or not already_paid[0]:
+                    try:
+                        tx_hash = send_ton(payout_address, ton_amount)
+                    except Exception as e:
+                        print(f"❌ Ошибка выплаты TON: {e}")
+                        tx_hash = "ERROR"
+
+                    cursor.execute("""
+                        UPDATE ton_transactions
+                        SET payout_address = %s,
+                            payout_tx = %s
+                        WHERE transaction_id = %s
+                    """, (payout_address, tx_hash, tx))
+                    conn.commit()
+            else:
+                print(f"❌ Нет TON-адреса для пользователя {user_id}, TON-приз не выплачен.")
+
 
         return jsonify({
-            "status": "success",
-            "prize": prize,
-            "new_balance": int(new_balance),
-            "refund": refund,
-            "ton_prize": ton_prize
+            "status":      "success",
+            "prize_index": prize_index,
+            "prize":       prize,
+            "new_balance": new_balance,
+            "ton_prize":   ton_amount
         }), 200
 
-    except mysql.connector.Error as err:
-        if 'connection' in locals():
-            connection.rollback()
-        app.logger.error(f"Ошибка базы данных: {err}")
-        return jsonify({"status": "error", "message": str(err)}), 500
+    except mysql.connector.Error as e:
+        conn.rollback()
+        return jsonify(status="error", message=str(e)), 500
+
     finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if 'connection' in locals():
-            connection.close()
+        cursor.close()
+        conn.close()
 
 
 @app.route('/get_referral_link', methods=['GET'])
@@ -1421,5 +1439,112 @@ def get_spin_cost():
     finally:
         cursor.close()
         connection.close()
+
+@app.route('/initiate_ton_spin', methods=['POST'])
+def initiate_ton_spin():
+    user_id = request.json.get('user_id')
+    if not user_id:
+        return jsonify(status='error', message='User ID отсутствует'), 400
+
+    tx = f"TON_{user_id}_{int(time.time())}"
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor     = connection.cursor()
+        # Вставляем новую транзакцию в таблицу с status='pending'
+        cursor.execute("""
+        INSERT INTO ton_transactions
+        (user_id, transaction_id, amount_ton, status, created_at)
+        VALUES (%s, %s, %s, %s, %s)
+        """, (user_id, tx, MYSQL_CONFIG.get('spin_cost_ton', 0.01), 'pending', datetime.now()))
+        connection.commit()
+    except mysql.connector.Error as err:
+        return jsonify(status='error', message=str(err)), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+    return jsonify(status='success', transaction_id=tx), 200
+
+
+
+@app.route('/get_spin_result', methods=['GET'])
+def get_spin_result():
+    tx = request.args.get('transaction_id')
+    if not tx:
+        return jsonify(status='error', message='transaction_id is required'), 400
+
+    try:
+        conn = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT status, prize_index, prize, new_balance, ton_prize
+            FROM ton_transactions
+            WHERE transaction_id = %s
+        """, (tx,))
+        row = cursor.fetchone()
+    except mysql.connector.Error as e:
+        return jsonify(status='error', message=str(e)), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+    if not row:
+        return jsonify(status='error', message='Invalid transaction'), 404
+
+    if row['status'] == 'pending':
+        return jsonify(status='pending'), 200
+
+    # Убедимся, что все поля есть
+    return jsonify(
+        status='success',
+        prize_index = row['prize_index'],
+        prize       = row['prize'],
+        new_balance = row['new_balance'],
+        ton_prize   = float(row['ton_prize'] or 0)
+    ), 200
+
+
+@app.route('/confirm_ton_payment', methods=['POST'])
+def confirm_ton_payment():
+    tx      = request.json['transaction_id']
+    prize_i = random.randint(0, len(PRIZES)-1)
+    prize   = PRIZES[prize_i]
+    ton_p   = TON_PRIZES.get(prize, 0)
+
+    connection = mysql.connector.connect(**MYSQL_CONFIG)
+    cursor = connection.cursor()
+    # отмечаем как completed и добавляем детали
+    cursor.execute("""
+        UPDATE ton_transactions
+        SET status = 'completed',
+            prize_index = %s,
+            prize = %s,
+            ton_prize = %s,
+            updated_at = %s
+        WHERE transaction_id = %s
+    """, (prize_i, prize, ton_p, datetime.now(), tx))
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return jsonify(status='success'), 200
+
+@app.route('/get_wallet', methods=['POST'])
+def get_wallet():
+    user_id = request.json.get('user_id')
+    if not user_id:
+        return jsonify(status='error', message='user_id missing'), 400
+
+    conn = mysql.connector.connect(**MYSQL_CONFIG)
+    cursor = conn.cursor()
+    cursor.execute("SELECT ton_address FROM user_wallets WHERE user_id = %s", (user_id,))
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if row:
+        return jsonify(status='success', ton_address=row[0])
+    return jsonify(status='not_found'), 404
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

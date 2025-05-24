@@ -2,6 +2,8 @@ let isSpinning = false;
 const prizes = ["x3 tokens", "1000 tokens", "Drinking Water Dispenser", "10000 tokens", "100000 tokens", "2000 tokens", "Humanoid robot", "x2 tokens"];
 const probabilities = [5, 28, 2, 20, 10, 28, 2, 5];
 
+
+
 /*рандом по шансам колеса*/
 function getRandomIndex() {
     const total = probabilities.reduce((sum, prob) => sum + prob, 0);
@@ -13,107 +15,186 @@ function getRandomIndex() {
     return probabilities.length - 1;
 }
 
+let userTonAddress = null;
+
+async function fetchUserTonAddress(userId) {
+  try {
+    const res = await fetch('/get_wallet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId })
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+      userTonAddress = data.ton_address;
+    }
+  } catch (e) {
+    console.error("Не удалось получить TON-адрес пользователя", e);
+  }
+}
+
 
 
 async function startSpin(spinType) {
-    if (isSpinning) return;
+  if (isSpinning) return;
+  isSpinning = true;
 
-    const userId = new URLSearchParams(window.location.search).get('user_id');
-    if (!userId) {
-        showNotificationPopup("Ошибка", "/static/ton_icon.png", "Не удалось определить пользователя", true);
-        return;
+  const userId = new URLSearchParams(window.location.search).get('user_id');
+  if (!userId) {
+    showNotificationPopup("Ошибка", "/static/ton_icon.png", "Не удалось определить пользователя", true);
+    isSpinning = false;
+    return;
+  }
+
+  // ─── TON-спин ────────────────────────────────────────────────────────────
+  if (spinType === 'ton') {
+    try {
+      // 1) Создаём pending-транзакцию в базе
+      const initRes = await fetch('/initiate_ton_spin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId })
+      });
+      const initData = await initRes.json();
+      if (initData.status !== 'success') {
+        throw new Error(initData.message || 'Ошибка инициации TON-спина');
+      }
+      const transactionId = initData.transaction_id;
+
+      // 2) Передаём транзакцию боту, чтобы он выставил инвойс
+      await Telegram.WebApp.sendData(`spin_ton_${transactionId}`);
+
+      // 3) После успешной оплаты: отправляем на сервер готовый спин
+      const resp = await fetch('/spin_wheel_ton', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          transaction_id: transactionId
+        })
+      });
+      const data = await resp.json();
+      if (data.status !== 'success') {
+        throw new Error(data.message || 'Ошибка выполнения TON-спина');
+      }
+
+      // 4) Анимация колеса по data.prize_index
+      const idx        = data.prize_index;
+      const finalAngle = (5 * 360) + (idx * 45) + 22.5;
+      const wheel      = document.getElementById('wheel');
+
+      wheel.style.transition = 'none';
+      wheel.style.transform  = 'rotate(0deg)';
+
+      setTimeout(() => {
+        wheel.style.transition = 'transform 4s cubic-bezier(0.25,0.1,0.25,1)';
+        wheel.style.transform  = `rotate(-${finalAngle}deg)`;
+      }, 10);
+
+      // 5) Показ уведомления и обновление баланса
+      setTimeout(() => {
+        const { prize, new_balance, ton_prize } = data;
+        document.getElementById('currency-amount').textContent = new_balance;
+        let message = `Вы выиграли ${prize}!`;
+        if (ton_prize) message += ` + ${ton_prize} TON`;
+        showNotificationPopup(prize, "/static/img_whell/ton_symbol.png", message);
+        updateSpinCost(userId);
+        isSpinning = false;
+      }, 4050);
+
+    } catch (err) {
+      console.error('TON-спин не удался:', err);
+      showNotificationPopup("Ошибка", "/static/ton_icon.png", err.message, true);
+      isSpinning = false;
     }
+    return;
+  }
 
-    isSpinning = true;
-    const wheel = document.getElementById('wheel');
+  // ─── Токен-спин ───────────────────────────────────────────────────────────
+  const targetIndex = getRandomIndex();
+  const finalAngle  = (5 * 360) + (targetIndex * 45) + 22.5;
+  const wheel       = document.getElementById('wheel');
 
-    let transactionId;
-    if (spinType === 'ton') {
-        try {
-            transactionId = await simulateTonTransaction(userId);
-        } catch (error) {
-            console.error('Транзакция TON отменена или ошибка:', error);
-            isSpinning = false;
-            return;
-        }
-    }
+  wheel.style.transition = 'none';
+  wheel.style.transform  = 'rotate(0deg)';
+  setTimeout(() => {
+    wheel.style.transition = 'transform 4s cubic-bezier(0.25,0.1,0.25,1)';
+    wheel.style.transform  = `rotate(-${finalAngle}deg)`;
+  }, 10);
 
-    const targetIndex = getRandomIndex();
-    const finalAngle = (5 * 360) + (targetIndex * 45) + 22.5;
-
-    wheel.style.transition = 'none';
-    wheel.style.transform = `rotate(0deg)`;
+  try {
+    const resp = await fetch('/spin_wheel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, prize_index: targetIndex })
+    });
+    const data = await resp.json();
 
     setTimeout(() => {
-        wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
-        wheel.style.transform = `rotate(-${finalAngle}deg)`;
-    }, 10);
+      if (data.status === "success") {
+        document.getElementById('currency-amount').textContent = data.new_balance;
+        showNotificationPopup(`Вы выиграли ${data.prize}!`, "/static/bitcoin.png", `Баланс: ${data.new_balance}`);
+        updateSpinCost(userId);
+      } else {
+        showNotificationPopup("Ошибка", "/static/ton_icon.png", data.message, true);
+      }
+      isSpinning = false;
+    }, 4050);
+  } catch (err) {
+    console.error('Ошибка токен-спина:', err);
+    showNotificationPopup("Ошибка", "/static/ton_icon.png", "Ошибка подключения", true);
+    isSpinning = false;
+  }
+}
 
-    try {
-        const endpoint = spinType === 'ton' ? '/spin_wheel_ton' : '/spin_wheel';
-        const body = {
-            user_id: userId,
-            prize_index: targetIndex,
-            ...(spinType === 'ton' && { transaction_id: transactionId })
-        };
 
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
+// ─── Помощник: опрашиваем Flask о результате TON-спина ─────────────────────
+async function pollForSpinResult(transactionId, userId) {
+    const wheel = document.getElementById('wheel');
+    const interval = setInterval(async () => {
+        try {
+            const res = await fetch(`/get_spin_result?transaction_id=${transactionId}`);
+            const json = await res.json();
 
-        const data = await response.json();
+            if (json.status === 'pending') {
+                // ещё не готово — ждём
+                return;
+            }
+            clearInterval(interval);
 
-        setTimeout(() => {
-            if (data.status === "success") {
-                let message = `Вы выиграли ${data.prize}!`;
-                let prizeImage = "/static/bitcoin.png";
+            if (json.status !== 'success') {
+                throw new Error(json.message || 'Неизвестная ошибка спина');
+            }
 
-                if (spinType === 'ton' && data.ton_prize > 0) {
-                    message += ` + ${data.ton_prize} TON`;
-                    prizeImage = "/static/img_whell/ton_symbol.png";
-                }
+            // ─── Запускаем анимацию колеса ───────────────────────────────
+            const prizeIndex = json.prize_index;
+            const finalAngle = (5 * 360) + (prizeIndex * 45) + 22.5;
+            wheel.style.transition = 'none';
+            wheel.style.transform = 'rotate(0deg)';
+            setTimeout(() => {
+                wheel.style.transition = 'transform 4s cubic-bezier(0.25,0.1,0.25,1)';
+                wheel.style.transform = `rotate(-${finalAngle}deg)`;
+            }, 10);
 
-                document.getElementById('currency-amount').textContent = data.new_balance;
-                showNotificationPopup(data.prize, prizeImage, message);
+            // ─── Показ результата ───────────────────────────────────────
+            setTimeout(() => {
+                const { prize, new_balance, ton_prize } = json;
+                document.getElementById('currency-amount').textContent = new_balance;
+                let msg = `Вы выиграли ${prize}!`;
+                if (ton_prize) msg += ` + ${ton_prize} TON`;
+                showNotificationPopup(prize, "/static/img_whell/ton_symbol.png", msg);
                 updateSpinCost(userId);
-                if (spinType === 'ton') checkTonSpinAvailability(userId);
-            } else {
-                showNotificationPopup("Ошибка", "/static/ton_icon.png", data.message, true);
-            }
+                isSpinning = false;
+            }, 4050);
+
+        } catch (err) {
+            clearInterval(interval);
+            console.error('Ошибка при опросе результата:', err);
+            showNotificationPopup("Ошибка", "/static/ton_symbol.png", err.message, true);
             isSpinning = false;
-        }, 4050);
-
-    } catch (error) {
-        console.error('Ошибка:', error);
-        showNotificationPopup("Ошибка", "/static/ton_icon.png", "Ошибка подключения", true);
-        isSpinning = false;
-    }
+        }
+    }, 1000);
 }
-
-// Тестовая функция для симуляции TON-транзакции
-async function simulateTonTransaction(userId) {
-    const tg = window.Telegram.WebApp;
-    return new Promise((resolve, reject) => {
-        tg.showPopup({
-            title: 'Подтверждение транзакции',
-            message: 'Совершить тестовую транзакцию 0.01 TON?',
-            buttons: [
-                { id: 'confirm', type: 'default', text: 'Подтвердить' },
-                { type: 'cancel', text: 'Отмена' }
-            ]
-        }, (buttonId) => {
-            if (buttonId === 'confirm') {
-                const transactionId = `TEST_${userId}_${Date.now()}`;
-                resolve(transactionId);
-            } else {
-                reject(new Error('Транзакция отменена'));
-            }
-        });
-    });
-}
-
 async function checkSpinAvailability(userId) {
     const spinButton = document.querySelector('.token-spin');
     const spinButtonSpan = spinButton.querySelector('span');

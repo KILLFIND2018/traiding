@@ -1,9 +1,20 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, LabeledPrice
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, PreCheckoutQueryHandler, MessageHandler, filters
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, LabeledPrice, Update, ReplyKeyboardMarkup
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, PreCheckoutQueryHandler, MessageHandler, filters, ContextTypes
 import mysql.connector
 import requests
 import os
 from config import TOKEN, WEB_APP_URL, MYSQL_CONFIG
+
+
+import re
+
+user_wallet_entry_mode = set()
+
+
+TON_ADDRESS_RE = re.compile(r'^[A-Za-z0-9_-]{48,64}$')
+
+def is_valid_ton_address(addr: str) -> bool:
+    return bool(TON_ADDRESS_RE.match(addr))
 
 # ID администратора (замени на свой Telegram ID)
 ADMIN_USER_ID = "8170805217"
@@ -96,9 +107,11 @@ async def start(update, context):
         [InlineKeyboardButton("How to Earn TON", callback_data='how_to_earn_ton')],
         [InlineKeyboardButton("Support", callback_data='support')],
         [InlineKeyboardButton("About Us", callback_data='about_us')],
+        [InlineKeyboardButton("🔗 Link TON Wallet", callback_data='link_wallet')],
         [InlineKeyboardButton("Restart", callback_data='restart')],
         [InlineKeyboardButton("Buy Coins with Stars", callback_data='buy_coins')],
-    ]
+]
+
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     welcome_text = (
@@ -155,6 +168,11 @@ async def handle_callback(update, context):
         )
     elif query.data == 'restart':
         await context.bot.send_message(chat_id=query.message.chat_id, text="/start")
+    elif query.data == 'link_wallet':
+        user_id = query.from_user.id
+        user_wallet_entry_mode.add(user_id)
+        await query.message.reply_text("📨 Пришлите ваш TON-адрес (начинается с EQ или UQ...)")
+
     elif query.data == 'back_to_menu':
         user = query.from_user
         first_name = user.first_name or "Player"
@@ -170,9 +188,11 @@ async def handle_callback(update, context):
             [InlineKeyboardButton("How to Earn TON", callback_data='how_to_earn_ton')],
             [InlineKeyboardButton("Support", callback_data='support')],
             [InlineKeyboardButton("About Us", callback_data='about_us')],
+            [InlineKeyboardButton("🔗 Link TON Wallet", callback_data='link_wallet')],
             [InlineKeyboardButton("Restart", callback_data='restart')],
             [InlineKeyboardButton("Buy Coins with Stars", callback_data='buy_coins')],
-        ]
+]
+
         reply_markup = InlineKeyboardMarkup(keyboard)
         welcome_text = (
             f"Welcome to Tycoon Simulator, {first_name}! 🎉\n"
@@ -244,13 +264,96 @@ async def successful_payment(update, context):
         cursor.close()
         connection.close()
 
+async def handle_webapp_data(update, context):
+    if update.message.web_app_data:
+        data = update.message.web_app_data.data
+        if data.startswith("spin_ton_"):
+            tx = data.split("_", 2)[2]
+            user_id = str(update.effective_user.id)
+
+            try:
+                requests.post(
+                    'https://tycoonofficial.com/confirm_ton_payment',
+                    json={'transaction_id': tx, 'user_id': user_id},
+                    timeout=5
+                )
+            except Exception as e:
+                print("Error notifying Flask of TON payment:", e)
+            
+            # Отправляем инвойс
+            await context.bot.send_invoice(
+                chat_id=update.message.chat_id,
+                title="Spin the Wheel",
+                description="Pay 0.01 TON to spin the wheel",
+                payload=f"spin_ton_{tx}",
+                provider_token="",  # Пустое для TON-платежей
+                currency="TON",
+                prices=[LabeledPrice("Spin Cost", 10000000)]  # 0.01 TON = 10,000,000 nanoTON
+            )
+
+# Запрос адреса
+async def ask_wallet(update, context):
+    user_id = update.effective_user.id
+    user_wallet_entry_mode.add(user_id)
+    await update.message.reply_text("📨 Пришлите ваш TON-адрес (начинается с EQ или UQ...)")
+
+
+# Сохранение TON-адреса
+async def save_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id  # int — корректно для BIGINT в MySQL
+    text = update.message.text.strip()
+
+    print(f"[DEBUG] save_wallet: user_id={user_id}, message='{text}'")
+
+    if user_id not in user_wallet_entry_mode:
+        print("[DEBUG] Not in entry mode, skipping.")
+        return
+
+    user_wallet_entry_mode.remove(user_id)
+
+    if not is_valid_ton_address(text):
+        await update.message.reply_text("❌ Это не похоже на корректный TON-адрес.")
+        return
+
+    try:
+        connection = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = connection.cursor()
+
+        cursor.execute(
+            "REPLACE INTO user_wallets (user_id, ton_address) VALUES (%s, %s)",
+            (user_id, text)
+        )
+        connection.commit()
+
+        # Проверка, что адрес действительно записался
+        cursor.execute("SELECT ton_address FROM user_wallets WHERE user_id = %s", (user_id,))
+        row = cursor.fetchone()
+        print(f"[DEBUG] DB confirmation: {row}")
+
+        await update.message.reply_text(f"✅ Адрес сохранён: `{text}`", parse_mode='Markdown')
+
+    except mysql.connector.Error as e:
+        print(f"[ERROR] MySQL error: {e}")
+        await update.message.reply_text("❌ Ошибка при сохранении адреса в базу данных.")
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+
 def main():
     application = Application.builder().token(TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(handle_callback))
     application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment))
+    application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_webapp_data))
+    application.add_handler(CommandHandler("wallet", ask_wallet))
+    application.add_handler(MessageHandler(filters.TEXT, save_wallet))
     application.run_polling()
+
+
 
 if __name__ == '__main__':
     main()
