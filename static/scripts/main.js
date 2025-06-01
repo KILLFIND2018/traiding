@@ -45,12 +45,12 @@ async function startApp(userId) {
     }, 5000);
     await checkNewRewards(userId);
     await checkLoginReward(userId);
-    await checkTonSpinAvailability(userId);
+    //await checkTonSpinAvailability(userId);
     await checkSpinAvailability(userId);
     await updateSpinCost(userId);
     await fetchUserTonAddress(userId);
     const rewardCheckInterval = setInterval(() => checkLoginReward(userId), 1000);
-    const tonSpinCheckInterval = setInterval(() => checkTonSpinAvailability(userId), 1000);
+    //const tonSpinCheckInterval = setInterval(() => checkTonSpinAvailability(userId), 1000);
     const spinCheckInterval = setInterval(() => checkSpinAvailability(userId), 1000);
     const inventoryCheckInterval = setInterval(async () => {
         await loadInventory(userId);
@@ -84,7 +84,7 @@ async function startApp(userId) {
             loadRating();
             await checkNewRewards(userId);
             setInterval(() => checkLoginReward(userId), 1000);
-            setInterval(() => checkTonSpinAvailability(userId), 1000);
+            //setInterval(() => checkTonSpinAvailability(userId), 1000);
             setInterval(() => checkSpinAvailability(userId), 1000);
         }
     });

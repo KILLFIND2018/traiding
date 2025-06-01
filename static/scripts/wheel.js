@@ -133,7 +133,7 @@ async function startSpin(spinType) {
     setTimeout(() => {
       if (data.status === "success") {
         document.getElementById('currency-amount').textContent = data.new_balance;
-        showNotificationPopup(`Вы выиграли ${data.prize}!`, "/static/bitcoin.png", `Баланс: ${data.new_balance}`);
+        showNotificationPopup(`You win ${data.prize}!`, "/static/bitcoin.png");
         updateSpinCost(userId);
       } else {
         showNotificationPopup("Ошибка", "/static/ton_icon.png", data.message, true);
@@ -210,7 +210,7 @@ async function checkSpinAvailability(userId) {
             const hours = Math.floor(remaining / 3600);
             const minutes = Math.floor((remaining % 3600) / 60);
             const seconds = Math.floor(remaining % 60);
-            spinButtonSpan.textContent = `Осталось ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            spinButtonSpan.textContent = `Left ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             spinButton.disabled = true;
             spinButton.classList.remove('available');
         } else {
@@ -225,7 +225,7 @@ async function checkSpinAvailability(userId) {
         spinButton.classList.remove('available');
     }
 }
-
+/*
 async function checkTonSpinAvailability(userId) {
     const tonButton = document.querySelector('.ton-spin');
     const tonButtonSpan = tonButton.querySelector('span');
@@ -256,7 +256,7 @@ async function checkTonSpinAvailability(userId) {
         tonButton.classList.remove('available');
     }
 }
-
+*/
 async function updateSpinCost(userId) {
     try {
         const response = await fetch(`/get_spin_cost?user_id=${userId}`);
